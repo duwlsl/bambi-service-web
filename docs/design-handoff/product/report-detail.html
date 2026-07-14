@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 콘텐츠 상세</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-detail">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav-search" data-screen="search" style="cursor:pointer;"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">마크다운으로 생성된 브리핑 본문을 뷰어로 렌더링합니다.</div>
+        </aside>
+
+        <!-- READER -->
+        <main class="reader">
+
+          <div class="readbar">
+            <span class="back" data-screen="home"><span class="ar">←</span>홈 피드로</span>
+            <span class="rsp"></span>
+            <!-- DECISION-031: 생성 시점 MD 저장(A안) — content_md 원문 복사 -->
+            <span class="btn ghost sm" title="마크다운 원문 복사" id="d-md">⧉ MD 복사</span>
+            <span class="btn ghost sm" id="d-save" data-on="1">⚑ 보관됨</span>
+            <span class="btn ghost sm" id="d-share">↗ 공유</span>
+          </div>
+
+          <article class="dcard">
+            <div class="dhead">
+              <span class="pav me">나</span>
+              <div>
+                <div class="pname">내 아침 브리핑 <span class="h">· 항목 1/5</span></div>
+                <div class="pmeta">오늘 오전 7:00 생성 · 밤사이 수집 42건 중 선별</div>
+              </div>
+              <span class="dpill" id="d-pill">나만 보기</span>
+            </div>
+
+            <h1 class="dtitle">원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족</h1>
+            <p class="dlead">미 CPI 발표를 앞두고 달러가 약세로 전환, 회원님의 환전 예정 시점과 관련한 변동이 감지됐습니다.</p>
+            <div class="dmeta">
+              <span>출처 <b>3건</b></span><span class="dot">·</span>
+              <span class="ok">● 신뢰도 높음</span><span class="dot">·</span>
+              <span>왜 나에게 왔나: 관심사 <b>‘원/달러 환율’</b> 트리거 충족</span>
+            </div>
+
+            <div class="md">
+              <span class="mdtag">## h2 — 섹션 제목</span>
+              <h2>핵심 요약</h2>
+              <span class="mdtag">p — 본문 문단 · **굵게**</span>
+              <p>밤사이 달러화는 주요 통화 대비 전반적으로 약세를 보였습니다. 오늘 밤 발표되는 미 소비자물가지수(<b>CPI</b>)가 시장 예상치를 하회할 것이라는 기대가 채권 시장에서 먼저 가격에 반영되기 시작했고, 이 흐름이 외환 시장으로 이어졌습니다.</p>
+
+              <span class="mdtag">- ul — 리스트 (하위 중첩 포함)</span>
+              <ul>
+                <li>원/달러 환율은 새벽 3시 이후 낙폭을 키우며 전일 종가 대비 <b>0.8% 하락</b>했습니다.</li>
+                <li>채권 금리 동반 하락 — 시장은 오늘 밤 CPI를 낮게 반영하기 시작했습니다.
+                  <ul>
+                    <li>미 10년물 <b>−6bp</b>, 2년물 −4bp (새벽 3시 기준)</li>
+                    <li>금리·환율이 같은 방향 — 출처 [1][2]</li>
+                  </ul>
+                </li>
+                <li>회원님의 <b>환전 예정(이달 말)</b> 시점과 관련해 확인할 만한 변동입니다.</li>
+              </ul>
+
+              <span class="mdtag">&gt; blockquote — 인용문 + 출처 링크</span>
+              <blockquote>“달러 약세는 원화만의 움직임이 아니라 달러 인덱스 전반의 하락과 동조하고 있다.”
+                <span class="qs">— <a class="ext">한국은행 외환시장 동향 공시</a> 인용</span>
+              </blockquote>
+
+              <h2>통화별 야간 변동</h2>
+              <span class="mdtag">| table | — 표 + 기준시점 각주</span>
+              <table>
+                <thead><tr><th>통화</th><th>야간 변동</th><th>방향</th></tr></thead>
+                <tbody>
+                  <tr><td>USD/KRW</td><td><span class="dn">−0.8%</span></td><td>하락</td></tr>
+                  <tr><td>USD/JPY</td><td><span class="dn">−0.5%</span></td><td>하락</td></tr>
+                  <tr><td>달러 인덱스(DXY)</td><td><span class="dn">−0.4%</span></td><td>하락</td></tr>
+                  <tr><td>EUR/USD</td><td><span class="up">+0.3%</span></td><td>유로 강세</td></tr>
+                </tbody>
+              </table>
+              <p class="tnote">표는 오전 5:10 기준 · 출처 [1] 한국은행, [2] 주요 경제지</p>
+
+              <span class="mdtag">![ ] image — 이미지 + 캡션/출처/라이선스</span>
+              <figure class="fig">
+                <div class="box"><span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="596" height="300" style="fill:var(--bg-soft)"></rect>
+                    <g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="75" x2="596" y2="75"></line><line x1="0" y1="150" x2="596" y2="150"></line><line x1="0" y1="225" x2="596" y2="225"></line></g>
+                    <polyline style="fill:none;stroke:var(--signal)" stroke-width="3" points="24,112 108,120 192,108 276,142 360,158 444,184 528,202 572,224"></polyline>
+                    <circle cx="276" cy="142" r="4.5" style="fill:var(--signal)"></circle>
+                    <text x="24" y="34" style="fill:var(--ink-dim)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="14">USD/KRW · 24h</text>
+                    <text x="292" y="132" style="fill:var(--ink-mid)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="12" font-weight="600">03:00 낙폭 확대</text>
+                    <text x="520" y="252" style="fill:var(--ink-mid)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="14" font-weight="600">−0.8%</text>
+                  </svg>
+                </span></div>
+                <figcaption><span class="c">그림 1. 원/달러 환율 24시간 흐름 — 새벽 3시 이후 낙폭 확대</span><span class="src">출처 · 한국은행</span><span class="lic">재사용 허용 (공시자료)</span></figcaption>
+              </figure>
+
+              <h2>왜 지금 중요한가</h2>
+              <p>회원님이 등록한 환전 예정 시점(이달 말)과 목표 환율을 기준으로 보면 현재 환율은 등록한 범위에 근접해 있습니다. 다만 오늘 밤 CPI 수치가 예상을 웃돌 경우 <b>단기 반등 변수</b>가 있어, 이후 흐름은 달라질 수 있습니다.</p>
+
+              <span class="mdtag">### h3 — 하위 제목</span>
+              <h3>적용된 트리거 조건</h3>
+              <span class="mdtag">``` code block — 코드블록</span>
+              <div class="code"><span class="cm">// LLM Wiki에서 수정 가능</span><br>{<br>&nbsp;&nbsp;<span class="k">"interest"</span>: "USD/KRW",<br>&nbsp;&nbsp;<span class="k">"trigger"</span>: { <span class="k">"type"</span>: "daily_change", <span class="k">"threshold"</span>: 0.5 },<br>&nbsp;&nbsp;<span class="k">"actual"</span>: -0.8,&nbsp;&nbsp;<span class="cm">// 조건 충족 → 오늘 1순위</span><br>&nbsp;&nbsp;<span class="k">"d_day"</span>: 14&nbsp;&nbsp;<span class="cm">// 환전 예정일까지</span><br>}</div>
+              <span class="mdtag">`inline code` + [링크] — 내부/외부(↗) 구분</span>
+              <p>임계값 <code>threshold: 0.5</code>가 너무 자주 걸린다면 <a data-screen="wiki">LLM Wiki</a>에서 조건을 직접 조정할 수 있어요.</p>
+
+              <h3>오늘 확인해볼 것</h3>
+              <span class="mdtag">1. ol — 순서 리스트</span>
+              <ol>
+                <li>오늘 밤 <b>21:30</b> 미 CPI 발표 — 예상 상회 시 단기 반등 가능</li>
+                <li>분할 환전 시 1차 실행 구간 검토 (목표 환율 대비 현재 위치)</li>
+                <li>내일 아침 브리핑에서 발표 결과와 환율 반응 후속 확인</li>
+              </ol>
+
+              <div class="tfb"><span class="tq">이 주제, 계속 받아볼까요?</span><span class="btn sm">👍 이 주제 더 보기</span><span class="btn ghost sm">그만 보기</span></div>
+            </div>
+          </article>
+
+
+
+
+          <!-- sources -->
+          <section class="block">
+            <div class="bt">출처 <span class="cnt">3건</span></div>
+            <div class="srcrow">
+              <span class="no2">[1]</span><span class="dot"></span>
+              <div style="flex:1;"><div class="sn">한국은행 — 외환시장 동향 공시</div><div class="pub">한국은행 · 2026-07-09 05:10</div></div>
+              <span class="stp">공식 발표</span><span class="go">원문 열기 ↗</span>
+            </div>
+            <div class="srcrow">
+              <span class="no2">[2]</span><span class="dot"></span>
+              <div style="flex:1;"><div class="sn">달러 약세 전환 보도 2건</div><div class="pub">주요 경제지 · 2026-07-09 04:42</div></div>
+              <span class="stp">주요 언론</span><span class="go">원문 열기 ↗</span>
+            </div>
+            <div class="srcrow">
+              <span class="no2">[3]</span><span class="dot mid"></span>
+              <div style="flex:1;"><div class="sn">야간 거래 반응 스레드</div><div class="pub">외환 커뮤니티 · 참고용 · 03:58</div></div>
+              <span class="stp">커뮤니티</span><span class="go">원문 열기 ↗</span>
+            </div>
+          </section>
+
+          <!-- comments / memo -->
+          <section class="block">
+            <div class="bt">댓글 · 메모 <span class="cnt">비공개 상태 — 나만 메모 가능</span></div>
+            <div class="cmt">
+              <span class="cav">나</span>
+              <div><div class="cn">Parami<span class="ct">방금 · 나만 보는 메모</span></div>
+              <p>이달 말 환전 · 목표가 근접. CPI 결과 보고 분할로 진행. 트리거 ±0.3%로 좁힐지 검토.</p></div>
+            </div>
+            <div class="cinput">
+              <span class="cav2">나</span>
+              <!-- placeholder 스펙: 비공개 상태 "메모를 입력하세요", 공개 전환 시 "댓글을 입력하세요"로 자동 변경 -->
+              <span class="field">메모를 입력하세요</span>
+            </div>
+            <p class="memo-note">공개 브리핑으로 전환하면 다른 사용자가 댓글을 남길 수 있어요.</p>
+          </section>
+
+        </main>
+
+        <!-- RIGHT RAIL (detail) -->
+        <aside class="side-r">
+          <div class="rpanel rnext">
+            <h4>다음 항목 <span class="all">02 / 05</span></h4>
+            <div class="rrelated"><span class="rico">◉</span><div><div class="rt">오픈소스 LLM 신규 릴리즈 2건 — 벤치마크 갱신</div><div class="rm">AI · 출처 2건 · 신뢰도 높음</div></div></div>
+            <span class="btn ghost sm">다음 항목 읽기 →</span>
+          </div>
+
+          <div class="rpanel">
+            <h4>출처 신뢰도 요약</h4>
+            <div class="rstat"><span>출처</span><b>3건</b></div>
+            <div class="rstat"><span>종합 신뢰도</span><b class="ok">높음</b></div>
+            <div class="rstat"><span>마지막 업데이트</span><b>05:10</b></div>
+          </div>
+
+          <div class="rpanel">
+            <h4>관련 브리핑 <span class="all">내 기록</span></h4>
+            <div class="rrelated"><span class="rico">◉</span><div><div class="rt">미 금리 인하 시점 전망 — 3가지 시나리오</div><div class="rm">지난주 보관함 · 거시경제</div></div></div>
+            <div class="rrelated"><span class="rico">◉</span><div><div class="rt">달러 인덱스 4개월 최저 — 배경 정리</div><div class="rm">2일 전 브리핑 · 환율</div></div></div>
+            <div class="rrelated"><span class="rico">◉</span><div><div class="rt">환전 수수료 비교 — 주요 은행 5곳</div><div class="rm">3주 전 보관함 · 환테크</div></div></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+  <!-- 브리핑 공유 모달 -->
+  <div class="modal-bg" id="sh-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="브리핑 공유" style="width:460px;">
+      <div class="mhead"><span class="mt">브리핑 공유</span><span class="mx" data-sh-close>✕</span></div>
+      <p class="ms">이 보고서는 지금 <b>나만 보기</b> 상태예요.<br>피드에 게시하면 <b>공개</b>로 전환되고, 팔로워 피드와 검색에서 볼 수 있게 돼요. 메모는 댓글로 전환돼요.</p>
+      <div class="mfoot"><span class="btn" id="sh-link">링크만 복사</span><span class="btn signal" id="sh-post">공개하고 피드에 게시</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

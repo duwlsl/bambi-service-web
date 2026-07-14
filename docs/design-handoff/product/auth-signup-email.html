@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 가입 — 이메일 입력</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-auth">
+    <div class="app">
+      <div class="auth">
+
+        <!-- RIGHT: brand panel -->
+        <div class="auth-r">
+          <div class="rtop">
+            <div class="rbrand">
+              <svg width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+              <span class="word">alphacatcher</span>
+            </div>
+          </div>
+          <div class="auth-rmid">
+            <div class="rhead">밤사이 쌓인 소식,<br>아침 5분이면 충분해요.</div>
+            <div class="auth-preview">
+              <div class="pv-head"><span class="sun"><svg viewBox="0 0 14 14" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="2.8" style="fill:var(--signal)"></circle><g style="stroke:var(--signal)" stroke-width="1.3" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="2.5"></line><line x1="7" y1="11.5" x2="7" y2="13"></line><line x1="1" y1="7" x2="2.5" y2="7"></line><line x1="11.5" y1="7" x2="13" y2="7"></line></g></svg></span>오늘 아침 브리핑 · 7월 9일 · 5건</div>
+              <div class="pv-title">밤사이 42건에서 5건을 골랐어요</div>
+              <div class="pv-sum">환율·오픈소스 LLM·보유 종목이 오늘의 핵심. 각 항목은 왜 골랐는지 근거와 함께 정리했어요.</div>
+              <div class="pv-row"><span class="n">01</span><div><div class="pt">원/달러 환율 0.8% 하락 — 트리거 충족</div><div class="pm">#환율 · 신뢰도 높음</div></div></div>
+              <div class="pv-row"><span class="n">02</span><div><div class="pt">오픈소스 LLM 릴리즈 2건</div><div class="pm">#AI · 신뢰도 높음</div></div></div>
+              <div class="pv-row"><span class="n">03</span><div><div class="pt">관심 노트북 12% 할인</div><div class="pm">#쇼핑 · 3개월 최저가</div></div></div>
+            </div>
+            <div class="rcap">매일 아침 <b>7:00</b> · 관심사 기반으로 자동 정리돼요</div>
+          </div>
+        </div>
+
+        <!-- LEFT: form -->
+        <div class="auth-l">
+          <div class="auth-back show" id="auth-back" data-auth="signup" role="button" tabindex="0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            뒤로
+          </div>
+
+          <div class="auth-body">
+
+            <!-- VIEW 1 : 가입 선택 -->
+            <div class="auth-form auth-view" data-auth-view="signup" hidden>
+              <div class="auth-orb">
+                <svg width="46" height="46" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+              </div>
+              <div class="auth-title">시작하기</div>
+              <div class="auth-sub">내일 아침, 첫 브리핑이 도착해요.</div>
+              <button class="auth-btn signal" data-auth="email">이메일로 계속하기</button>
+              <button class="auth-btn" data-screen="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>Google로 계속하기</button>
+              <div class="auth-switch">이미 계정이 있으세요?<a data-auth="login">로그인</a></div>
+            </div>
+
+            <!-- VIEW 2 : 이메일 가입 폼 -->
+            <div class="auth-form auth-view" data-auth-view="email">
+              <div class="auth-orb">
+                <svg width="46" height="46" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+              </div>
+              <div class="auth-title">계정 만들기</div>
+              <div class="auth-sub">이메일과 비밀번호를 입력해 주세요.</div>
+              <div class="field">
+                <label for="su-email">이메일</label>
+                <div class="fwrap"><input id="su-email" type="email" placeholder="name@example.com" autocomplete="email"></div>
+              </div>
+              <div class="field">
+                <label for="su-pw">비밀번호</label>
+                <div class="fwrap">
+                  <input id="su-pw" type="password" placeholder="비밀번호 만들기" autocomplete="new-password">
+                  <span class="eye" title="비밀번호 표시"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+                </div>
+                <div class="hint">8자 이상, 영문과 숫자를 함께 사용해 주세요.</div>
+              </div>
+              <button class="auth-btn signal auth-cta" data-screen="home">계속하기</button>
+              <div class="auth-terms">계속하면 <a>이용약관</a>과 <a>개인정보 처리방침</a>에 동의하게 돼요.</div>
+              <div class="auth-switch">이미 계정이 있으세요?<a data-auth="login">로그인</a></div>
+            </div>
+
+            <!-- VIEW 3 : 로그인 -->
+            <div class="auth-form auth-view" data-auth-view="login" hidden="">
+              <div class="auth-orb">
+                <svg width="46" height="46" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+              </div>
+              <div class="auth-title">로그인</div>
+              <div class="auth-sub">다시 만나서 반가워요.</div>
+              <div class="field">
+                <label for="li-email">이메일</label>
+                <div class="fwrap"><input id="li-email" type="email" placeholder="name@example.com" autocomplete="email"></div>
+              </div>
+              <div class="field">
+                <div class="frow"><label for="li-pw">비밀번호</label><span class="link">비밀번호를 잊으셨나요?</span></div>
+                <div class="fwrap">
+                  <input id="li-pw" type="password" placeholder="비밀번호 입력" autocomplete="current-password">
+                  <span class="eye" title="비밀번호 표시"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+                </div>
+              </div>
+              <button class="auth-btn signal auth-cta" data-screen="home">로그인</button>
+              <div class="auth-or">또는</div>
+              <button class="auth-btn" data-screen="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>Google로 계속하기</button>
+              <div class="auth-switch">아직 계정이 없으세요?<a data-auth="signup">가입하기</a></div>
+            </div>
+
+          </div>
+
+          <div class="auth-footer"><span>매일 아침, 나에게 중요한 것만.</span><span>© 2026 AlphaCatcher</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

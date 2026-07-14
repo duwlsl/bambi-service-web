@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 피드 카드 — 단일 이미지 보고서</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body data-route-base="../product/">
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-card">
+    <div class="app">
+      <div class="shell">
+        <main class="feed">
+            <!-- CARD B: 이미지 1장형 -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav" data-screen="uprofile" style="cursor:pointer;">MW</span>
+                <div data-screen="uprofile" style="cursor:pointer;">
+                  <div class="pname">macro_watcher <span class="h">@macro_w</span></div>
+                  <div class="pmeta">오전 7:41 · 공개 브리핑 · 추천</div>
+                </div>
+                <span class="pmore svmore" id="rec-more">⋯
+                  <div class="svpop" hidden style="top:24px;">
+                    <span class="pi" id="rec-like"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5.5 7.2 8 2.6c.9 0 1.6.7 1.6 1.6v2.2h3c.8 0 1.4.7 1.2 1.5l-.9 4.2c-.1.7-.7 1.1-1.4 1.1H5.5M5.5 7.2v6M5.5 7.2H2.6v6h2.9" stroke-linejoin="round"></path></svg>추천이 마음에 들어요</span>
+                    <span class="pi" id="rec-hide"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6.2"></circle><line x1="3.8" y1="12.2" x2="12.2" y2="3.8"></line></svg>관심 없음</span>
+                  </div>
+                </span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">미 CPI 발표 전날 밤, 채권시장이 먼저 움직인 이유</h3>
+              <p class="pbody">10년물 금리가 새벽에 6bp 빠졌습니다. 출처 4건을 원문까지 따라가 보면 시장이 이미 낮은 CPI를 가격에 반영하기 시작했다는 해석이 가능합니다.</p>
+              <div class="pimg">
+                <span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 280" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="596" height="280" style="fill:var(--bg-soft)"></rect>
+                    <g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="93" x2="596" y2="93"></line><line x1="0" y1="186" x2="596" y2="186"></line></g>
+                    <polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="24,120 106,112 188,136 270,120 352,150 434,142 516,176 572,170"></polyline>
+                    <circle cx="352" cy="150" r="3.5" style="fill:var(--signal)"></circle>
+                    <text x="24" y="32" style="fill:var(--ink-dim)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13">US 10Y · overnight</text>
+                    <text x="500" y="32" style="fill:var(--ink-mid)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13" font-weight="600">−6bp</text>
+                  </svg>
+                </span>
+                <div class="imgcap"><span class="c">10년물 국채 금리 야간 흐름 — 새벽 3시 이후 하락 전환</span><span class="src">출처 · 미 재무부</span></div>
+              </div>
+              <div class="reason"><span class="rd"></span>내 관심사 <b>‘거시경제’</b>와 토픽 일치</div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>32</b></span>
+                <span class="pact">♡ <b>128</b></span>
+                <span class="pact">조회 <b>1.8만</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+        </main>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

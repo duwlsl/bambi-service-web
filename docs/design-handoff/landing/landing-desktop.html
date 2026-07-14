@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 랜딩 (Landing Desktop)</title>
+<!--
+  ============================================================
+  AlphaCatcher — 랜딩 (Landing Desktop, Full-size Export)
+  ============================================================
+  Status: Final · Figma Native Frame (AC / Landing / Desktop) · 콘텐츠 기준 폭 1440px
+  기준본(원본, 무수정 보존): Outputs/디자인산출물_2026-07-07/alphacatcher-landing-mockup-v2-motionorb.html
+  = 원본 − (목업 문서 프레임) + (Full-Bleed 보정) + (2026-07-14 일관성 정규화 · 감사 B안)
+
+  [정규화 요약]
+   - 공유 토큰 값을 shared/tokens.css Light와 일치 (--ink/--line/--wash/--signal-ink 등)
+   - 하드코딩 색(#E14E00, #fff) → 토큰(var(--signal-ink), var(--on-signal))
+   - "While you sleep, we read." = 기본 서체(Pretendard) 통일 · italic/serif 제거 (2026-07-14 정정)
+     전용 Brand Signature 스타일로 취급하지 않음 — Marketing 일반 텍스트로 분류
+   - Header '요금' 메뉴 제거 / CTA: 시작하기 → auth-signup-choice, 공개 브리핑 둘러보기 → home-feed
+   - Footer 개인정보 처리방침·문의 = 링크 없는 텍스트('준비 중' 라벨)
+   - 금융 조언성 문구 중립화 (유리한 구간 → 확인할 만한 변동)
+   - Navigation Label 14 → 14.5px (Product .mi/.tab과 통일)
+  [유지] MotionOrb(색·입자·회전·hover·ring) · Hero Display · 넓은 섹션 여백 · 오렌지 글로우
+         · Marketing CTA 크기 · Header 76px · Light 전용(Dark 미도입) · 합니다체
+  ============================================================
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Quicksand:wght@300;400;500&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+/* ---- Landing scope (.lp) — v4 : bright & clean, Meridian-style split hero ---- */
+.lp{
+  /* --- 공유 토큰: shared/tokens.css Light와 값 일치 (2026-07-14 정규화 · B안) --- */
+  --bg:#FFFFFF;
+  --bg-soft:#F5F6F8;
+  --bg-inset:#EEF0F3;
+  --bg-warm:#F5F6F8;      /* = --bg-soft */
+  --bg-alt:#F5F6F8;       /* = --bg-soft */
+  --surface:#FFFFFF;      /* = --bg */
+  --line:#E6E8EC;
+  --line-strong:#D7DBE0;
+  --ink:#141619;
+  --ink-mid:#454B54;
+  --ink-dim:#6B7280;
+  --signal:#FF5A00;
+  --signal-ink:#E35200;
+  --on-signal:#FFFFFF;
+  --wash:rgba(255,90,0,.09);
+  --wash-strong:rgba(255,90,0,.20);
+  /* --- Landing 전용 그래픽 토큰 (Product에 대응 의미 없음 — 유지) --- */
+  --signal-soft:#FF8A3D;
+  --wash-weak:rgba(255,90,0,.05);
+  --shadow-warm:rgba(255,90,0,.14);
+  --contrast:#171717;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  border:2px solid #8a8a8a;
+  width:1440px;margin:0 auto 88px;
+  overflow:hidden;position:relative;
+}
+.lp *{box-sizing:border-box;}
+.lp .mono{font-family:"Space Grotesk",monospace;letter-spacing:.16em;text-transform:uppercase;}
+/* .lp .serif (Instrument Serif italic) 규칙 제거 — 2026-07-14: 클로징 문구가 Pretendard로 확정되어 사용처 0건 */
+@media (prefers-reduced-motion: reduce){.lp *{animation:none!important;transition:none!important;}}
+
+/* buttons */
+.lp-btn{display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;padding:12px 24px;border-radius:12px;border:1px solid var(--line-strong);color:var(--ink);background:var(--surface);white-space:nowrap;cursor:default;transition:transform .2s ease,box-shadow .2s ease;}
+.lp-btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px var(--shadow-warm);}
+.lp-btn.signal{background:var(--signal);border-color:var(--signal);color:var(--on-signal);box-shadow:0 12px 26px -12px rgba(255,90,0,.55);}
+.lp-btn.dark{background:var(--contrast);border-color:var(--contrast);color:#FFFFFF;}
+.lp-btn.ghost{background:transparent;border-color:transparent;}
+.lp-btn.big{padding:16px 32px;font-size:16px;}
+
+/* nav */
+.lp-nav{display:flex;align-items:center;gap:36px;height:76px;padding:0 72px;border-bottom:1px solid var(--line);position:relative;z-index:6;background:var(--bg);}
+.lp-logo{display:flex;align-items:center;gap:11px;}
+.lp-logo svg.mark{display:block;flex-shrink:0;}
+.lp-logo .word{font-family:"Quicksand","Pretendard Variable",sans-serif;font-weight:400;font-size:21px;letter-spacing:.02em;color:var(--ink);}
+.lp-footer .lp-logo .word{font-size:16px;}
+.lp-nav-links{display:flex;gap:30px;font-size:14px;color:var(--ink-dim);}
+.lp-nav .cta{margin-left:auto;display:flex;gap:12px;align-items:center;}
+.lp-nav .lp-btn{padding:10px 20px;}
+
+/* ---- HERO : split layout (copy left / MotionOrb right) ---- */
+.lp-hero{
+  position:relative;
+  height:92vh;min-height:820px;max-height:1020px;
+  overflow:hidden;
+  background:
+    radial-gradient(1000px 760px at 90% 100%, rgba(255,140,60,.18) 0%, rgba(255,170,110,.09) 42%, rgba(255,255,255,0) 70%),
+    linear-gradient(115deg,#FFFFFF 0%,#FFFFFF 55%,#FDF7F1 78%,#FAF1E8 100%);
+}
+.lp-hero-copy{
+  position:absolute;left:72px;top:50%;transform:translateY(-55%);
+  width:552px;z-index:3;text-align:left;
+  animation:lp-fadeup .8s ease .15s both;
+}
+@keyframes lp-fadeup{from{opacity:0;transform:translateY(calc(-55% + 14px))}to{opacity:1;transform:translateY(-55%)}}
+.lp-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-dim);border:1px solid var(--line);border-radius:999px;padding:9px 18px;margin-bottom:32px;background:var(--surface);}
+.lp-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--signal);}
+.lp-h1{font-size:56px;line-height:1.16;font-weight:700;letter-spacing:-.01em;margin:0;}
+.lp-h1 .signal-w{color:var(--signal);background:linear-gradient(transparent 64%,var(--wash) 64%);padding:0 3px;letter-spacing:0;}
+.lp-sub{font-size:18px;line-height:1.75;color:var(--ink-dim);max-width:520px;margin:24px 0 38px;}
+.lp-sub b{color:var(--ink);font-weight:600;}
+.lp-hero-actions{display:flex;gap:14px;position:relative;z-index:4;}
+.lp-hero-meta{display:flex;gap:26px;margin-top:30px;font-size:13px;color:var(--ink-dim);}
+.lp-hero-meta span{display:inline-flex;align-items:center;gap:8px;}
+.lp-hero-meta i{font-style:normal;color:var(--signal);}
+
+/* MotionOrb — hero primary visual (canvas: cosmic data observatory)
+   퍼져 있던 정보(주변 입자)가 궤도를 따라 흐르다 중앙의 orange particle sphere(신호)로 정제·수렴.
+   v5.2: 정적 SVG -> 경량 vanilla canvas. 외부 라이브러리 없음. */
+/* v5.7 framing: 레퍼런스(halftone globe)식 — 구체가 우측에서 크게 잘려 들어오는 구도.
+   구체 중심은 프레임 우측 끝 부근(x≈1300), 좌측 카피 보호 (구체 좌측끝 ~858px > 카피 624px) */
+.lp-orb-zone{
+  position:absolute;right:-510px;bottom:-230px;top:auto;
+  transform:none;
+  width:1300px;height:1300px;z-index:1;pointer-events:auto;
+}
+.lp-orb-halo{position:absolute;inset:-30px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(255,160,100,.10),rgba(255,140,70,.04) 55%,transparent 74%);
+  opacity:.9;transition:transform .9s cubic-bezier(.22,.61,.36,1),opacity .9s ease;}
+.lp-orb-lens{display:none;position:absolute;inset:24%;border-radius:50%;pointer-events:none; /* v5.7: 레퍼런스에 없는 요소라 비활성 */
+  border:1px solid rgba(255,140,70,.13);
+  box-shadow:0 0 100px -20px rgba(255,120,40,.32),inset 0 0 90px -30px rgba(255,160,100,.22);
+  transition:box-shadow .9s ease;}
+.lp-orb-zone.is-excited .lp-orb-halo{transform:scale(1.06);opacity:1;}
+.lp-orb-zone.is-excited .lp-orb-lens{
+  box-shadow:0 0 100px -20px rgba(255,90,0,.26),inset 0 0 80px -32px rgba(255,138,61,.16);}
+.lp-orb{position:relative;width:100%;height:100%;animation:lp-breathe 9s ease-in-out infinite;}
+@keyframes lp-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.014)}}
+.lp-orb canvas{display:block;width:100%;height:100%;}
+.lp-orb-caption{position:absolute;left:72px;bottom:44px;z-index:4;font-size:12px;color:var(--ink-dim);background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:999px;padding:7px 16px;backdrop-filter:blur(4px);}
+.lp-orb-caption b{color:var(--signal);font-weight:600;}
+
+/* MotionOrb 반응형 — 좁은 화면에서 hero 세로 재배치, orb 축소·중앙 정렬 */
+@media (max-width:1100px){
+  body{padding:32px 12px 60px;}
+  .doc-header,.frame-label,.frame-sub{width:auto;max-width:100%;}
+  .lp{width:100%;}
+  .lp-nav{padding:0 28px;gap:20px;}
+  .lp-nav-links{display:none;}
+  .lp-hero{height:auto;min-height:0;max-height:none;padding:56px 28px 0;}
+  .lp-hero-copy{position:static;transform:none;width:auto;max-width:560px;animation:none;}
+  .lp-hero-meta{flex-wrap:wrap;gap:12px 20px;}
+  .lp-orb-zone{position:relative;right:auto;top:auto;bottom:auto;transform:none;
+    width:min(560px,96vw);height:min(560px,96vw);margin:-8px auto -64px;}
+  .lp-orb{width:100%;height:100%;}
+  .lp-orb-caption{left:28px;bottom:16px;}
+  .lp-sec{padding:80px 28px;}
+  .lp-final{padding:90px 28px;}
+  .lp-timeline,.lp-sns,.lp-split{flex-direction:column;}
+  .lp-ticker{flex-wrap:wrap;gap:20px;padding:24px 28px;}
+  .lp-footer{padding:24px 28px;flex-wrap:wrap;}
+}
+
+/* ---- section shells ---- */
+.lp-sec{padding:140px 72px;position:relative;}
+.lp-sec.alt{background:var(--bg-alt);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.lp-sec-eyebrow{font-size:11.5px;color:var(--ink-dim);margin-bottom:20px;}
+.lp-sec-h{font-size:48px;font-weight:700;letter-spacing:-.02em;line-height:1.25;max-width:780px;margin:0;}
+.lp-sec-sub{font-size:17px;line-height:1.75;color:var(--ink-dim);max-width:600px;margin-top:18px;}
+
+/* S3 ticker */
+.lp-ticker{background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:34px 72px;display:flex;align-items:center;justify-content:center;gap:56px;font-size:14px;color:var(--ink-dim);position:relative;z-index:5;}
+.lp-ticker .item{display:flex;align-items:baseline;gap:10px;}
+.lp-ticker .n{font-family:"Space Grotesk",monospace;font-size:30px;font-weight:600;color:var(--ink);letter-spacing:0;}
+.lp-ticker .n.signal{color:var(--signal);}
+.lp-ticker .arrow{color:var(--line-strong);font-size:18px;}
+.lp-ticker .label-lead{font-size:12px;letter-spacing:.14em;}
+
+/* S4 product proof mockup */
+.lp-mock{max-width:920px;margin:70px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:36px 40px;text-align:left;box-shadow:0 30px 70px -34px var(--shadow-warm),0 6px 20px -12px rgba(17,24,39,.08);}
+.lp-mock-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:8px;}
+.lp-mock-head .title{font-size:20px;font-weight:700;}
+.lp-mock-head .date{font-size:13px;color:var(--ink-dim);}
+.lp-mock-head .pill{margin-left:auto;font-size:11.5px;color:var(--ink-dim);border:1px solid var(--line-strong);border-radius:999px;padding:5px 13px;}
+.lp-item{display:flex;gap:18px;padding:20px 0;border-bottom:1px solid var(--line);}
+.lp-item:last-of-type{border-bottom:none;}
+.lp-item .no{font-family:"Space Grotesk",monospace;font-size:13px;color:var(--ink-dim);padding-top:4px;width:26px;flex-shrink:0;}
+.lp-item h4{font-size:17px;font-weight:700;margin:0 0 6px;}
+.lp-item p{font-size:14px;line-height:1.65;color:var(--ink-dim);margin:0;}
+.lp-item .why{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;color:var(--signal-ink);background:var(--wash);border:1px solid var(--wash-strong);border-radius:8px;padding:7px 12px;}
+.lp-item .why::before{content:"●";font-size:7px;color:var(--signal);}
+.lp-tagrow{display:flex;gap:8px;margin-top:10px;}
+.lp-tag{font-size:11.5px;color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;padding:3px 10px;background:var(--bg-warm);}
+.lp-mock-foot{display:flex;align-items:center;gap:14px;margin-top:6px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-dim);}
+.lp-src-dots{display:inline-flex;gap:5px;}
+.lp-src-dots i{width:8px;height:8px;border-radius:50%;background:var(--ink-dim);display:inline-block;}
+.lp-src-dots i:nth-child(2){opacity:.65}.lp-src-dots i:nth-child(3){opacity:.45}.lp-src-dots i:nth-child(4){opacity:.28}
+
+/* S5 timeline */
+.lp-timeline{display:flex;gap:24px;margin-top:80px;position:relative;}
+.lp-timeline::before{content:"";position:absolute;top:9px;left:3%;right:3%;height:2px;background:linear-gradient(90deg,rgba(17,17,17,.12),rgba(17,17,17,.20) 55%,var(--signal));}
+.lp-step{flex:1;position:relative;padding-top:52px;}
+.lp-step .node{position:absolute;top:0;left:0;width:20px;height:20px;border-radius:50%;background:var(--surface);border:2px solid rgba(17,17,17,.24);}
+.lp-step:nth-child(3) .node{background:var(--signal);border-color:var(--signal);box-shadow:0 4px 14px rgba(255,90,0,.35);}
+.lp-step .time{font-family:"Space Grotesk",monospace;font-size:12.5px;letter-spacing:.14em;color:var(--ink-dim);margin-bottom:12px;}
+.lp-step h4{font-size:21px;font-weight:700;margin:0 0 10px;}
+.lp-step p{font-size:14.5px;line-height:1.7;color:var(--ink-dim);margin:0;max-width:340px;}
+.lp-step .scard{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:13px;color:var(--ink-dim);line-height:1.6;box-shadow:0 12px 30px -20px var(--shadow-warm);}
+.lp-step .scard b{color:var(--ink);}
+
+/* S6 split */
+.lp-split{display:flex;gap:80px;align-items:center;}
+.lp-split .copy{flex:1;}
+.lp-split .visual{flex:1;}
+.lp-feature{display:flex;gap:16px;margin-top:32px;}
+.lp-feature .fico{width:38px;height:38px;border-radius:10px;flex-shrink:0;background:rgba(255,90,0,.06);border:1px solid rgba(255,90,0,.20);display:flex;align-items:center;justify-content:center;color:var(--signal);font-size:15px;}
+.lp-feature h5{font-size:16px;font-weight:700;margin:0 0 6px;}
+.lp-feature p{font-size:14px;line-height:1.65;color:var(--ink-dim);margin:0;max-width:420px;}
+.lp-whycard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:30px 32px;box-shadow:0 30px 70px -34px var(--shadow-warm);}
+.lp-whycard .whead{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:6px;}
+.lp-whycard .whead .t{font-size:17px;font-weight:700;}
+.lp-whycard .whead .pill{margin-left:auto;font-size:11px;color:var(--ink-dim);border:1px solid var(--line-strong);border-radius:999px;padding:4px 11px;}
+
+/* S7 posts */
+.lp-sns{display:flex;gap:24px;margin-top:70px;}
+.lp-post{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 16px 40px -28px var(--shadow-warm);transition:transform .25s ease,box-shadow .25s ease;}
+.lp-post:hover{transform:translateY(-5px);box-shadow:0 26px 50px -28px var(--shadow-warm);}
+.lp-post .phead{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.lp-post .pav{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#F3F4F6,#E2E4E8);border:1px solid var(--line-strong);}
+.lp-post .pname{font-size:14px;font-weight:700;}
+.lp-post .ptime{font-size:12px;color:var(--ink-dim);}
+.lp-post .pvis{margin-left:auto;font-size:11px;color:var(--ink-dim);border:1px solid var(--line-strong);border-radius:999px;padding:3px 10px;}
+.lp-post h4{font-size:16.5px;font-weight:700;margin:0 0 8px;line-height:1.45;}
+.lp-post p{font-size:13.5px;line-height:1.65;color:var(--ink-dim);margin:0 0 14px;}
+.lp-post .pact{display:flex;gap:20px;font-size:12.5px;color:var(--ink-dim);border-top:1px solid var(--line);padding-top:14px;}
+.lp-post .pact b{color:var(--ink);font-weight:600;}
+
+/* S8 final */
+.lp-final{padding:150px 72px 140px;text-align:center;position:relative;background:var(--bg);overflow:hidden;}
+.lp-final .echo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:820px;height:820px;border-radius:50%;background:radial-gradient(closest-side,var(--wash-weak),transparent 70%);pointer-events:none;}
+/* .lp-final .serif 규칙 제거 — 2026-07-14: 클로징 문구는 .lp-signature(Pretendard 23px)로 대체됨 */
+.lp-final h2{font-size:58px;font-weight:700;letter-spacing:-.022em;line-height:1.2;margin:0 0 20px;position:relative;}
+.lp-final p{font-size:17px;color:var(--ink-dim);margin:0 0 42px;position:relative;}
+.lp-final .lp-hero-actions{justify-content:center;}
+.lp-footer{display:flex;align-items:center;gap:24px;padding:30px 72px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-dim);background:var(--bg);}
+.lp-footer .right{margin-left:auto;display:flex;gap:22px;}
+</style>
+<style>
+/* ============================================================
+   EXPORT LAYER — 목업 문서 프레임 제거 + Full-Bleed + 일관성 정규화(타이포 최소분)
+   1440 중앙 기준선: max(72px, calc((100% - 1440px)/2 + 72px))
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:#FFFFFF;
+  font-family:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.lp{width:100%;max-width:none;margin:0;border:0;}
+
+@media (min-width:1101px){
+  .lp-nav{padding-inline:max(72px, calc((100% - 1440px) / 2 + 72px));}
+  .lp-hero-copy{left:max(72px, calc((100% - 1440px) / 2 + 72px));}
+  .lp-orb-caption{left:max(72px, calc((100% - 1440px) / 2 + 72px));}
+  /* MotionOrb: 원본 규칙 그대로 (right:-510px · 1300×1300) — override 없음 */
+}
+
+/* Landing 클로징 문구 "While you sleep, we read." — 2026-07-14 확정:
+   기본 서체(Pretendard) 23px 일반 텍스트. italic·serif 없음. 전용 Brand Signature 스타일 아님.
+   크기·색·여백·위치는 기존 유지. Figma Text Style = Marketing / Closing Text.
+   관련 폰트(Instrument Serif) import 및 .serif 규칙은 전부 제거됨(사용처 0건). */
+.lp-signature{
+  font-family:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-style:normal;
+  font-size:23px;color:var(--ink-dim);display:block;margin-bottom:22px;position:relative;
+}
+
+/* Navigation Label — Product 내비(.mi/.tab 14.5px)와 통일. 헤더 높이·간격·버튼 크기 무변경 */
+.lp-nav-links{font-size:14.5px;}
+
+/* CTA를 span → a(실제 제품 화면 연결)로 교체하며 링크 기본 스타일만 제거. 버튼 디자인 무변경 */
+.lp-btn{text-decoration:none;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="lp">
+
+  <!-- S1 NAV -->
+  <nav class="lp-nav">
+    <div class="lp-logo"><svg class="mark" width="30" height="30" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="#FF5A00"><circle cx="16" cy="16" r="4.1"/><circle cx="19.70" cy="17.53" r="1.75"/><circle cx="17.53" cy="19.70" r="1.75"/><circle cx="14.47" cy="19.70" r="1.75"/><circle cx="12.30" cy="17.53" r="1.75"/><circle cx="12.30" cy="14.47" r="1.75"/><circle cx="14.47" cy="12.30" r="1.75"/><circle cx="17.53" cy="12.30" r="1.75"/><circle cx="19.70" cy="14.47" r="1.75"/></g><g fill="#111111" opacity="0.85"><circle cx="24.06" cy="17.99" r="1.21"/><circle cx="21.79" cy="21.95" r="1.19"/><circle cx="18.13" cy="24.02" r="1.27"/><circle cx="14.22" cy="24.11" r="1.30"/><circle cx="10.42" cy="22.14" r="1.28"/><circle cx="8.09" cy="18.51" r="1.19"/><circle cx="7.96" cy="13.93" r="1.38"/><circle cx="9.90" cy="10.37" r="1.23"/><circle cx="13.94" cy="7.96" r="1.42"/><circle cx="18.20" cy="8.00" r="1.27"/><circle cx="22.13" cy="10.41" r="1.18"/><circle cx="24.09" cy="14.13" r="1.25"/></g><g fill="#111111" opacity="0.52"><circle cx="26.80" cy="16.16" r="0.88"/><circle cx="25.85" cy="20.44" r="1.01"/><circle cx="23.50" cy="23.77" r="0.97"/><circle cx="19.49" cy="26.22" r="0.93"/><circle cx="15.41" cy="26.78" r="0.87"/><circle cx="11.81" cy="25.95" r="0.89"/><circle cx="7.86" cy="23.10" r="0.94"/><circle cx="5.90" cy="19.82" r="0.97"/><circle cx="5.21" cy="15.51" r="0.91"/><circle cx="6.38" cy="11.09" r="0.99"/><circle cx="8.55" cy="8.18" r="0.96"/><circle cx="12.40" cy="5.82" r="1.02"/><circle cx="16.79" cy="5.23" r="0.91"/><circle cx="21.09" cy="6.47" r="0.88"/><circle cx="23.95" cy="8.69" r="1.00"/><circle cx="26.04" cy="12.02" r="0.95"/></g><g fill="#111111" opacity="0.28"><circle cx="29.18" cy="17.78" r="0.64"/><circle cx="27.54" cy="22.62" r="0.63"/><circle cx="24.82" cy="25.96" r="0.60"/><circle cx="21.53" cy="28.10" r="0.63"/><circle cx="17.67" cy="29.19" r="0.61"/><circle cx="13.18" cy="29.00" r="0.68"/><circle cx="9.72" cy="27.73" r="0.64"/><circle cx="6.80" cy="25.60" r="0.64"/><circle cx="3.93" cy="21.59" r="0.68"/><circle cx="2.77" cy="17.35" r="0.59"/><circle cx="2.89" cy="13.77" r="0.64"/><circle cx="4.00" cy="10.26" r="0.62"/><circle cx="6.50" cy="6.69" r="0.57"/><circle cx="9.71" cy="4.28" r="0.65"/><circle cx="13.73" cy="2.89" r="0.59"/><circle cx="18.24" cy="2.89" r="0.67"/><circle cx="21.81" cy="4.04" r="0.61"/><circle cx="25.66" cy="6.86" r="0.67"/><circle cx="28.16" cy="10.62" r="0.67"/><circle cx="29.14" cy="13.93" r="0.61"/></g></svg><span class="word">alphacatcher</span></div>
+    <!-- [정규화 2026-07-14] '요금' 메뉴 제거 — MVP에 요금 화면 없음·정책 미확정(DECISION-022·033). 대체 메뉴 추가 안 함 -->
+    <div class="lp-nav-links"><span>제품</span><span>작동 방식</span><span>공개 브리핑</span></div>
+    <div class="cta">
+      <a class="lp-btn ghost" href="../product/auth-login.html">로그인</a>
+      <a class="lp-btn signal" href="../product/auth-signup-choice.html">시작하기</a>
+    </div>
+  </nav>
+
+  <!-- S2 HERO : SPLIT (copy left / MotionOrb right) -->
+  <header class="lp-hero">
+
+    <div class="lp-hero-copy">
+      <div class="lp-eyebrow mono"><span class="dot"></span>AI Morning Briefing</div>
+      <h1 class="lp-h1">내 관심사를 밤새 모아<br>아침에 <span class="signal-w">한 장</span>으로</h1>
+      <p class="lp-sub">밤사이 흩어진 정보 중 나에게 필요한 신호만 골라,<br>이유와 출처까지 정리해 아침 브리핑으로 전달합니다.</p>
+      <!-- [정규화 2026-07-14] '무료로 시작하기'→'시작하기'(요금 정책 미확정) · '샘플 브리핑 보기'→'공개 브리핑 둘러보기'(샘플 화면 미존재 → 공개 피드 연결) -->
+      <div class="lp-hero-actions">
+        <a class="lp-btn signal big" href="../product/auth-signup-choice.html">시작하기</a>
+        <a class="lp-btn big" href="../product/home-feed.html">공개 브리핑 둘러보기 →</a>
+      </div>
+      <div class="lp-hero-meta">
+        <span><i>✓</i>매일 아침 7:00 도착</span>
+        <span><i>✓</i>모든 문장에 출처 표기</span>
+        <span><i>✓</i>추천 이유 설명 포함</span>
+      </div>
+    </div>
+
+    <div class="lp-orb-zone">
+      <div class="lp-orb-halo"></div>
+      <div class="lp-orb-lens"></div>
+      <div class="lp-orb">
+        <canvas id="lpOrbCanvas" role="img"
+          aria-label="MotionOrb — micro data 입자들이 3D 구체 표면과 내부에 밀도 차이를 이루며 분포하고, 구체가 천천히 회전하는 동안 일부 입자가 표면에 붙었다가 코어로 정제되거나 다시 흩어지는 데이터 천체 (인터랙티브 표현)"></canvas>
+      </div>
+    </div>
+    <div class="lp-orb-caption mono">수집 42 → 신호 5 → <b>브리핑 1</b></div>
+  </header>
+
+  <!-- S3 LAST NIGHT TICKER -->
+  <div class="lp-ticker">
+    <span class="mono label-lead">Last Night</span>
+    <div class="item"><span class="n">42</span><span>건 수집</span></div>
+    <span class="arrow">→</span>
+    <div class="item"><span class="n">5</span><span>건 필터링</span></div>
+    <span class="arrow">→</span>
+    <div class="item"><span class="n signal">1</span><span>장 브리핑</span></div>
+    <div class="item" style="margin-left:24px;padding-left:40px;border-left:1px solid var(--line);"><span class="n">3</span><span>분이면 충분</span></div>
+  </div>
+
+  <!-- S4 PRODUCT PROOF -->
+  <section class="lp-sec" style="text-align:center;">
+    <div class="lp-sec-eyebrow mono">The Briefing</div>
+    <h2 class="lp-sec-h" style="margin:0 auto;">내일 아침, 이렇게 도착합니다</h2>
+    <p class="lp-sec-sub" style="margin-left:auto;margin-right:auto;">설명이 아니라 실물입니다. 항목마다 이유와 출처가 붙은 한 장 브리핑.</p>
+
+    <div class="lp-mock">
+      <div class="lp-mock-head">
+        <span class="title">아침 브리핑</span>
+        <span class="date">1월 16일 목요일 · 오전 7:00</span>
+        <span class="pill">관심사 6개 반영</span>
+      </div>
+
+      <div class="lp-item">
+        <span class="no">01</span>
+        <div>
+          <h4>원/달러 환율, 밤사이 0.8% 하락 — 트리거 조건 충족</h4>
+          <p>미 CPI 발표를 앞두고 달러가 약세로 돌아섰습니다. 회원님의 환전 예정 시점과 관련해 확인할 만한 변동이 감지됐습니다.</p>
+          <div class="lp-tagrow"><span class="lp-tag">#환율</span><span class="lp-tag">#거시경제</span></div>
+          <span class="why">관심사 ‘원/달러 환율’ 트리거(±0.5%)와 출처 3건이 매칭됨</span>
+        </div>
+      </div>
+
+      <div class="lp-item">
+        <span class="no">02</span>
+        <div>
+          <h4>오픈소스 LLM 신규 릴리즈 2건 — 벤치마크 갱신</h4>
+          <p>밤사이 공개된 두 모델이 코딩 벤치마크 상위권에 진입했습니다. 추적 중인 프로젝트와 직접 관련.</p>
+          <div class="lp-tagrow"><span class="lp-tag">#AI</span><span class="lp-tag">#오픈소스</span></div>
+          <span class="why">관심사 ‘오픈소스 LLM 동향’ 트리거(신규 릴리즈)와 매칭됨</span>
+        </div>
+      </div>
+
+      <div class="lp-item">
+        <span class="no">03</span>
+        <div>
+          <h4>관심 상품 노트북, 12% 할인 시작</h4>
+          <p>등록해 둔 모델이 오늘 자정부터 할인에 들어갔습니다. 최근 3개월 최저가입니다.</p>
+          <div class="lp-tagrow"><span class="lp-tag">#쇼핑</span></div>
+          <span class="why">관심사 ‘노트북 특가’ 트리거(10% 이상 할인)와 매칭됨</span>
+        </div>
+      </div>
+
+      <div class="lp-mock-foot">
+        <span class="lp-src-dots"><i></i><i></i><i></i><i></i></span>
+        <span>출처 9건 · 신뢰도 검증됨 · 모든 항목 원문 추적 가능</span>
+        <span style="margin-left:auto;font-weight:600;color:var(--ink);">저장 · 피드에 공유 →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5 HOW IT WORKS -->
+  <section class="lp-sec alt">
+    <div class="lp-sec-eyebrow mono">How it works</div>
+    <h2 class="lp-sec-h">당신이 자는 동안,<br>밤은 아침 한 장이 됩니다</h2>
+    <p class="lp-sec-sub">수집 → 관련성 필터링 → 아침 브리핑. 세 단계가 매일 자동으로 반복됩니다.</p>
+
+    <div class="lp-timeline">
+      <div class="lp-step">
+        <span class="node"></span>
+        <div class="time mono">23:00 — Collection</div>
+        <h4>밤새 수집</h4>
+        <p>등록한 관심사와 키워드를 기준으로 뉴스, 공시, 가격 변동, 커뮤니티 신호를 밤새 수집합니다.</p>
+        <div class="scard"><b>42건 수집됨</b><br>공식 발표 6 · 언론 21 · 데이터 9 · 커뮤니티 6</div>
+      </div>
+      <div class="lp-step">
+        <span class="node"></span>
+        <div class="time mono">03:00 — Filtering</div>
+        <h4>관련성 필터링</h4>
+        <p>내 트리거 규칙과 중요도로 걸러내고, 남은 항목마다 근거 출처와 신뢰도를 연결합니다.</p>
+        <div class="scard"><b>42건 → 5건</b><br>트리거 미충족 28 · 중복 6 · 저신뢰 출처 3 제외</div>
+      </div>
+      <div class="lp-step">
+        <span class="node"></span>
+        <div class="time mono">07:00 — Briefing</div>
+        <h4>아침 브리핑 도착</h4>
+        <p>‘왜 나에게 왔는지’ 설명이 붙은 한 장 브리핑이 도착합니다. 읽는 데 3분이면 충분합니다.</p>
+        <div class="scard"><b>한 장 브리핑</b><br>항목 5개 · 출처 9건 · 추천 이유 전부 표기</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6 EXPLAINABLE -->
+  <section class="lp-sec">
+    <div class="lp-split">
+      <div class="copy">
+        <div class="lp-sec-eyebrow mono">Explainable Personalization</div>
+        <h2 class="lp-sec-h" style="font-size:42px;">모든 추천에는<br>이유가 붙습니다</h2>
+        <p class="lp-sec-sub">블랙박스 추천이 아닙니다. 어떤 관심사, 어떤 트리거, 어떤 출처가 매칭됐는지 항목마다 투명하게 보여줍니다.</p>
+        <div class="lp-feature">
+          <div class="fico">◈</div>
+          <div><h5>왜 나에게 왔는지</h5><p>매칭된 관심사·트리거·출처를 항목별로 표시해, 브리핑이 만들어진 과정을 그대로 확인할 수 있습니다.</p></div>
+        </div>
+        <div class="lp-feature">
+          <div class="fico">◎</div>
+          <div><h5>출처 신뢰도 추적</h5><p>공식 발표, 주요 언론, 커뮤니티를 구분해 신뢰도를 표기하고, 언제든 원문으로 이동할 수 있습니다.</p></div>
+        </div>
+        <div class="lp-feature">
+          <div class="fico">✎</div>
+          <div><h5>내가 제어하는 LLM Wiki</h5><p>무엇을 지켜볼지, 어떻게 설명할지 — 관심사 메모리를 직접 편집해 브리핑을 내 방식대로 조율합니다.</p></div>
+        </div>
+      </div>
+      <div class="visual">
+        <div class="lp-whycard">
+          <div class="whead">
+            <span class="t">왜 나에게 왔는지</span>
+            <span class="pill">항목 01</span>
+          </div>
+          <div class="lp-item" style="padding:14px 0;">
+            <span class="no">A</span>
+            <div><h4 style="font-size:15px;">매칭 관심사</h4><p>원/달러 환율 · 미 국채 금리</p></div>
+          </div>
+          <div class="lp-item" style="padding:14px 0;">
+            <span class="no">B</span>
+            <div><h4 style="font-size:15px;">매칭 출처</h4><p>공식 발표 1건 · 주요 언론 2건 — 신뢰도 높음</p></div>
+          </div>
+          <div class="lp-item" style="padding:14px 0;">
+            <span class="no">C</span>
+            <div><h4 style="font-size:15px;">포함된 이유</h4><p>트리거 조건 ‘전일 대비 ±0.5% 변동’ 충족 → 브리핑 상단 배치</p></div>
+          </div>
+          <div class="lp-mock-foot" style="margin-top:2px;padding-top:14px;">
+            <span>이 설명 방식은 LLM Wiki에서 직접 편집할 수 있습니다</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7 PUBLIC BRIEFINGS -->
+  <section class="lp-sec alt">
+    <div class="lp-sec-eyebrow mono">Public Briefings</div>
+    <h2 class="lp-sec-h">혼자 읽고 끝나지 않습니다</h2>
+    <p class="lp-sec-sub">잘 만든 아침 브리핑을 피드에 공유하고, 다른 사람의 시선을 저장하세요. 반응과 댓글, 팔로우로 이어지는 브리핑 커뮤니티.</p>
+
+    <div class="lp-sns">
+      <div class="lp-post">
+        <div class="phead">
+          <span class="pav"></span>
+          <div><div class="pname">macro_watcher</div><div class="ptime">오전 7:41</div></div>
+          <span class="pvis">공개</span>
+        </div>
+        <h4>미 CPI 발표 전날 밤, 시장이 움직인 이유</h4>
+        <p>오늘 브리핑에서 이 부분이 핵심. 출처 4건 전부 원문 확인했고, 특히 두 번째 출처가…</p>
+        <div class="lp-tagrow" style="margin-bottom:14px;"><span class="lp-tag">#거시경제</span><span class="lp-tag">#CPI</span></div>
+        <div class="pact"><span>♡ <b>128</b></span><span>💬 <b>32</b></span><span>↗ 공유</span><span style="margin-left:auto;">⚑ 저장</span></div>
+      </div>
+      <div class="lp-post">
+        <div class="phead">
+          <span class="pav"></span>
+          <div><div class="pname">ai_curator</div><div class="ptime">오전 8:05</div></div>
+          <span class="pvis">공개</span>
+        </div>
+        <h4>밤사이 나온 오픈소스 LLM 릴리즈 3개 정리</h4>
+        <p>어젯밤 브리핑에 잡힌 릴리즈들. 벤치마크 수치는 전부 출처 링크 달아뒀습니다.</p>
+        <div class="lp-tagrow" style="margin-bottom:14px;"><span class="lp-tag">#AI</span><span class="lp-tag">#오픈소스</span></div>
+        <div class="pact"><span>♡ <b>86</b></span><span>💬 <b>14</b></span><span>↗ 공유</span><span style="margin-left:auto;">⚑ 저장</span></div>
+      </div>
+      <div class="lp-post">
+        <div class="phead">
+          <span class="pav"></span>
+          <div><div class="pname">value_kim</div><div class="ptime">오전 8:20</div></div>
+          <span class="pvis">공개</span>
+        </div>
+        <h4>보유 종목 실적 발표, 브리핑으로 3분 정리</h4>
+        <p>아침 브리핑 그대로 공유합니다. 왜 나에게 왔는지 설명 보는 재미가 있네요.</p>
+        <div class="lp-tagrow" style="margin-bottom:14px;"><span class="lp-tag">#주식</span><span class="lp-tag">#실적</span></div>
+        <div class="pact"><span>♡ <b>41</b></span><span>💬 <b>6</b></span><span>↗ 공유</span><span style="margin-left:auto;">⚑ 저장</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8 FINAL CTA (Option A: bright) -->
+  <section class="lp-final">
+    <div class="echo"></div>
+    <span class="lp-signature">While you sleep, we read.</span>
+    <h2>내일 아침 7시,<br>첫 브리핑이 도착합니다</h2>
+    <p>관심사 등록에 2분. 나머지는 밤이 알아서 합니다.</p>
+    <div class="lp-hero-actions">
+      <a class="lp-btn signal big" href="../product/auth-signup-choice.html">시작하기</a>
+      <a class="lp-btn big" href="../product/home-feed.html">공개 브리핑 둘러보기</a>
+    </div>
+  </section>
+
+  <div class="lp-footer">
+    <div class="lp-logo"><svg class="mark" width="22" height="22" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="#FF5A00"><circle cx="16" cy="16" r="4.1"/><circle cx="19.70" cy="17.53" r="1.75"/><circle cx="17.53" cy="19.70" r="1.75"/><circle cx="14.47" cy="19.70" r="1.75"/><circle cx="12.30" cy="17.53" r="1.75"/><circle cx="12.30" cy="14.47" r="1.75"/><circle cx="14.47" cy="12.30" r="1.75"/><circle cx="17.53" cy="12.30" r="1.75"/><circle cx="19.70" cy="14.47" r="1.75"/></g><g fill="#111111" opacity="0.85"><circle cx="24.06" cy="17.99" r="1.21"/><circle cx="21.79" cy="21.95" r="1.19"/><circle cx="18.13" cy="24.02" r="1.27"/><circle cx="14.22" cy="24.11" r="1.30"/><circle cx="10.42" cy="22.14" r="1.28"/><circle cx="8.09" cy="18.51" r="1.19"/><circle cx="7.96" cy="13.93" r="1.38"/><circle cx="9.90" cy="10.37" r="1.23"/><circle cx="13.94" cy="7.96" r="1.42"/><circle cx="18.20" cy="8.00" r="1.27"/><circle cx="22.13" cy="10.41" r="1.18"/><circle cx="24.09" cy="14.13" r="1.25"/></g><g fill="#111111" opacity="0.52"><circle cx="26.80" cy="16.16" r="0.88"/><circle cx="25.85" cy="20.44" r="1.01"/><circle cx="23.50" cy="23.77" r="0.97"/><circle cx="19.49" cy="26.22" r="0.93"/><circle cx="15.41" cy="26.78" r="0.87"/><circle cx="11.81" cy="25.95" r="0.89"/><circle cx="7.86" cy="23.10" r="0.94"/><circle cx="5.90" cy="19.82" r="0.97"/><circle cx="5.21" cy="15.51" r="0.91"/><circle cx="6.38" cy="11.09" r="0.99"/><circle cx="8.55" cy="8.18" r="0.96"/><circle cx="12.40" cy="5.82" r="1.02"/><circle cx="16.79" cy="5.23" r="0.91"/><circle cx="21.09" cy="6.47" r="0.88"/><circle cx="23.95" cy="8.69" r="1.00"/><circle cx="26.04" cy="12.02" r="0.95"/></g><g fill="#111111" opacity="0.28"><circle cx="29.18" cy="17.78" r="0.64"/><circle cx="27.54" cy="22.62" r="0.63"/><circle cx="24.82" cy="25.96" r="0.60"/><circle cx="21.53" cy="28.10" r="0.63"/><circle cx="17.67" cy="29.19" r="0.61"/><circle cx="13.18" cy="29.00" r="0.68"/><circle cx="9.72" cy="27.73" r="0.64"/><circle cx="6.80" cy="25.60" r="0.64"/><circle cx="3.93" cy="21.59" r="0.68"/><circle cx="2.77" cy="17.35" r="0.59"/><circle cx="2.89" cy="13.77" r="0.64"/><circle cx="4.00" cy="10.26" r="0.62"/><circle cx="6.50" cy="6.69" r="0.57"/><circle cx="9.71" cy="4.28" r="0.65"/><circle cx="13.73" cy="2.89" r="0.59"/><circle cx="18.24" cy="2.89" r="0.67"/><circle cx="21.81" cy="4.04" r="0.61"/><circle cx="25.66" cy="6.86" r="0.67"/><circle cx="28.16" cy="10.62" r="0.67"/><circle cx="29.14" cy="13.93" r="0.61"/></g></svg><span class="word">alphacatcher</span></div>
+    <!-- [정규화 2026-07-14] 개인정보 처리방침·문의: 실제 페이지 미존재 → 링크 없는 텍스트 + '준비 중' 라벨(법적·운영 필수 자리 유지). 존재하지 않는 HTML 참조 없음 -->
+    <div class="right"><span>제품</span><span>공개 브리핑</span><span title="준비 중" aria-label="개인정보 처리방침 — 준비 중">개인정보 처리방침</span><span title="준비 중" aria-label="문의 — 준비 중">문의</span></div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   MotionOrb v5.4 — 3D particle globe + data swarm 하이브리드
+   (vanilla canvas 3D projection, 외부 라이브러리 없음)
+   ① 표면 입자: micro glyph(dot·square·plus·tick)가 구면 위 밀도 patch(대륙)와
+      void(빈 영역)를 이루며 분포 -> 정보 밀도 차이가 보이는 데이터 행성
+   ② 내부 입자 + orange signal core: 구체 안쪽 깊이감
+   ③ 구체 전체가 y축으로 천천히 회전, z-depth에 따라 크기/투명도 차등
+   ④ orbital ring 3개(얇고 은은, 기울기·속도 상이) 복원
+   ⑤ loop: 바깥 입자가 곡선으로 접근 -> 표면 부착(회전에 편승) ->
+      일부는 core로 정제(pulse), 일부는 다시 바깥으로 확산
+   대응: hover(회전·흐름 가속, orange 선명) / prefers-reduced-motion(정적 1프레임)
+        / IntersectionObserver·ResizeObserver / DPR 상한 2 / 총 입자 ~760개
+   v5.4.1 — 밀도 강화: 표면 460·내부 130·주변 산포 90·연결선 46쌍·flow 38, ring 강화
+   v5.5 — 존재감 강화: 영역 1100px(+22%)·구체 R .28, orange 비중 60%로 상향(gray는 보조),
+          key particle 12%(크고 진한 orange), ring/halo/core 대비 강화, core 응축 90개
+   v5.5.1 — 프레이밍: 우하단 배치·R .30, 구체 하단·우측이 프레임 밖으로 잘리는 구도
+   v5.6 — 컨셉 반영(Meridian+Pure Global): warm atmosphere(hero 우하단 orange wash,
+          peach halo, 구체 body volume 셰이딩), core를 도넛이 아닌 발광점+확산 파동으로
+          재설계, ring-dot glyph 추가, 포인터 근접도 기반 응집(모임)↔확산(흩어짐)
+          인터랙션 — "내 관심사를 밤새 모아 아침에 한 장으로"의 시각화
+   v5.7 — 레퍼런스(halftone dot globe) 복제: 위경도 격자 점 ~2,400개가 노이즈 기반
+          유사 대륙 패턴을 이루는 orange globe(blue→orange 치환). 앞면 반구만 렌더,
+          점 크기/명도로 곡면 표현, 얇은 orbital line 3개 + 좌상단 소형 loop 2개,
+          은은한 warm glow. swarm/flow 요소는 레퍼런스 충실 재현을 위해 제거.
+   v5.8 — 1번(halftone globe) 구조 유지 + 2번 요소 소량 흡수: 중심 signal core를
+          bloom 3겹으로 강화, core 공전 입자 26개, 구체 주변 micro data 입자 54개
+          (dot·square·plus·dash, 일부 중심 방향 연결선), hover 시 주변 입자·core
+          입자가 중심으로 부드럽게 응집(18~20% 수축)·glow 발광·라인 하이라이트
+          가속, leave 시 천천히 복귀 — "모았다가 흩어지는" 카피의 시각화.
+   v5.9 — 정정: 중앙 core/bloom/공전 입자 전부 제거(옅은 wash만). 주변 micro 입자
+          66개는 hover 시 중앙이 아니라 구체 표면(1.03R)·orbital line(1.14/1.30R)
+          반경으로 정돈되고 leave 시 흩어짐. 인접 입자 간 연결선 12쌍(수렴 아님),
+          구체 표면 위를 함께 도는 정보 원자 20개 추가 — "관심사별로 정돈"의 표현.
+   v5.10 — 밀도/생동감 보강: 격자 3.4°로 상향·대륙 threshold .48·바다 점 존재감
+          상향(회전 중 빈 구간 완화). 원자형 요소 18개가 구체 위를 가로질러 느리게
+          비행(전 목업 감성), 주변 입자 전체에 저속 표류 비행 추가.
+   ============================================================ */
+(function(){
+  var zone=document.querySelector('.lp-orb-zone');
+  var orb=document.querySelector('.lp-orb');
+  var canvas=document.getElementById('lpOrbCanvas');
+  if(!zone||!orb||!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var DPR=Math.min(window.devicePixelRatio||1,2);
+  var TAU=Math.PI*2;
+  var TILT=-0.22,CTL=Math.cos(TILT),STL=Math.sin(TILT);
+  var W=0,H=0,CX=0,CY=0,R=0;
+  var excite=0,target=0,visible=true,raf=null,last=0,T=0;
+  var A=3.79; /* 시작 화면: 아시아(대한민국, 동경 127°)가 정면에 오는 회전각 */
+
+  /* ---- value noise: 유사 대륙 패턴 (레퍼런스의 대륙/빈 바다 구조 근사) ---- */
+  function hash2(x,y){var h=Math.sin(x*127.1+y*311.7)*43758.5453;return h-Math.floor(h);}
+  function vnoise(u,v){
+    var xi=Math.floor(u),yi=Math.floor(v),xf=u-xi,yf=v-yi;
+    var a=hash2(xi,yi),b=hash2(xi+1,yi),c=hash2(xi,yi+1),d=hash2(xi+1,yi+1);
+    var sx=xf*xf*(3-2*xf),sy=yf*yf*(3-2*yf);
+    return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy;
+  }
+  /* v5.17: 유기적 3D 노이즈 분포 — 규칙적 패턴(축구공) 제거, 태양 granulation/군도의
+     자연스러운 무늬. 채움 66% : 빈 34%, 어느 면이 와도 채움 54~76%로 균형 */
+  function h3(x,y,z){var h=Math.sin(x*127.1+y*311.7+z*74.7)*43758.5453;return h-Math.floor(h);}
+  function vn3(x,y,z){
+    var xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z);
+    var xf=x-xi,yf=y-yi,zf=z-zi;
+    var sx=xf*xf*(3-2*xf),sy=yf*yf*(3-2*yf),sz=zf*zf*(3-2*zf);
+    function L(a,b,t){return a+(b-a)*t;}
+    var c000=h3(xi,yi,zi),c100=h3(xi+1,yi,zi),c010=h3(xi,yi+1,zi),c110=h3(xi+1,yi+1,zi);
+    var c001=h3(xi,yi,zi+1),c101=h3(xi+1,yi,zi+1),c011=h3(xi,yi+1,zi+1),c111=h3(xi+1,yi+1,zi+1);
+    return L(L(L(c000,c100,sx),L(c010,c110,sx),sy),
+             L(L(c001,c101,sx),L(c011,c111,sx),sy),sz);
+  }
+  function landVal(lat,lon){
+    var cl2=Math.cos(lat);
+    var dx=cl2*Math.cos(lon),dy=Math.sin(lat),dz=cl2*Math.sin(lon);
+    var f=.40*vn3(dx*4+9,dy*4+7,dz*4+3)
+         +.36*vn3(dx*8+23,dy*8+17,dz*8+11)
+         +.24*vn3(dx*16+41,dy*16+31,dz*16+29);
+    return Math.max(0,Math.min(1,.33+(f-.455)*1.6));
+  }
+
+  /* ---- halftone dot grid: 위도/경도 격자 점이 대륙 패턴을 이룸 ---- */
+  var DOTS=[];
+  (function(){
+    var latStep=3.0*Math.PI/180; /* v5.13: 격자 밀도 추가 상향 — 더 채워진 구체 */
+    for(var la=-1.36;la<=1.36;la+=latStep){
+      var cl=Math.cos(la);
+      var n=Math.max(10,Math.round(TAU/latStep*cl));
+      for(var k=0;k<n;k++){
+        var lo=k/n*TAU;
+        var lv=landVal(la,lo);
+        var land=lv>.33; /* v5.16: 채움(orange) 65% : 빈(연주황/연회색) 35% */
+        var cr;
+        if(land)cr='255,90,0';
+        else cr=Math.random()<.55?'255,165,115':'178,172,166';
+        DOTS.push({
+          x:cl*Math.cos(lo),y:Math.sin(la),z:cl*Math.sin(lo),
+          land:land,col:cr,
+          s:land?(1.0+Math.min(1,(lv-.33)*3.5)):.85,
+          a:land?(.55+Math.min(.4,(lv-.33)*1.6)):.46
+        });
+      }
+    }
+  })();
+
+  /* ---- orbital line: 크고 얇은 타원 + 좌상단 소형 loop (레퍼런스 구조) ---- */
+  var RINGS=[
+    {rad:1.14,sq:.34,rot:-.32,speed:.12, alpha:.42,col:'255,120,45',phase:0},
+    {rad:1.30,sq:.16,rot:.42, speed:-.09,alpha:.32,col:'255,155,95',phase:2.1},
+    {rad:1.06,sq:.62,rot:1.05,speed:.07, alpha:.24,col:'255,120,45',phase:4.2}
+  ];
+  var LOOPS=[
+    {ox:-.92,oy:-.62,rx:.30,ry:.10,rot:-.5,alpha:.32},
+    {ox:-.70,oy:-.86,rx:.22,ry:.07,rot:-.9,alpha:.26},
+    /* v5.18: 텍스트-구체 사이 여백을 쓸고 지나가는 대형 곡선 */
+    {ox:-1.15,oy:-.05,rx:.52,ry:.16,rot:-.35,alpha:.22},
+    {ox:-1.05,oy:.45, rx:.38,ry:.12,rot:.55, alpha:.18},
+    {ox:-.55, oy:-1.05,rx:.42,ry:.13,rot:-.15,alpha:.16}
+  ];
+  /* v5.18: 모였다 퍼지는 그라데이션 블롭 (좌측 여백의 색 볼륨) */
+  var BLOBS=[
+    {ox:-1.18,oy:-.30,r:.34,w:.20,ph:0},
+    {ox:-1.05,oy:.25, r:.28,w:.16,ph:2.4},
+    {ox:-1.30,oy:.55, r:.24,w:.13,ph:4.6},
+    {ox:-.85, oy:-.80,r:.30,w:.11,ph:1.3},
+    {ox:-1.40,oy:.05, r:.22,w:.24,ph:3.7}
+  ];
+  /* v5.19: 반짝임 입자 — 여백 곳곳에서 천천히 깜빡임 */
+  var SPARK=[];
+  for(var s1=0;s1<30;s1++){
+    SPARK.push({nx:-1.5+Math.random()*2.2,ny:-1.3+Math.random()*2.6,
+      size:.6+Math.random()*.9,ph:Math.random()*TAU,w:.5+Math.random()*1.1,
+      a:.25+Math.random()*.3});
+  }
+  /* v5.19: 데이터 유성 — 이따금 여백을 가로질러 구체 쪽으로 흐르는 가는 streak */
+  function newStreak(){
+    return{x:-1.6+Math.random()*1.2,y:-1.2+Math.random()*1.4,
+      ang:.25+Math.random()*.45,
+      t:-Math.random()*6,dur:2.2+Math.random()*1.4,len:.16+Math.random()*.12};
+  }
+  var STREAKS=[newStreak(),newStreak(),newStreak()];
+
+  /* ---- v5.9 보조 레이어: 구체 주변 micro data 입자.
+     hover 시 '중앙'이 아니라 구체 표면(1.03R)/orbital line(1.14·1.30R)으로 정돈 ---- */
+  var DOCKS=[1.03,1.14,1.30];
+  var AMB=[];
+  for(var a0=0;a0<66;a0++){
+    AMB.push({ang:Math.random()*TAU,d:1.08+Math.random()*.38,
+      dock:DOCKS[Math.floor(Math.random()*DOCKS.length)],
+      type:Math.floor(Math.random()*4),size:.7+Math.random()*1.1,
+      orange:Math.random()<.72,px:0,py:0,
+      spd:(Math.random()<.5?1:-1)*(.015+.035*Math.random()), /* 느린 표류 비행 */
+      ph:Math.random()*TAU,w:.4+Math.random()*.9,
+      a:.18+Math.random()*.22});
+  }
+  /* v5.10: 구체 위를 가로질러 날아다니는 원자형 요소 (이전 목업 감성) */
+  for(var a1=0;a1<18;a1++){
+    AMB.push({ang:Math.random()*TAU,d:.55+Math.random()*.40,
+      dock:1.03,
+      type:Math.floor(Math.random()*4),size:.8+Math.random()*1.2,
+      orange:Math.random()<.85,px:0,py:0,
+      spd:(Math.random()<.5?1:-1)*(.02+.04*Math.random()),
+      ph:Math.random()*TAU,w:.4+Math.random()*.9,
+      a:.30+Math.random()*.25});
+  }
+  /* v5.18: 텍스트-구체 사이 여백을 떠다니는 원자 (좌측 방향에 배치, 저속 표류) */
+  for(var a2=0;a2<22;a2++){
+    AMB.push({ang:Math.PI+(Math.random()-.5)*.9,d:1.12+Math.random()*.34,
+      dock:DOCKS[Math.floor(Math.random()*DOCKS.length)],
+      type:Math.floor(Math.random()*4),size:.9+Math.random()*1.3,
+      orange:Math.random()<.8,px:0,py:0,
+      spd:(Math.random()<.5?1:-1)*(.008+.015*Math.random()),
+      ph:Math.random()*TAU,w:.4+Math.random()*.9,
+      a:.26+Math.random()*.24});
+  }
+  /* 입자 간 가벼운 연결선: 인접 입자끼리 (중앙 수렴 아님) */
+  var PAIRS=[];
+  for(var p0=0;p0<600&&PAIRS.length<12;p0++){
+    var pa=AMB[Math.floor(Math.random()*AMB.length)];
+    var pb=AMB[Math.floor(Math.random()*AMB.length)];
+    if(pa===pb)continue;
+    var da=Math.abs(((pa.ang-pb.ang+Math.PI)%TAU+TAU)%TAU-Math.PI);
+    if(da<.5&&Math.abs(pa.d-pb.d)<.2)PAIRS.push([pa,pb]);
+  }
+  /* 구체 표면 위에 떠 있는 정보 원자 (회전에 실려 도는 micro symbol) */
+  var SDOTS=[];
+  for(var c0=0;c0<20;c0++){
+    var su=Math.random()*1.7-.85,sa0=Math.random()*TAU,sr0=Math.sqrt(1-su*su);
+    SDOTS.push({x:sr0*Math.cos(sa0),y:su,z:sr0*Math.sin(sa0),
+      type:1+Math.floor(Math.random()*3),size:.8+Math.random()*1.0,
+      ph:Math.random()*TAU,pale:Math.random()<.35});
+  }
+
+  function glyph(x,y,s,type){ /* micro data symbol: dot·square·plus·dash */
+    if(type===0){ctx.beginPath();ctx.arc(x,y,s*.5,0,TAU);ctx.fill();}
+    else if(type===1){ctx.fillRect(x-s*.5,y-s*.5,s,s);}
+    else if(type===2){ctx.fillRect(x-s*.8,y-s*.17,s*1.6,s*.34);
+                      ctx.fillRect(x-s*.17,y-s*.8,s*.34,s*1.6);}
+    else{ctx.fillRect(x-s*.85,y-s*.16,s*1.7,s*.32);}
+  }
+
+  function resize(){
+    var size=Math.max(160,Math.round(orb.clientWidth));
+    canvas.width=Math.round(size*DPR);canvas.height=Math.round(size*DPR);
+    W=canvas.width;H=canvas.height;CX=W/2;CY=H/2;R=W*.34;
+    if(reduced)draw(0.016);
+  }
+
+  function draw(dt){
+    T+=dt;
+    A+=dt*.06*(1+.4*excite);            /* 구체 y축 저속 회전 */
+    ctx.clearRect(0,0,W,H);
+    var ca=Math.cos(A),sa=Math.sin(A);
+
+    /* v5.18: 그라데이션 블롭 — 천천히 모였다(수축·진해짐) 퍼지는(확산·옅어짐) 색 볼륨 */
+    for(var bl=0;bl<BLOBS.length;bl++){
+      var bo=BLOBS[bl];
+      var bk=Math.sin(T*bo.w+bo.ph);
+      var bx=CX+(bo.ox+.06*bk)*R,by=CY+(bo.oy+.04*Math.cos(T*bo.w*.8+bo.ph))*R;
+      var brr=bo.r*R*(1+.25*bk);
+      var bg2=ctx.createRadialGradient(bx,by,0,bx,by,brr);
+      bg2.addColorStop(0,'rgba(255,150,90,'+(.09+.04*bk+.04*excite)+')');
+      bg2.addColorStop(.6,'rgba(255,170,120,'+(.045+.02*bk)+')');
+      bg2.addColorStop(1,'rgba(255,170,120,0)');
+      ctx.fillStyle=bg2;
+      ctx.beginPath();ctx.arc(bx,by,brr,0,TAU);ctx.fill();
+    }
+
+    /* v5.19: 반짝임 — 부드럽게 점멸 */
+    for(var sp2=0;sp2<SPARK.length;sp2++){
+      var sk=SPARK[sp2];
+      var tw2=Math.sin(T*sk.w+sk.ph);
+      if(tw2<=0)continue;
+      ctx.fillStyle='rgba(255,140,70,'+(sk.a*tw2*tw2*(1+.4*excite))+')';
+      ctx.beginPath();ctx.arc(CX+sk.nx*R,CY+sk.ny*R,sk.size*DPR,0,TAU);ctx.fill();
+    }
+
+    /* v5.19: 데이터 유성 — 꼬리가 잦아드는 가는 streak */
+    for(var st2=0;st2<STREAKS.length;st2++){
+      var mt=STREAKS[st2];
+      mt.t+=dt;
+      if(mt.t<0)continue;
+      var me=mt.t/mt.dur;
+      if(me>=1){STREAKS[st2]=newStreak();continue;}
+      var hx2=CX+(mt.x+Math.cos(mt.ang)*me*.9)*R;
+      var hy2=CY+(mt.y+Math.sin(mt.ang)*me*.9)*R;
+      var mal=.55*Math.sin(Math.PI*me)*(1+.3*excite);
+      var tx2=hx2-Math.cos(mt.ang)*mt.len*R,ty2=hy2-Math.sin(mt.ang)*mt.len*R;
+      var lg=ctx.createLinearGradient(hx2,hy2,tx2,ty2);
+      lg.addColorStop(0,'rgba(255,110,30,'+mal+')');
+      lg.addColorStop(1,'rgba(255,110,30,0)');
+      ctx.strokeStyle=lg;ctx.lineWidth=1.2*DPR;
+      ctx.beginPath();ctx.moveTo(hx2,hy2);ctx.lineTo(tx2,ty2);ctx.stroke();
+      ctx.fillStyle='rgba(255,120,40,'+mal+')';
+      ctx.beginPath();ctx.arc(hx2,hy2,1.6*DPR,0,TAU);ctx.fill();
+    }
+
+    /* orbital line */
+    for(var g0=0;g0<RINGS.length;g0++){
+      var g=RINGS[g0];
+      ctx.save();ctx.translate(CX,CY);ctx.rotate(g.rot);ctx.scale(1,g.sq);
+      ctx.lineWidth=1.3*DPR;
+      ctx.strokeStyle='rgba('+g.col+','+(g.alpha*(1+.5*excite))+')';
+      ctx.beginPath();ctx.arc(0,0,g.rad*R,0,TAU);ctx.stroke();
+      var ha=g.phase+T*g.speed*(1+.5*excite); /* 라인 위를 흐르는 하이라이트 — hover 시 가속 */
+      ctx.strokeStyle='rgba('+g.col+','+(g.alpha*2)+')';
+      ctx.beginPath();ctx.arc(0,0,g.rad*R,ha,ha+.9);ctx.stroke();
+      ctx.restore();
+    }
+    /* 좌상단 소형 loop 커브 */
+    for(var l0=0;l0<LOOPS.length;l0++){
+      var lp=LOOPS[l0];
+      ctx.save();ctx.translate(CX+lp.ox*R,CY+lp.oy*R);ctx.rotate(lp.rot);
+      ctx.scale(1,lp.ry/lp.rx);
+      ctx.lineWidth=1.3*DPR;
+      ctx.strokeStyle='rgba(255,140,80,'+(lp.alpha*(1+.4*excite))+')';
+      ctx.beginPath();ctx.arc(0,0,lp.rx*R,0,TAU);ctx.stroke();
+      ctx.restore();
+    }
+
+    /* 주변 micro data 입자 — hover 시 표면/orbital line 반경으로 정돈, leave 시 흩어짐 */
+    for(var m0=0;m0<AMB.length;m0++){
+      var am=AMB[m0];
+      am.ang+=am.spd*dt;                                 /* 느리게 날아다님 */
+      var wob=1+.012*Math.sin(T*am.w+am.ph);             /* 느슨한 표류 */
+      var dd=(am.d+(am.dock-am.d)*excite)*wob;           /* 중앙 수렴 아님: dock 반경으로 */
+      am.px=CX+Math.cos(am.ang)*dd*R;am.py=CY+Math.sin(am.ang)*dd*R;
+      var aal=am.a*(1+.35*Math.sin(T*am.w+am.ph))*(1+.5*excite);
+      ctx.fillStyle=am.orange?'rgba(255,110,30,'+aal+')':'rgba(150,135,120,'+(aal*.8)+')';
+      glyph(am.px,am.py,(1+am.size)*DPR,am.type);
+    }
+    /* 인접 입자 간 아주 가벼운 연결선 */
+    ctx.lineWidth=.7*DPR;
+    for(var pr0=0;pr0<PAIRS.length;pr0++){
+      var qa1=PAIRS[pr0][0],qb1=PAIRS[pr0][1];
+      ctx.strokeStyle='rgba(255,130,60,'+(.045+.05*excite)+')';
+      ctx.beginPath();ctx.moveTo(qa1.px,qa1.py);ctx.lineTo(qb1.px,qb1.py);ctx.stroke();
+    }
+
+    /* v5.9: 중앙 core/bloom 제거 — 구체 자체가 주인공. 아주 옅은 warm wash만 유지 */
+    var g1=ctx.createRadialGradient(CX,CY,0,CX,CY,R*.9);
+    g1.addColorStop(0,'rgba(255,160,100,.06)');
+    g1.addColorStop(1,'rgba(255,160,100,0)');
+    ctx.fillStyle=g1;ctx.beginPath();ctx.arc(CX,CY,R*.9,0,TAU);ctx.fill();
+
+    /* halftone globe: 앞면 반구만 (레퍼런스처럼) — 점 크기/간격으로 곡면 표현 */
+    for(var i=0;i<DOTS.length;i++){
+      var p=DOTS[i];
+      var x1=p.x*ca+p.z*sa,z1=-p.x*sa+p.z*ca;
+      var y1=p.y*CTL-z1*STL,z2=p.y*STL+z1*CTL;
+      if(z2>0)continue;                  /* 뒷면 생략 */
+      var f=-z2;                         /* 0=가장자리, 1=정면 */
+      var per=1/(1+z2*.30);
+      var px=CX+x1*R*per,py=CY+y1*R*per;
+      if(p.land){
+        ctx.fillStyle='rgba('+p.col+','+(p.a*(.35+.65*f)*(1+.35*excite))+')';
+        ctx.beginPath();ctx.arc(px,py,p.s*(.6+1.1*f)*1.5*DPR,0,TAU);ctx.fill();
+      }else{
+        ctx.fillStyle='rgba('+p.col+','+(p.a*(.35+.65*f))+')';
+        var ss=(.55+.65*f)*1.35*DPR;
+        ctx.fillRect(px-ss*.5,py-ss*.5,ss,ss);
+      }
+    }
+
+    /* 구체 표면 위 정보 원자 — 회전에 실려 함께 도는 micro symbol (앞면만) */
+    for(var q0=0;q0<SDOTS.length;q0++){
+      var sp=SDOTS[q0];
+      var sx1=sp.x*ca+sp.z*sa,sz1=-sp.x*sa+sp.z*ca;
+      var sy1=sp.y*CTL-sz1*STL,sz2=sp.y*STL+sz1*CTL;
+      if(sz2>0)continue;
+      var sf=-sz2,sper=1/(1+sz2*.30);
+      var qal=(.40+.20*Math.sin(T*.8+sp.ph))*(.4+.6*sf)*(1+.4*excite);
+      ctx.fillStyle=sp.pale?'rgba(255,178,124,'+qal+')':'rgba(255,110,30,'+qal+')';
+      glyph(CX+sx1*1.05*R*sper,CY+sy1*1.05*R*sper,(1.1+sp.size)*(.6+.9*sf)*DPR,sp.type);
+    }
+  }
+
+  function frame(ts){
+    raf=null;
+    if(!visible||reduced)return;
+    var dt=Math.min(.05,(ts-last)/1000||.016);last=ts;
+    excite+=(target-excite)*Math.min(1,dt*2.5); /* 응집/확산 천천히 — premium 모션 */
+    draw(dt);
+    raf=requestAnimationFrame(frame);
+  }
+  function start(){
+    if(!raf&&visible&&!reduced){last=performance.now();raf=requestAnimationFrame(frame);}
+  }
+
+  /* hover: 흐름 가속 · orange 입자 선명 · halo 확장(CSS) */
+  /* 인터랙션: 포인터가 코어에 가까울수록 응집이 강해지고, 떠나면 천천히 흩어짐 */
+  zone.addEventListener('pointermove',function(e){
+    var rc2=canvas.getBoundingClientRect();
+    if(!rc2.width)return;
+    var mx=(e.clientX-rc2.left)/rc2.width*W,my=(e.clientY-rc2.top)/rc2.height*H;
+    var d2=Math.sqrt((mx-CX)*(mx-CX)+(my-CY)*(my-CY));
+    target=Math.max(.25,Math.min(1,1.25-d2/(R*2.4)));
+    zone.classList.add('is-excited');
+  });
+  zone.addEventListener('pointerenter',function(){if(!target)target=.4;zone.classList.add('is-excited');});
+  zone.addEventListener('pointerleave',function(){target=0;zone.classList.remove('is-excited');});
+
+  if('IntersectionObserver'in window){
+    new IntersectionObserver(function(en){
+      visible=en[0].isIntersecting;if(visible)start();
+    },{threshold:.05}).observe(zone);
+  }
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)start();});
+  if('ResizeObserver'in window)new ResizeObserver(resize).observe(orb);
+  window.addEventListener('resize',resize);
+
+  resize();
+  if(reduced){draw(0.016);}else{start();}
+})();
+</script>
+</body>
+</html>

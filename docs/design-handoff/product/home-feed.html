@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 홈 — 공개 피드</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-home">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav-search" data-screen="search" style="cursor:pointer;"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi on"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+        </aside>
+
+        <!-- FEED -->
+        <main class="feed">
+
+          <div class="tabs">
+            <div class="tab" data-tab="mine"><span class="tl">내 보고서</span></div>
+            <div class="tab on" data-tab="rec"><span class="tl">피드</span></div>
+          </div>
+
+          <!-- === 추천 FEED === -->
+          <div data-feed="rec">
+
+            <!-- today's personal briefing (calm) -->
+            <div class="today">
+              <div class="th">
+                <span class="sun"><svg viewBox="0 0 16 16" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="3.2" style="fill:var(--signal)"></circle><g style="stroke:var(--signal)" stroke-width="1.4" stroke-linecap="round"><line x1="8" y1="1.5" x2="8" y2="3"></line><line x1="8" y1="13" x2="8" y2="14.5"></line><line x1="1.5" y1="8" x2="3" y2="8"></line><line x1="13" y1="8" x2="14.5" y2="8"></line></g></svg></span>
+                <span class="lbl">오늘 아침 브리핑</span>
+                <span class="tt">7월 9일 목 · 오전 7:00 · 5건</span>
+                <span class="priv">나만 보기</span>
+              </div>
+              <div class="tl" data-screen="detail">밤사이 42건에서 5건을 골랐어요 — 환율·오픈소스 LLM·보유 종목이 오늘의 핵심</div>
+              <p class="tsum">원/달러 환율이 설정한 트리거를 건드렸고, 오픈소스 LLM 릴리즈 2건과 보유 종목 실적 일정이 오늘 중요합니다. 각 항목은 왜 골랐는지 근거와 함께 정리했어요.</p>
+              <div class="tfoot">
+                <span class="tagm">환율</span>
+                <span class="tagm">오픈소스 LLM</span>
+                <span class="tagm">보유 종목</span>
+                <span class="link more" data-screen="detail">자세히 보기 →</span>
+              </div>
+            </div>
+
+            <!-- CARD A: 텍스트형 -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav me">나</span>
+                <div>
+                  <div class="pname">Parami <span class="h">@parami</span></div>
+                  <div class="pmeta">오전 7:20 · 내 브리핑에서 공유</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족</h3>
+              <p class="pbody">미 CPI 발표를 앞두고 달러가 약세로 전환했습니다. 새벽 3시 이후 낙폭이 커졌고, 환전 예정 시점(이달 말)과 관련해 확인할 만한 변동이 감지됐어요. <span class="showmore">더 보기</span></p>
+              <div class="reason"><span class="rd"></span>관심사 <b>‘원/달러 환율’</b> 트리거 충족</div>
+              <div class="pacts">
+                <span class="pact saved">⚑ <b>보관됨</b></span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>2</b></span>
+                <span class="pact">↗ 공유</span>
+                <span class="pact more">⋯</span>
+              </div>
+            </article>
+
+            <!-- CARD B: 이미지 1장형 -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav" data-screen="uprofile" style="cursor:pointer;">MW</span>
+                <div data-screen="uprofile" style="cursor:pointer;">
+                  <div class="pname">macro_watcher <span class="h">@macro_w</span></div>
+                  <div class="pmeta">오전 7:41 · 공개 브리핑 · 추천</div>
+                </div>
+                <span class="pmore svmore" id="rec-more">⋯
+                  <div class="svpop" hidden style="top:24px;">
+                    <span class="pi" id="rec-like"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5.5 7.2 8 2.6c.9 0 1.6.7 1.6 1.6v2.2h3c.8 0 1.4.7 1.2 1.5l-.9 4.2c-.1.7-.7 1.1-1.4 1.1H5.5M5.5 7.2v6M5.5 7.2H2.6v6h2.9" stroke-linejoin="round"></path></svg>추천이 마음에 들어요</span>
+                    <span class="pi" id="rec-hide"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6.2"></circle><line x1="3.8" y1="12.2" x2="12.2" y2="3.8"></line></svg>관심 없음</span>
+                  </div>
+                </span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">미 CPI 발표 전날 밤, 채권시장이 먼저 움직인 이유</h3>
+              <p class="pbody">10년물 금리가 새벽에 6bp 빠졌습니다. 출처 4건을 원문까지 따라가 보면 시장이 이미 낮은 CPI를 가격에 반영하기 시작했다는 해석이 가능합니다.</p>
+              <div class="pimg">
+                <span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 280" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="596" height="280" style="fill:var(--bg-soft)"></rect>
+                    <g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="93" x2="596" y2="93"></line><line x1="0" y1="186" x2="596" y2="186"></line></g>
+                    <polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="24,120 106,112 188,136 270,120 352,150 434,142 516,176 572,170"></polyline>
+                    <circle cx="352" cy="150" r="3.5" style="fill:var(--signal)"></circle>
+                    <text x="24" y="32" style="fill:var(--ink-dim)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13">US 10Y · overnight</text>
+                    <text x="500" y="32" style="fill:var(--ink-mid)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13" font-weight="600">−6bp</text>
+                  </svg>
+                </span>
+                <div class="imgcap"><span class="c">10년물 국채 금리 야간 흐름 — 새벽 3시 이후 하락 전환</span><span class="src">출처 · 미 재무부</span></div>
+              </div>
+              <div class="reason"><span class="rd"></span>내 관심사 <b>‘거시경제’</b>와 토픽 일치</div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>32</b></span>
+                <span class="pact">♡ <b>128</b></span>
+                <span class="pact">조회 <b>1.8만</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <!-- CARD C: 이미지 그리드형 -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav">AC</span>
+                <div>
+                  <div class="pname">ai_curator <span class="h">@ai_cur</span></div>
+                  <div class="pmeta">오전 8:05 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">밤사이 나온 오픈소스 LLM 릴리즈 2건 — 코딩 벤치마크 상위권 진입</h3>
+              <p class="pbody">어젯밤 브리핑에 잡힌 릴리즈 정리. 벤치마크 수치는 전부 원문 링크를 달아뒀고, 두 모델 모두 로컬 구동 요구사양이 낮아진 게 포인트입니다.</p>
+              <div class="pgrid">
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-inset)"></rect><g style="fill:var(--signal)"><rect x="34" y="78" width="24" height="48"></rect><rect x="74" y="60" width="24" height="66"></rect><rect x="114" y="44" width="24" height="82"></rect></g><g style="fill:var(--low)"><rect x="170" y="92" width="24" height="34"></rect><rect x="210" y="76" width="24" height="50"></rect><rect x="250" y="64" width="24" height="62"></rect></g></svg>
+                </span>
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-soft)"></rect><g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="49" x2="300" y2="49"></line><line x1="0" y1="98" x2="300" y2="98"></line></g><polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="14,108 64,80 114,88 164,56 214,62 276,34"></polyline></svg>
+                </span>
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-inset)"></rect><g font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" style="fill:var(--ink-dim)" font-size="14"><text x="26" y="52">MMLU</text><text x="26" y="86">HumanEval</text></g><g font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" style="fill:var(--ink-mid)" font-size="14" font-weight="600"><text x="200" y="52">82.4</text><text x="200" y="86">74.1</text></g></svg>
+                </span>
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-soft)"></rect><rect x="40" y="44" width="150" height="12" rx="6" style="fill:var(--line-strong)"></rect><rect x="40" y="70" width="110" height="12" rx="6" style="fill:var(--line-strong)"></rect><rect x="40" y="96" width="130" height="12" rx="6" style="fill:var(--line)"></rect></svg>
+                  <span class="more">+2</span>
+                </span>
+              </div>
+              <div class="reason"><span class="rd"></span>내 관심사 <b>‘오픈소스 LLM 동향’</b>과 일치</div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>14</b></span>
+                <span class="pact">♡ <b>86</b></span>
+                <span class="pact">조회 <b>9,120</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <article class="post">
+              <div class="phead">
+                <span class="pav" data-screen="uprofile" style="cursor:pointer;">VK</span>
+                <div data-screen="uprofile" style="cursor:pointer;">
+                  <div class="pname">value_kim <span class="h">@value_kim · 팔로잉</span></div>
+                  <div class="pmeta">오전 6:52 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">보유 종목 실적 발표 3분 정리 — 가이던스가 핵심</h3>
+              <p class="pbody">오늘 장 마감 후 실적을 내는 종목 3개를 짧게 정리했습니다. 매출보다 다음 분기 가이던스에 시장 반응이 갈릴 가능성이 큽니다.</p>
+              <div class="reason"><span class="rd"></span>팔로우 중 · 내 보유 종목과 겹침</div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>9</b></span>
+                <span class="pact">♡ <b>41</b></span>
+                <span class="pact">조회 <b>1.2만</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <article class="post">
+              <div class="phead">
+                <span class="pav" data-screen="uprofile" style="cursor:pointer;">FX</span>
+                <div data-screen="uprofile" style="cursor:pointer;">
+                  <div class="pname">fx_daily <span class="h">@fx_daily · 팔로잉</span></div>
+                  <div class="pmeta">오전 7:10 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">환전 타이밍, 트리거로 잡는 법 — 내 세팅 공개</h3>
+              <p class="pbody">±0.3% 트리거로 좁혔더니 알림이 늘긴 했지만 놓치는 구간이 줄었어요. 제가 쓰는 조건과 이유를 정리했습니다.</p>
+              <div class="pimg">
+                <span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 280" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="596" height="280" style="fill:var(--bg-soft)"></rect>
+                    <g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="93" x2="596" y2="93"></line><line x1="0" y1="186" x2="596" y2="186"></line></g>
+                    <polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="24,150 106,140 188,158 270,120 352,132 434,98 516,112 572,140"></polyline>
+                    <line x1="0" y1="120" x2="596" y2="120" style="stroke:var(--ink-dim)" stroke-width="1.2" stroke-dasharray="6 6" opacity=".7"></line>
+                    <text x="24" y="32" style="fill:var(--ink-dim)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13">USD/KRW · 트리거 라인</text>
+                  </svg>
+                </span>
+                <div class="imgcap"><span class="c">점선은 내가 설정한 목표 환율 트리거</span><span class="src">출처 · 한국은행</span></div>
+              </div>
+              <div class="reason"><span class="rd"></span>팔로우 중 · 토픽 <b>‘환테크’</b></div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>21</b></span>
+                <span class="pact">♡ <b>54</b></span>
+                <span class="pact">조회 <b>6,540</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <div class="feed-end">
+              <div class="l">오늘 피드는 여기까지예요</div>
+              <div class="s">무한 스크롤 대신, 오늘 중요한 것만 골라 보여드려요.</div>
+            </div>
+
+            <!-- ============================================================
+              [ARCHIVE · 2026-07-14, Parami 승인] "비로그인 첫 방문 · guest state" 시안 주석 블록 제거.
+              사유: 실제 제품 UI가 아니라 시안 설명 블록이라 Product Final 화면(AC / Home / Public Feed)에 포함하지 않음.
+              처리: Product Variant 미생성 · Figma Frame 수 미포함 · UI Kit 컴포넌트 수집 제외 · 원본으로만 기록.
+              원본 확인: Outputs/디자인산출물_2026-07-07/alphacatcher-feed-detail-mockup-v2.html
+                        (screen-home [피드] 탭 하단 guest state 블록) — 원본 무수정 보존. 관련: DECISION-025
+              참고: 가입 유도 모달(#guest-modal)은 실제 제품 UI라 DOM 유지(기본 hidden). '모달 미리보기'(#guest-demo) 트리거만 제거됨.
+            ============================================================ -->
+          </div>
+
+          <!-- === 팔로잉 FEED === -->
+          <div data-feed="mine" hidden>
+
+            <div class="kb-meta" style="margin-top:2px;">내가 받은 보고서 <b>128건</b> · 이번 주 <b>7건</b> — 전체는 <a class="link" data-screen="kb">지식창고</a>에서</div>
+
+            <div class="kb-group">오늘 · 7월 10일</div>
+            <div class="kb-card">
+              <div class="krow1"><div class="t" data-screen="detail">원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+              <div class="s">미 CPI 발표를 앞두고 달러가 약세로 전환, 환전 예정 시점과 관련해 확인할 만한 변동이 감지됐습니다.</div>
+              <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 3건</span><span>·</span><span>오전 7:00</span></div>
+            </div>
+            <div class="kb-card">
+              <div class="krow1"><div class="t" data-screen="detail">RTX 50 시리즈 국내 출시가 정리 — 관심 GPU 가격 추적 시작</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+              <div class="s">엔비디아 신형 GPU 국내 가격이 공개됐습니다. 목표가 대비 현재 위치를 정리했어요.</div>
+              <div class="m"><span class="kbadge od">온디맨드</span><span>#쇼핑</span><span>·</span><span>출처 2건</span><span>·</span><span>오후 2:12</span></div>
+            </div>
+
+            <div class="kb-group">어제 · 7월 9일</div>
+            <div class="kb-card">
+              <div class="krow1"><div class="t" data-screen="detail">오픈소스 LLM 릴리즈 2건 — 벤치마크 갱신, 로컬 구동 요건 완화</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+              <div class="s">새 모델 2종이 공개됐습니다. 사용 중인 스택 기준으로 적용 가능성을 정리했어요.</div>
+              <div class="m"><span class="kbadge">아침 브리핑</span><span class="kbadge" style="color:var(--ok);border-color:rgba(52,166,106,.3);background:rgba(52,166,106,.08);">공개</span><span>#AI</span><span>·</span><span>출처 4건</span><span>·</span><span>♡ 54 · 댓글 2 · 조회 1.1만</span><span>·</span><span>오전 7:00</span></div>
+            </div>
+
+            <div class="kb-card">
+              <div class="krow1"><div class="t" data-screen="detail">유로 강세 지속 — 분할 환전 2차 실행 시점 점검</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+              <div class="s">달러 인덱스 하락이 이어지며 유로가 강세입니다. 설정하신 분할 환전 기준으로 2차 시점을 점검했어요.</div>
+              <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 2건</span><span>·</span><span>오전 7:00</span></div>
+            </div>
+
+            <div class="kb-group">7월 8일</div>
+            <div class="kb-card">
+              <div class="krow1"><div class="t" data-screen="detail">반도체 수출 규제 변화 — 보유 종목 영향 점검</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+              <div class="s">규제 발표 이후 관련 종목 흐름과 증권가 해석을 모았습니다. 보유 종목 기준 영향은 제한적.</div>
+              <div class="m"><span class="kbadge">아침 브리핑</span><span>#반도체</span><span>·</span><span>출처 5건</span><span>·</span><span>오전 7:00</span></div>
+            </div>
+            <div class="kb-card">
+              <div class="krow1"><div class="t" data-screen="detail">AI 코딩 도구 요금 개편 — 사용 중인 플랜 영향 비교</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+              <div class="s">주요 AI 코딩 도구 2곳이 요금제를 바꿨습니다. 현재 플랜 기준 유지/이동 시나리오를 비교했어요.</div>
+              <div class="m"><span class="kbadge">아침 브리핑</span><span>#AI</span><span>·</span><span>출처 3건</span><span>·</span><span>오전 7:00</span></div>
+            </div>
+
+            <div class="feed-end">
+              <div class="l">최근 보고서 6건을 보여드렸어요</div>
+              <div class="s">지난 보고서 검색과 관심사별 모아보기는 <b>지식창고</b>에서 할 수 있어요.</div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- RIGHT RAIL (calm info panels) -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>오늘의 핵심 신호</h4>
+            <div class="sig"><span class="n">01</span><div><div class="st">원/달러 환율 0.8% 하락 — 트리거 충족</div><div class="sm">#환율 · 신뢰도 높음</div></div></div>
+            <div class="sig"><span class="n">02</span><div><div class="st">오픈소스 LLM 릴리즈 2건</div><div class="sm">#AI · 신뢰도 높음</div></div></div>
+            <div class="sig"><span class="n">03</span><div><div class="st">관심 노트북 12% 할인</div><div class="sm">#쇼핑 · 3개월 최저가</div></div></div>
+          </div>
+
+          <div class="rpanel">
+            <h4>추천 토픽</h4>
+            <div class="tpcs">
+              <span class="tpc">#미국증시</span><span class="tpc">#환테크</span><span class="tpc">#로컬LLM</span>
+              <span class="tpc plus">＋ 관심사로 추가</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+  <!-- 가입 유도 모달 — 비로그인 사용자가 보관·반응 시도 시 (B4 시안) -->
+  <div class="modal-bg" id="guest-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="가입 안내" style="width:400px;text-align:center;">
+      <div style="width:44px;height:44px;margin:6px auto 14px;"><svg width="44" height="44" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg></div>
+      <div style="font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.01em;">여기서부터는 계정이 필요해요</div>
+      <div style="font-size:13px;color:var(--ink-mid);line-height:1.65;margin-top:8px;">보관·반응·팔로우는 시작하기 후에 이용할 수 있어요.<br>내일 아침, 첫 브리핑이 도착해요.</div>
+      <div style="display:flex;gap:9px;justify-content:center;margin-top:20px;">
+        <span class="btn" data-gm-close data-screen="auth" data-auth="login">로그인</span>
+        <span class="btn signal" data-gm-close data-screen="auth">시작하기</span>
+      </div>
+      <div style="margin-top:12px;"><span class="link" data-gm-close style="font-size:12.5px;color:var(--ink-dim);">계속 둘러볼게요</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

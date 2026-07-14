@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 관심사 관리 · LLM Wiki</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-wiki">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi on"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">관심사를 조정하면 다음 브리핑부터 반영돼요.</div>
+        </aside>
+
+        <main class="feed">
+          <div class="wk-head">
+            <h1>관심사 · LLM Wiki</h1>
+            <div class="ssub">AI가 나를 어떻게 이해하고 있는지 확인하고, 다르게 이해한 부분은 직접 고쳐주세요.</div>
+          </div>
+
+          <!-- 1. AI 이해 요약 -->
+          <div class="mind">
+            <div class="mind-t">AI가 이해한 지금의 나</div>
+            <div class="mind-sub">최근 30일 저장 · 열람 활동 기준 — 직접 고정하거나 중지한 관심사는 AI 추정보다 우선해요</div>
+            <div class="mrow top"><span class="ml">환율 · 환전</span><span class="mbar"><i style="width:90%"></i></span><span class="mw">가장 큰 관심</span></div>
+            <div class="mrow"><span class="ml">AI · 개발</span><span class="mbar"><i style="width:68%"></i></span><span class="mw">꾸준함</span></div>
+            <div class="mrow"><span class="ml">노트북 · 특가</span><span class="mbar"><i style="width:42%"></i></span><span class="mw">가끔</span></div>
+            <div class="mrow paused"><span class="ml">반도체</span><span class="mbar"><i style="width:14%"></i></span><span class="mw">잠시 쉬는 중</span></div>
+            <div class="mind-scan"><span class="scan-dot"></span>AI가 어젯밤 저장한 콘텐츠 3건을 분석하고 있어요.</div>
+          </div>
+
+          <!-- 2. AI가 최근 발견한 관심사 -->
+          <div class="sec-t" id="fd-sec">AI가 최근 발견한 관심사<span class="more2">더 보기 (4)</span></div>
+          <div class="found" id="fd-list">
+            <div class="frow2">
+              <div class="fi2"><div class="fn2">미국 국채</div><div class="fd2">‘거시경제’·‘원/달러 환율’ 저장이 늘어서, 함께 보면 좋겠다고 판단했어요.</div></div>
+              <div class="fa2"><span class="btn sm">＋ 추가</span><span class="btn ghost sm">무시</span></div>
+            </div>
+            <div class="frow2">
+              <div class="fi2"><div class="fn2">반도체 장비</div><div class="fd2">최근 ‘반도체 업황’ 열람이 늘었어요. 관련 공급망 주제예요.</div></div>
+              <div class="fa2"><span class="btn sm">＋ 추가</span><span class="btn ghost sm">무시</span></div>
+            </div>
+          </div>
+
+          <!-- 3. 내 관심사 -->
+          <div class="sec-t" id="wk-mysec">내 관심사<span class="sc" id="wk-mysc">6개 · 활성 5</span></div>
+
+          <div class="wcard">
+            <div class="wc-top"><span class="wc-name">원/달러 환율</span><span class="pin">고정됨</span><span class="wsrc llm">◈ LLM 추론</span><span class="conf">신뢰도 91%</span><span class="sp"></span><span class="btn sm" data-wm-open>수정하기</span></div>
+            <div class="wc-lbl">AI는 이렇게 이해했어요</div>
+            <ul class="wc-why">
+              <li><b>‘환전 수수료 비교’</b> 등 3건을 저장했어요</li>
+              <li>환율 기사를 최근 12회 열람했어요</li>
+              <li>미 CPI 일정 콘텐츠를 반복해서 확인했어요</li>
+            </ul>
+          </div>
+
+          <div class="wcard">
+            <div class="wc-top"><span class="wc-name">오픈소스 LLM 동향</span><span class="wsrc">직접 설정</span><span class="sp"></span><span class="btn sm" data-wm-open>수정하기</span></div>
+            <div class="wc-lbl">AI는 이렇게 이해했어요</div>
+            <ul class="wc-why">
+              <li>온보딩에서 직접 추가한 관심사예요</li>
+              <li>이후 릴리즈 노트 열람이 늘어 이해가 깊어지고 있어요</li>
+            </ul>
+          </div>
+
+          <div class="wcard">
+            <div class="wc-top"><span class="wc-name">노트북 특가</span><span class="wsrc llm">◈ LLM 추론</span><span class="conf">신뢰도 78%</span><span class="sp"></span><span class="btn sm" data-wm-open>수정하기</span></div>
+            <div class="wc-lbl">AI는 이렇게 이해했어요</div>
+            <ul class="wc-why">
+              <li><b>‘게이밍 노트북 가격 비교’</b>를 2건 저장했어요</li>
+              <li>상품 페이지를 8회 열람했어요</li>
+            </ul>
+          </div>
+
+          <div class="wcard paused">
+            <div class="wc-top"><span class="wc-name">반도체 업황</span><span class="wsrc">직접 설정</span><span class="sp"></span><span class="btn sm" data-wm-open>수정하기</span></div>
+            <div class="wc-status">3일째 새 신호가 없어 잠시 쉬고 있어요. 수정하기에서 다시 켤 수 있어요.</div>
+          </div>
+
+        </main>
+
+        <!-- RIGHT RAIL -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>추론 요약</h4>
+            <div class="rstat"><span>관심사</span><b>6</b></div>
+            <div class="rstat"><span>활성 / 비활성</span><b>5 / 1</b></div>
+            <div class="rstat"><span>제외한 주제</span><b>2</b></div>
+            <div class="rstat"><span>이번 주 신규</span><b class="ok">1</b></div>
+          </div>
+        </aside>
+      </div>
+      <!-- 관심사 상세 수정 모달 (카드에서는 숨김 — 수정하기로 진입) -->
+      <div class="modal-bg" id="wk-modal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-label="관심사 수정" style="width:480px;">
+          <div class="mhead"><span class="mt">원/달러 환율 <span class="wsrc llm" style="margin-left:6px;">◈ LLM 추론</span></span><span class="mx" data-wm-close>✕</span></div>
+          <div class="srow">
+            <div class="sl"><div class="t2">고정 (핀)</div><div class="d2">AI 추정과 무관하게 항상 보고서에서 챙겨요.</div></div>
+            <span class="sw on" role="switch" aria-checked="true"></span>
+          </div>
+          <div class="srow">
+            <div class="sl"><div class="t2">일시중지</div><div class="d2">쉬는 동안 보고서·알림에서 빠지고, AI 추정도 멈춰요.</div></div>
+            <span class="sw" role="switch" aria-checked="false"></span>
+          </div>
+          <div class="srow">
+            <div class="sl"><div class="t2">연결 키워드</div><div class="d2" style="margin-top:7px;"><span class="tagm">환전 예정 · 이달 말</span> <span class="tagm">목표 환율</span> <span class="tagm">미 CPI 일정</span> <span class="tagm" style="border-style:dashed;cursor:pointer;">＋</span></div></div>
+          </div>
+          <div class="srow">
+            <div class="sl"><div class="t2">알림 조건</div><div class="d2">충족되면 바로 알림을 보내요.</div></div>
+            <span class="wcond" style="margin:0;"><span class="ci">◉</span><span class="wcode">전일 대비 ±0.5% 변동</span></span>
+          </div>
+          <div class="srow">
+            <div class="sl"><div class="t2">최근 7일 브리핑</div></div>
+            <span class="val"><b style="color:var(--signal-ink);">4회</b></span>
+          </div>
+          <div class="mfoot"><span class="btn sm danger" style="border-color:var(--err-line);margin-right:auto;">이 주제 제외</span><span class="btn" data-wm-close>닫기</span><span class="btn signal" data-wm-close>저장</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>
