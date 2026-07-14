@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 프로필 — 본인</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-profile">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav-search" data-screen="search" style="cursor:pointer;"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi on"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">프로필에는 내 공개 브리핑이 쌓입니다.</div>
+        </aside>
+
+        <main class="feed">
+          <!-- profile header -->
+          <div class="pcard">
+            <div class="pcover"></div>
+            <div class="pbody2">
+              <div class="pavatar-lg">P</div>
+              <div class="prow">
+                <div>
+                  <div class="pname-lg">Parami</div>
+                  <div class="phandle">@parami · 가입 2026년 3월</div>
+                </div>
+                <div class="pactions">
+                  <span class="btn signal sm" id="pe-open">프로필 편집</span>
+                  <span class="btn sm">↗ 공유</span>
+                </div>
+              </div>
+              <p class="pbio">매일 아침 환율·오픈소스 LLM·거시경제 브리핑을 받아 골라 읽고 보관합니다. 관심사 기반으로 나에게 중요한 것만.</p>
+              <div class="pinterests">
+                <span class="tagm">#환율</span><span class="tagm">#오픈소스LLM</span><span class="tagm">#거시경제</span><span class="tagm">#환테크</span><span class="tagm">#로컬LLM</span>
+              </div>
+              <div class="pstats">
+                <div class="pstat"><b>128</b><span>브리핑</span></div>
+                <div class="pstat"><b>342</b><span>팔로워</span></div>
+                <div class="pstat"><b>89</b><span>팔로잉</span></div>
+                <div class="pstat" data-screen="saved" style="cursor:pointer;" title="보관함 열기"><b>23</b><span>보관</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 공개 브리핑 (프로필 = 공개 활동 전용, 보관함·지식창고는 좌측 내비 전용 화면) -->
+          <div>
+            <article class="post">
+              <div class="phead">
+                <span class="pav me">P</span>
+                <div>
+                  <div class="pname">Parami <span class="h">@parami</span></div>
+                  <div class="pmeta">2일 전 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">원/달러 환율 0.8% 하락 — 내 트리거 세팅과 근거 공개</h3>
+              <p class="pbody">환전 예정이라 ±0.5% 트리거를 걸어뒀는데 오늘 새벽 충족됐어요. 왜 골랐는지, 어떤 출처를 봤는지 정리했습니다.</p>
+              <div class="reason"><span class="rd"></span>내 관심사 <b>‘원/달러 환율’</b>에서 생성</div>
+              <div class="pacts">
+                <span class="pact saved">⚑ <b>보관됨</b></span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>18</b></span>
+                <span class="pact">♡ <b>64</b></span>
+                <span class="pact">조회 <b>2.3만</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <article class="post">
+              <div class="phead">
+                <span class="pav me">P</span>
+                <div>
+                  <div class="pname">Parami <span class="h">@parami</span></div>
+                  <div class="pmeta">5일 전 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">오픈소스 LLM 릴리즈 2건 — 로컬 구동 관점에서 정리</h3>
+              <p class="pbody">벤치마크보다 로컬 요구사양이 낮아진 게 핵심이라 표로 정리했어요. 두 모델 다 원문 링크 첨부.</p>
+              <div class="pimg">
+                <span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 260" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="596" height="260" style="fill:var(--bg-inset)"></rect><g style="fill:var(--signal)"><rect x="60" y="120" width="46" height="110"></rect><rect x="140" y="86" width="46" height="144"></rect><rect x="220" y="60" width="46" height="170"></rect></g><g style="fill:var(--low)"><rect x="330" y="150" width="46" height="80"></rect><rect x="410" y="120" width="46" height="110"></rect><rect x="490" y="100" width="46" height="130"></rect></g></svg>
+                </span>
+                <div class="imgcap"><span class="c">코딩 벤치마크 · 로컬 요구사양 비교</span><span class="src">출처 · 리더보드</span></div>
+              </div>
+              <div class="reason"><span class="rd"></span>내 관심사 <b>‘오픈소스 LLM’</b>에서 생성</div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>27</b></span>
+                <span class="pact">♡ <b>92</b></span>
+                <span class="pact">조회 <b>4,870</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+          </div>
+
+        </main>
+
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>내 관심사 <span class="all">LLM Wiki</span></h4>
+            <div class="introw"><span class="d"></span>원/달러 환율<span class="n">활성</span></div>
+            <div class="introw"><span class="d"></span>오픈소스 LLM 동향<span class="n">활성</span></div>
+            <div class="introw"><span class="d"></span>거시경제<span class="n">활성</span></div>
+            <div class="introw"><span class="d off"></span>반도체 업황<span class="n">일시중지</span></div>
+          </div>
+
+          <div class="rpanel">
+            <h4>이번 주 활동</h4>
+            <div class="rstat"><span>보관한 브리핑</span><b>5</b></div>
+            <div class="rstat"><span>브리핑 오픈</span><b>12</b></div>
+            <div class="rstat"><span>새 관심사</span><b>1</b></div>
+            <div class="rstat"><span>공개 게시</span><b>2</b></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+  <!-- 프로필 편집 모달 -->
+  <div class="modal-bg" id="pe-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="프로필 편집" style="width:480px;">
+      <div class="mhead"><span class="mt">프로필 편집</span><span class="mx" data-pe-close>✕</span></div>
+      <div class="pe-row">
+        <span class="pe-av">P</span>
+        <div>
+          <span class="btn sm">사진 변경</span>
+          <div class="pe-hint">목업 시안 — 실제로는 업로드·크롭 창이 열려요.</div>
+        </div>
+      </div>
+      <div class="pe-lab">이름</div>
+      <input type="text" id="pe-name" value="Parami" maxlength="20">
+      <div class="pe-lab">핸들</div>
+      <input type="text" id="pe-handle" value="@parami" maxlength="20">
+      <div class="pe-lab">소개</div>
+      <textarea id="pe-bio" rows="3" maxlength="120">매일 아침 환율·오픈소스 LLM·거시경제 브리핑을 받아 골라 읽고 보관합니다. 관심사 기반으로 나에게 중요한 것만.</textarea>
+      <div class="pe-cnt"><span id="pe-bio-n">0</span>/120</div>
+      <div class="pe-wiki" data-screen="wiki" data-pe-close>관심사 태그는 LLM Wiki에서 관리돼요 →</div>
+      <div class="mfoot"><span class="btn" data-pe-close>취소</span><span class="btn signal" id="pe-save">저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

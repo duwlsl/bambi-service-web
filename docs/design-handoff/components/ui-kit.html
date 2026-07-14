@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — UI Kit (Figma Component 이관 기준본)</title>
+<!--
+  ============================================================
+  AlphaCatcher UI Kit
+  ============================================================
+  Extracted from Final Export · No Figma MCP Called · Last Updated: 2026-07-14
+  실제 컴포넌트를 shared CSS로 그대로 렌더링합니다 (원본 파일 무수정, 링크만 참조).
+  포함하지 않는 것: guest review block(제거됨) · prototype/auth-google-redirect(Prototype Only)
+                   · MotionOrb Canvas(벡터 변환 제외)
+  Admin은 Rough — Product Final 공통 컴포넌트로 승격하지 않습니다.
+  ============================================================
+-->
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+<style>
+/* 문서 전용 CSS — 제품 CSS 미수정 */
+body{background:var(--bg);}
+.doc{width:100%;max-width:1440px;margin:0 auto;padding:0 72px 120px;background:var(--bg);}
+.doc h1{font-size:40px;font-weight:700;letter-spacing:-.02em;margin:56px 0 12px;color:var(--ink);}
+.doc .lead{font-size:15px;line-height:1.75;color:var(--ink-dim);max-width:820px;}
+.doc h2{font-size:22px;font-weight:700;letter-spacing:-.015em;margin:56px 0 6px;color:var(--ink);border-top:1px solid var(--line);padding-top:26px;}
+.doc h2 .n{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--signal-ink);letter-spacing:.1em;margin-right:10px;}
+.doc h3{font-size:14.5px;font-weight:700;margin:26px 0 8px;color:var(--ink);}
+.doc .sub{font-size:13px;color:var(--ink-dim);line-height:1.7;margin-bottom:16px;max-width:880px;}
+.cmp{border:1px solid var(--line);border-radius:14px;margin-bottom:18px;overflow:hidden;}
+.cmp-h{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg-soft);border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.cmp-h .nm{font-family:"Space Grotesk",monospace;font-size:11.5px;letter-spacing:.06em;color:var(--ink);font-weight:600;}
+.cmp-h .sp{flex:1;}
+.pri{font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid var(--line-strong);color:var(--ink-dim);background:var(--bg);}
+.pri.p0{color:#fff;background:var(--signal);border-color:var(--signal);}
+.pri.p1{color:var(--signal-ink);background:var(--wash);border-color:var(--wash-strong);}
+.pri.p2{color:var(--ink-mid);}
+.pri.ref{color:var(--ink-dim);border-style:dashed;}
+.cmp-b{padding:20px 18px;background:var(--bg);}
+.cmp-f{font-size:11.5px;color:var(--ink-dim);line-height:1.7;padding:12px 16px;border-top:1px dashed var(--line);background:var(--bg);}
+.cmp-f b{color:var(--ink-mid);}
+.cmp-f code{font-family:"Space Grotesk",monospace;font-size:10.5px;color:var(--signal-ink);}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.mini{font-size:10.5px;color:var(--ink-dim);margin-top:6px;font-family:"Space Grotesk",monospace;}
+table.k{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+table.k th{text-align:left;font-size:11px;color:var(--ink-dim);border-bottom:1px solid var(--line);padding:8px 10px;}
+table.k td{border-bottom:1px solid var(--line);padding:9px 10px;color:var(--ink-mid);vertical-align:top;}
+table.k code{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--signal-ink);}
+.note{border-left:3px solid var(--signal);background:var(--wash);border-radius:0 8px 8px 0;padding:12px 16px;font-size:12.5px;line-height:1.7;color:var(--ink-mid);margin:14px 0;}
+.note.warn{border-left-color:var(--err);background:var(--err-bg);}
+/* Landing 컴포넌트 문서화용 (landing-desktop.html의 실제 값 복제 — 랜딩 파일 무수정) */
+.lpx{font-family:"Pretendard Variable",sans-serif;}
+.lpx-nav{display:flex;align-items:center;gap:36px;height:76px;padding:0 24px;border:1px solid var(--line);border-radius:12px;background:var(--bg);}
+.lpx-word{font-family:"Quicksand",sans-serif;font-weight:400;font-size:21px;letter-spacing:.02em;color:var(--ink);}
+.lpx-links{display:flex;gap:30px;font-size:14.5px;color:var(--ink-dim);}
+.lpx-cta{margin-left:auto;display:flex;gap:12px;}
+.lpx-btn{display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;padding:12px 24px;border-radius:12px;border:1px solid var(--line-strong);color:var(--ink);background:var(--bg);}
+.lpx-btn.sig{background:var(--signal);border-color:var(--signal);color:var(--on-signal);box-shadow:0 12px 26px -12px rgba(255,90,0,.55);}
+.lpx-btn.big{padding:16px 32px;font-size:16px;}
+.lpx-btn.ghost{background:transparent;border-color:transparent;}
+.lpx-eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:"Space Grotesk",monospace;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);border:1px solid var(--line);border-radius:999px;padding:9px 18px;background:var(--bg);}
+.lpx-eyebrow .d{width:6px;height:6px;border-radius:50%;background:var(--signal);}
+/* Landing 클로징 문구(.lp-signature) = Pretendard 23px 일반 텍스트 — 전용 Signature 스타일 없음(2026-07-14 확정) */
+/* Admin 문서화용 (admin rough의 실제 값 복제 — admin 파일 무수정) */
+.adx-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.adx-table th{text-align:left;padding:9px 10px;color:var(--ink-dim);font-weight:600;border-bottom:1px solid var(--line);font-size:11.5px;white-space:nowrap;}
+.adx-table td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--ink-mid);}
+.adx-badge{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--ink-dim);}
+.adx-badge.ok{color:var(--ok);border-color:rgba(52,166,106,.3);background:rgba(52,166,106,.08);}
+.adx-badge.err{color:var(--err);border-color:var(--err-line);background:var(--err-bg);}
+.adx-card{border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:180px;}
+.adx-card .l{font-size:12px;color:var(--ink-dim);}
+.adx-card .v{font-size:22px;font-weight:700;color:var(--ink);margin-top:6px;letter-spacing:-.01em;}
+.adx-card .d{font-size:11.5px;color:var(--ink-dim);margin-top:5px;}
+.adx-403{border:1px dashed var(--line-strong);border-radius:14px;padding:34px;text-align:center;}
+.adx-403 .code{font-family:"Space Grotesk",monospace;font-size:44px;font-weight:600;color:var(--line-strong);letter-spacing:.04em;}
+.adx-403 .t{font-size:19px;font-weight:700;color:var(--ink);margin-top:6px;}
+.adx-403 .s{font-size:13px;color:var(--ink-dim);line-height:1.65;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+<div class="doc">
+
+  <h1>AlphaCatcher — UI Kit</h1>
+  <p class="lead">Product Final 15 · Variant 6 · Landing 1 · Admin Rough 6에서 <b>실제로 사용 중인 컴포넌트만</b> 추출해 렌더링했습니다.
+  존재하지 않는 상태·컴포넌트는 만들지 않았습니다. 각 카드에 <b>Figma 등록 이름 · Variant · 실제 사용 파일 수 · 우선순위</b>를 표기합니다.</p>
+
+  <!-- ============ 02 PRIORITY ============ -->
+  <h2><span class="n">02</span>Component Priority</h2>
+  <table class="k">
+    <tr><th>등급</th><th>기준</th><th>Component</th></tr>
+    <tr><td><span class="pri p0">P0</span></td><td>핵심 화면 다수에서 반복 · 수정 영향 큼</td><td>Button(product) · Navigation/Product · Left Menu · Report Card · Avatar · Modal · Toast · Badge/Status · Interest Chip · State(Loading/Empty/Error)</td></tr>
+    <tr><td><span class="pri p1">P1</span></td><td>중복은 있으나 영향도 중간</td><td>Tab · Search Input · Knowledge Card · Saved Card · Notification Item · Reaction Row · Source Trust Row · Why-This Reason · Right Rail Panel · Toggle Switch · Filter Chip</td></tr>
+    <tr><td><span class="pri p2">P2</span></td><td>특정 화면 전용 · 빈도 낮음</td><td>Wiki Interest Card · Mind Bar · Comment · Profile Stat · Auth Button · Onboarding Chip · Markdown Viewer · Dropdown(svpop) · Plan Card</td></tr>
+    <tr><td><span class="pri ref">REF</span></td><td>참고용 — Native Component화 대상 아님</td><td>Landing Navigation/Button/Eyebrow/Closing Text · MotionOrb · Admin Table/Stat/Badge/403 · Sample 라벨(.samp)</td></tr>
+  </table>
+
+  <!-- ============ 03 NAVIGATION ============ -->
+  <h2><span class="n">03</span>Navigation</h2>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Navigation / Product / Global</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 13개 파일 (product 11 · variants 2)</span></div>
+    <div class="cmp-b">
+      <nav class="nav" style="border:1px solid var(--line);border-radius:12px;">
+        <div class="logo"><span class="word">alphacatcher</span></div>
+        <div class="spacer"></div>
+        <div class="nav-search"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+        <div class="spacer"></div>
+        <span class="btn signal sm">＋ 관심 자료</span>
+        <span class="nav-ico" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" title="내 프로필" aria-label="내 프로필">나</span>
+      </nav>
+      <div class="mini">우측 순서: ＋ 관심 자료 → 알림(종, unread badge) → 내 프로필</div>
+    </div>
+    <div class="cmp-f"><b>Anatomy</b> logo(wordmark) → nav-search(중앙 absolute 596px) → <b>＋ 관심 자료 CTA</b> → <b>알림 벨(inline SVG + unread badge)</b> → <b>내 프로필(원형 아바타 트리거 · 34px)</b><br>
+      <b>Size</b> height 58 · padding 0 24 · gap 18 · 아바타 34 (nav-ico 38) · <b>Variant</b> <code>Notification=None|Unread</code> · <code>Theme=Light|Dark</code><br>
+      <b>선택자</b> <code>.nav .logo .nav-search .btn.signal.sm .nav-ico .nav-avatar</code> (base.css) — <b>Landing Nav와 합치지 말 것</b><br>
+      <b>2026-07-14 정정</b> 알림 아이콘을 실제 목업의 종 SVG로 교체 · 내 프로필을 <b>13개 화면</b>(product 11 · variants 2) nav에 실제 추가 → <code>.nav-avatar</code>는 더 이상 미사용 컴포넌트가 아님</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Navigation / Product / Left Menu</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 11개 파일</span></div>
+    <div class="cmp-b" style="max-width:300px;">
+      <div class="menu">
+        <div class="mi on"><span class="ic">⌂</span>홈</div>
+        <div class="mi"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+        <div class="mi"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+        <div class="mi"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+        <div class="mi"><span class="ic">◑</span>프로필</div>
+        <div class="divider"></div>
+        <div class="mi"><span class="ic">⚙</span>설정</div>
+      </div>
+      <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>State=Default|Active</code> · <code>Count=None|Number</code> · <b>Size</b> item 14.5px / padding 11 12 / radius 10<br><b>선택자</b> <code>.menu .mi .mi.on .cnt .divider .side-foot</code></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Navigation / Product / Tab</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 5개 파일</span></div>
+    <div class="cmp-b" style="max-width:520px;">
+      <div class="tabs">
+        <div class="tab on"><span class="tl">내 보고서</span></div>
+        <div class="tab"><span class="tl">피드</span></div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>State=Default|Active</code> · 14.5px/600 · 활성 시 하단 인디케이터(<code>.tab.on .tl::after</code>)<br>프로필 탭(<code>.ptabs/.ptab</code>)은 <b>CSS에만 존재하고 현재 HTML 미사용</b> → Component화 제외</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Navigation / Landing</span><span class="sp"></span><span class="pri ref">REFERENCE</span><span class="pri">사용 1개 파일</span></div>
+    <div class="cmp-b lpx">
+      <div class="lpx-nav">
+        <span class="lpx-word">alphacatcher</span>
+        <div class="lpx-links"><span>제품</span><span>작동 방식</span><span>공개 브리핑</span></div>
+        <div class="lpx-cta"><span class="lpx-btn ghost">로그인</span><span class="lpx-btn sig">시작하기</span></div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>공유 요소</b> 워드마크 마크(SVG) · 브랜드 컬러 · 내비 라벨 14.5px<br>
+      <b>Marketing 전용</b> height 76 · 기준선 72 · 워드마크 21px · glow 버튼 · 검색/알림/아바타 없음<br>
+      <b>판정</b> Product Global Nav의 Variant로 <b>합치지 않음</b> — 별도 Component (<code>Navigation / Landing</code>)</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Navigation / Back (Read Bar)</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 3개 파일(상세 계열)</span></div>
+    <div class="cmp-b" style="max-width:760px;">
+      <div class="readbar">
+        <span class="back"><span class="ar">←</span>홈 피드로</span>
+        <span class="rsp"></span>
+        <span class="btn sm">⧉ MD 복사</span>
+        <span class="btn sm">⚑ 보관됨</span>
+        <span class="btn sm">↗ 공유</span>
+      </div>
+    </div>
+    <div class="cmp-f">Breadcrumb은 <b>존재하지 않음</b> — 뒤로가기(Back) 방식만 사용. <b>선택자</b> <code>.readbar .back .ar</code></div>
+  </div>
+
+  <!-- ============ 04 BUTTONS ============ -->
+  <h2><span class="n">04</span>Buttons</h2>
+  <p class="sub">코드에 실제 존재하는 종류만 등록합니다. <b>Loading 상태는 제품 버튼에 존재하지 않습니다</b>(파이프라인 재실행 버튼의 텍스트 교체만 있음 → Admin Rough).</p>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Button / Product</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 25개 파일(전 영역)</span></div>
+    <div class="cmp-b">
+      <div class="row">
+        <span class="btn signal">시작하기</span>
+        <span class="btn">보관</span>
+        <span class="btn ghost">취소</span>
+        <span class="btn signal sm">＋ 관심 자료</span>
+        <span class="btn sm">상세</span>
+        <span class="btn dis">계속하기</span>
+        <span class="btn following">팔로잉</span>
+        <span class="link">자세히 보기 →</span>
+      </div>
+      <div class="mini">signal · default · ghost · signal+sm · sm · dis(disabled) · following · link</div>
+    </div>
+    <div class="cmp-f">
+      <b>Size</b> Default 13.5px/600 · padding 9 15 · radius 10 &nbsp;|&nbsp; Small 12.5px · padding 7 12 · radius 8<br>
+      <b>Variant</b> <code>Type=Signal|Default|Ghost|Following</code> · <code>Size=Default|Small</code> · <code>State=Default|Disabled</code> · <code>Icon=None|Leading</code> (텍스트 심볼 사용)<br>
+      <b>Hover</b> 배경/보더 변화만 (translate 없음) · <b>Disabled</b> <code>.btn.dis{opacity:.45;pointer-events:none}</code> — <span style="color:var(--err)">CSS만 존재, HTML 사용 0건</span><br>
+      <b>Destructive</b> 별도 클래스 없음 — <code>.btn.following:hover</code>와 admin 인라인(<code>border-color:var(--err-line)</code>)만 존재 → <b>Decision Needed</b><br>
+      <b>Focus</b> 스타일 없음 → <span style="color:var(--err)">접근성 Critical</span> · <b>Dark</b> 토큰 대응 O</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Button / Auth (Provider)</span><span class="sp"></span><span class="pri p2">P2</span><span class="pri">사용 3개 파일(auth)</span></div>
+    <div class="cmp-b" style="max-width:380px;">
+      <span class="auth-btn signal" style="margin-bottom:8px;">이메일로 계속하기</span>
+      <span class="auth-btn">Google로 계속하기</span>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>Type=Email(signal)|Google</code> · full-width · <b>선택자</b> <code>.auth-btn .auth-btn.signal</code><br>Google 버튼은 <b>제품 UI로 유지</b>(클릭 후 외부 OAuth로 직행) — prototype 중간 화면은 이관 대상 아님</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Button / Marketing</span><span class="sp"></span><span class="pri ref">REFERENCE</span><span class="pri">사용 1개 파일</span></div>
+    <div class="cmp-b lpx">
+      <div class="row">
+        <span class="lpx-btn sig big">시작하기</span>
+        <span class="lpx-btn big">공개 브리핑 둘러보기 →</span>
+        <span class="lpx-btn sig">시작하기</span>
+        <span class="lpx-btn ghost">로그인</span>
+      </div>
+      <div class="mini">big(hero/final) · big-secondary · nav-signal · nav-ghost</div>
+    </div>
+    <div class="cmp-f"><b>Size</b> 14px · padding 12 24 · radius 12 &nbsp;|&nbsp; Big 16px · padding 16 32<br>
+      <b>Effect</b> signal glow <code>0 12px 26px -12px rgba(255,90,0,.55)</code> · hover <code>translateY(-2px)</code> — <b>Product 버튼에 없음</b><br>
+      <b>판정</b> Product Button의 Size Variant로 <b>합치지 않음</b> — 별도 Component(<code>Button / Marketing</code>)</div>
+  </div>
+
+  <!-- ============ 05 INPUTS ============ -->
+  <h2><span class="n">05</span>Inputs</h2>
+  <p class="sub">실제 존재: Text · Password · Search(2종) · Textarea(comment/prompt) · Toggle · Chip 입력. <b>Select · Checkbox · Radio 컴포넌트는 존재하지 않습니다</b>(드롭다운은 <code>.fchip.dd</code> 표기만, 선택은 칩 토글로 처리).</p>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Input / Search</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 4개 파일 + nav 11개</span></div>
+    <div class="cmp-b" style="max-width:560px;">
+      <div class="kb-search"><span class="sico"></span><input type="text" placeholder="이름, 핸들, 이메일 검색"></div>
+      <div class="mini">.kb-search (height 46 · radius 12) — 화면 내부 검색</div>
+      <div class="nav-search" style="position:static;transform:none;width:100%;margin-top:12px;"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+      <div class="mini">.nav-search (height 38 · radius 19) — 글로벌 내비 검색 (읽기 전용 트리거)</div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>Placement=Nav|In-page</code> · <code>State=Default|Focus</code>(focus: border signal + <code>0 0 0 3px var(--wash)</code>)<br>같은 "검색"이지만 높이·radius·동작이 달라 <b>Variant로 통합 가능</b>(Placement) — 값은 각 Variant에 고정</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Input / Text · Password</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 3개 파일(auth·설정·모달)</span></div>
+    <div class="cmp-b" style="max-width:420px;">
+      <div class="modal" style="box-shadow:none;border:1px solid var(--line);">
+        <div class="mt" style="margin-bottom:10px;">이메일</div>
+        <input type="text" placeholder="you@example.com">
+        <div class="mh">8자 이상, 영문과 숫자를 함께 사용해 주세요.</div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>Size</b> height 46 · radius 10 · 14px · <b>Variant</b> <code>Type=Text|Password</code> · <code>State=Default|Focus|Error</code>(에러 힌트는 <code>.hint</code> 색상 --err)<br><b>선택자</b> <code>.modal input</code> · <code>.auth-form input</code></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Input / Toggle Switch</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 3개 파일(설정·소스등록)</span></div>
+    <div class="cmp-b">
+      <div class="row">
+        <span class="sw on" role="switch" aria-checked="true"></span>
+        <span class="sw" role="switch" aria-checked="false"></span>
+      </div>
+      <div class="mini">38×22 · knob 18 · on = --signal</div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>State=On|Off</code> · <code>role="switch"</code>·<code>aria-checked</code> 있음(접근성 양호) · <b>선택자</b> <code>.sw .sw.on</code></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Input / Interest Chip (선택 + 직접 추가)</span><span class="sp"></span><span class="pri p2">P2</span><span class="pri">사용 2개 파일(온보딩)</span></div>
+    <div class="cmp-b">
+      <div class="row">
+        <span class="chip on"><span class="pl"></span>원/달러 환율</span>
+        <span class="chip"><span class="pl"></span>금리·채권</span>
+        <span class="chip add">＋ 관심사 직접 추가</span>
+      </div>
+      <div class="mini">.chip(999px · 13.5px/600) · .chip.on(wash + signal border) · .chip.add(dashed)</div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>State=Default|Selected</code> · <code>Type=Preset|Add|Custom(삭제 가능)</code> — Custom은 <code>.chip .rm</code> 삭제 버튼 포함</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Input / Comment</span><span class="sp"></span><span class="pri p2">P2</span><span class="pri">사용 3개 파일(상세 계열)</span></div>
+    <div class="cmp-b" style="max-width:620px;">
+      <div class="cinput"><span class="cav2">나</span><div class="field">의견을 남겨보세요</div></div>
+    </div>
+    <div class="cmp-f"><b>선택자</b> <code>.cinput .cav2 .field</code> — 실제 textarea가 아니라 트리거 필드(목업). Figma: 단일 상태</div>
+  </div>
+
+  <!-- ============ 06 CHIPS / BADGES ============ -->
+  <h2><span class="n">06</span>Chips / Badges / Tags</h2>
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Badge · Tag · Chip 인벤토리</span><span class="sp"></span><span class="pri p0">P0</span></div>
+    <div class="cmp-b">
+      <div class="row">
+        <span class="fchip on">전체</span><span class="fchip">활성</span><span class="fchip dd">플랜</span>
+        <span class="tagm">환율</span><span class="tagm llm">LLM</span>
+        <span class="kbadge">아침 브리핑</span>
+        <span class="dpill">나만 보기</span>
+        <span class="mdtag">## h2</span>
+        <span class="samp">공통 상태 · states</span>
+      </div>
+      <div class="mini">.fchip(필터) · .tagm(토픽 태그) · .kbadge(콘텐츠 종류) · .dpill(공개 범위) · .mdtag(개발 라벨) · .samp(검수 라벨)</div>
+      <div style="margin-top:16px;max-width:620px;">
+        <div class="reason"><span class="rd"></span>관심사 <b>‘원/달러 환율’</b> 트리거 충족</div>
+        <div class="mini">.reason — "왜 나에게 왔나" 개인화 근거 칩 (제품 핵심 차별 요소)</div>
+      </div>
+    </div>
+    <div class="cmp-f">
+      <table class="k">
+        <tr><th>Component</th><th>역할</th><th>Figma 처리</th><th>사용</th></tr>
+        <tr><td><code>Chip / Filter</code></td><td>목록 필터(전체/활성/플랜)</td><td>Variant <code>State=Default|Selected</code> · <code>Type=Plain|Dropdown</code></td><td>3 product + 2 admin</td></tr>
+        <tr><td><code>Tag / Topic</code></td><td>관심사·토픽 (<code>.tagm</code>)</td><td>Variant <code>Source=User|LLM</code></td><td>7 product</td></tr>
+        <tr><td><code>Badge / Content Type</code></td><td>아침 브리핑/온디맨드 (<code>.kbadge .kbadge.od</code>)</td><td>Variant <code>Type=Briefing|OnDemand</code></td><td>3 product</td></tr>
+        <tr><td><code>Badge / Visibility</code></td><td>나만 보기/공개 (<code>.dpill</code>)</td><td>Variant <code>Visibility=Private|Public</code></td><td>3 파일</td></tr>
+        <tr><td><code>Chip / Reason</code></td><td>개인화 근거 (<code>.reason</code>)</td><td><b>별도 Component</b> — 태그와 합치지 말 것</td><td>6 파일</td></tr>
+        <tr><td><code>Badge / Trust</code></td><td>신뢰도(<code>● 신뢰도 높음</code> — 인라인 색 <code>--ok</code>)</td><td>Variant <code>Level=High|Mid|None</code> — <b>현재 클래스 없이 인라인</b> → Normalize Before Figma</td><td>상세·보관함</td></tr>
+        <tr><td><code>Badge / Status (Admin)</code></td><td><code>.abadge</code> ok/warn/err/run</td><td><b>Admin Rough 전용</b> — Product Badge로 승격 금지</td><td>5 admin</td></tr>
+        <tr><td>Plan Badge</td><td>Free/Pro</td><td><b>Admin 테이블 텍스트로만 존재</b> — 컴포넌트 아님</td><td>admin only</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ 07 REPORT CARDS ============ -->
+  <h2><span class="n">07</span>Report Cards</h2>
+  <p class="sub">Report Card 3종(Text / Single Image / Image Grid)은 <b>Component + Variant</b> 후보입니다(구조·Props 동일, 미디어만 다름). Knowledge/Saved/Notification 카드는 <b>역할이 달라 별도 Component</b>입니다.</p>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Card / Report</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 8개 파일 (product 4 · variants 3 · landing 1 유사)</span></div>
+    <div class="cmp-b" style="max-width:760px;">
+      <article class="post">
+        <div class="phead">
+          <span class="pav">MW</span>
+          <div>
+            <div class="pname">macro_watcher <span class="h">@macro_w</span></div>
+            <div class="pmeta">오전 7:41 · 공개 브리핑 · 추천</div>
+          </div>
+          <span class="pmore">⋯</span>
+        </div>
+        <h3 class="ptitle">미 CPI 발표 전날 밤, 채권시장이 먼저 움직인 이유</h3>
+        <p class="pbody">10년물 금리가 새벽에 6bp 빠졌습니다. 출처 4건을 원문까지 따라가 보면 시장이 이미 낮은 CPI를 가격에 반영하기 시작했다는 해석이 가능합니다.</p>
+        <div class="reason"><span class="rd"></span>내 관심사 <b>‘거시경제’</b>와 토픽 일치</div>
+        <div class="pacts">
+          <span class="pact">⚑ <b>보관</b></span>
+          <span class="pact"><b>32</b></span>
+          <span class="pact">♡ <b>128</b></span>
+          <span class="pact">↗ 공유</span>
+          <span class="pact more">⋯</span>
+        </div>
+      </article>
+    </div>
+    <div class="cmp-f">
+      <b>Anatomy</b> phead(avatar · name/handle · meta · more) → ptitle → pbody → <b>reason</b> → media(optional) → pacts<br>
+      <b>Variant</b> <code>Media=None|Single|Grid</code> · <code>Author=Self|Other</code> · <code>Saved=Default|Saved</code> · <code>Visibility=Private|Public</code><br>
+      <b>Source</b> <code>variants/report-card-text.html</code> · <code>report-card-single-image.html</code> · <code>report-card-image-grid.html</code> (Frame 폭 760)<br>
+      <b>Landing Sample Report Card</b>(<code>.lp-item</code>, 16.5px 제목)는 마케팅 재현물 — <b>같은 Component로 합치지 말 것</b></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Card / Today Briefing</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 3개 파일</span></div>
+    <div class="cmp-b" style="max-width:760px;">
+      <div class="today">
+        <div class="th">
+          <span class="lbl">오늘 아침 브리핑</span>
+          <span class="tt">7월 9일 목 · 오전 7:00 · 5건</span>
+          <span class="priv">나만 보기</span>
+        </div>
+        <div class="tl">밤사이 42건에서 5건을 골랐어요 — 환율·오픈소스 LLM·보유 종목이 오늘의 핵심</div>
+        <p class="tsum">원/달러 환율이 설정한 트리거를 건드렸고, 오픈소스 LLM 릴리즈 2건과 보유 종목 실적 일정이 오늘 중요합니다.</p>
+        <div class="tfoot">
+          <span class="tagm">환율</span><span class="tagm">오픈소스 LLM</span><span class="tagm">보유 종목</span>
+          <span class="link more">자세히 보기 →</span>
+        </div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>선택자</b> <code>.today .th .lbl .tt .priv .tl .tsum .tfoot</code> — 홈 상단 고정 카드. Report Card와 <b>구조가 달라 별도 Component</b></div>
+  </div>
+
+  <!-- ============ 08 OTHER CARDS ============ -->
+  <h2><span class="n">08</span>Other Cards</h2>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Card / Knowledge</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 3개 파일</span></div>
+    <div class="cmp-b" style="max-width:700px;">
+      <div class="kb-card">
+        <div class="krow1"><div class="t">원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족</div><span class="copy">⧉ MD 복사</span></div>
+        <div class="s">미 CPI 발표를 앞두고 달러가 약세로 전환, 환전 예정 시점과 관련해 확인할 만한 변동이 감지됐습니다.</div>
+        <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 3건</span><span>·</span><span>오전 7:00</span></div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>제목 15px</b>(Report Card 18px과 다름) · MD 복사 액션 포함 · <b>Report Card와 병합 금지</b><br><b>선택자</b> <code>.kb-card .krow1 .t .copy .s .m</code> · 사용: library · home(내 보고서 리스트)</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Card / Saved</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 2개 파일</span></div>
+    <div class="cmp-b" style="max-width:720px;">
+      <div class="sv-item">
+        <span class="pav">FX</span>
+        <div class="sv-body">
+          <div class="sv-auth"><span class="an2">FX Daily</span><span class="ah2">@fx_daily · 7월 10일 작성 · 저장 방금</span></div>
+          <div class="sv-title">환전 타이밍, 트리거로 잡는 법 — 내 세팅 공개</div>
+          <div class="sv-sum">±0.3% 트리거로 좁혔더니 알림이 늘긴 했지만 놓치는 구간이 줄었어요.</div>
+          <div class="sv-tagr"><span class="tagm">환테크</span><span class="tagm">원·달러 환율</span><span>·</span><span>출처 2건 · <span style="color:var(--ok);font-weight:600;">신뢰도 높음</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>타인 공개 보고서 북마크</b> 전용(DECISION-021). 작성자 정보가 카드 좌측 아바타로 분리 — Report Card와 구조 다름<br><b>선택자</b> <code>.sv-item .sv-body .sv-auth .sv-title .sv-sum .sv-tagr .sv-acts</code></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Card / Wiki Interest</span><span class="sp"></span><span class="pri p2">P2</span><span class="pri">사용 1개 파일</span></div>
+    <div class="cmp-b" style="max-width:720px;">
+      <div class="wcard">
+        <div class="wc-top"><span class="wc-name">원/달러 환율</span><span class="pin">고정됨</span><span class="wsrc llm">◈ LLM 추론</span><span class="conf">신뢰도 91%</span><span class="sp" style="flex:1"></span><span class="btn sm">수정하기</span></div>
+        <div class="wc-lbl">AI는 이렇게 이해했어요</div>
+        <ul class="wc-why">
+          <li><b>‘환전 수수료 비교’</b> 등 3건을 저장했어요</li>
+          <li>환율 기사를 최근 12회 열람했어요</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>Source=LLM|Manual</code> · <code>State=Active|Paused(.wcard.paused)</code> · <b>선택자</b> <code>.wcard .wc-top .wc-name .pin .wsrc .conf .wc-why</code></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Item / Notification</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 1개 파일</span></div>
+    <div class="cmp-b" style="max-width:700px;">
+      <div class="ntf unread"><div>브리핑 도착 · 오늘 아침 5건을 정리했어요</div></div>
+      <div class="ntf cond"><div>조건 달성 · ‘원/달러 환율’ 트리거(±0.5%) 충족</div></div>
+      <div class="ntf soc"><div>소셜 · macro_watcher 님이 회원님을 팔로우했어요</div></div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>Type=Briefing|Condition|Social</code> · <code>Read=Unread|Read</code> · <b>선택자</b> <code>.ntf .ntf.unread .ntf.cond .ntf.soc</code></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Item / Search Result</span><span class="sp"></span><span class="pri p2">P2</span><span class="pri">사용 1개 파일</span></div>
+    <div class="cmp-b" style="max-width:700px;">
+      <div class="kb-card">
+        <div class="krow1"><div class="t">미 CPI 발표 전날 밤, 채권시장이 먼저 움직인 이유</div></div>
+        <div class="s">검색 결과 요약 — 보관함/지식창고 카드와 동일 구조를 재사용</div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>중복 구현:</b> search.html의 결과 아이템은 <code>.sv-*</code>/<code>.kb-card</code> 구조를 재사용합니다 → <b>Knowledge Card Variant</b>로 흡수 권장(Merge Audit)</div>
+  </div>
+
+  <!-- ============ 09 FEEDBACK ============ -->
+  <h2><span class="n">09</span>Feedback / State</h2>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Modal</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 17개 파일</span></div>
+    <div class="cmp-b">
+      <div class="modal" style="position:static;box-shadow:0 24px 60px rgba(10,12,15,.28);max-width:440px;">
+        <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx">✕</span></div>
+        <p class="ms">저장하거나, 지금 바로 분석을 요청할 수 있어요.</p>
+        <input type="text" placeholder="링크 또는 메모">
+        <div class="mfoot"><span class="btn">취소</span><span class="btn signal">추가하기</span></div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>Size</b> width 380 / 400 / 440 (3값) · padding 22 24 · radius 16 · shadow modal<br>
+      <b>Variant</b> <code>Type=Form|Confirm|Guest Signup|Share</code> · <code>Width=380|400|440</code><br>
+      <b>실제 모달 목록</b> 관심자료(am) · 가입 유도(guest) · 공유(sh) · 프로필 편집(pe) · 이메일/비번/탈퇴(em·pw·del) · 관심사 추가(ob) · Wiki 수정(wk) · 조건 달성(cond) · 팔로워(ff) · Admin 상세/확인/소스등록<br>
+      <b>Confirmation Dialog</b> = admin <code>#au-confirm</code> + 설정 탈퇴(del) — 제품에도 존재</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Modal / Guest Signup</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 2개 파일(home 2종)</span></div>
+    <div class="cmp-b">
+      <div class="modal" style="position:static;box-shadow:0 24px 60px rgba(10,12,15,.28);max-width:400px;text-align:center;">
+        <div style="font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.01em;">여기서부터는 계정이 필요해요</div>
+        <div style="font-size:13px;color:var(--ink-mid);line-height:1.65;margin-top:8px;">보관·반응·팔로우는 시작하기 후에 이용할 수 있어요.<br>내일 아침, 첫 브리핑이 도착해요.</div>
+        <div style="display:flex;gap:9px;justify-content:center;margin-top:20px;">
+          <span class="btn">로그인</span><span class="btn signal">시작하기</span>
+        </div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>실제 제품 UI</b>(<code>#guest-modal</code>) — 비로그인 사용자가 보관·반응 시도 시 노출. <b>제거된 guest 검수 시안 블록과 다른 것</b>이며 UI Kit에 포함합니다.</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Toast</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 24개 파일</span></div>
+    <div class="cmp-b">
+      <div class="up-toast" style="position:static;transform:none;display:inline-block;">보관함에 저장했어요</div>
+      <div class="mini">.up-toast (전역) · .sv-toast (보관함 실행취소 — 액션 포함)</div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>Type=Message|Undo</code> · 3초 후 자동 숨김(JS) · <b>선택자</b> <code>.up-toast .sv-toast</code></div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">State / Loading · Empty · Error</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 8개 파일</span></div>
+    <div class="cmp-b">
+      <div class="pstates" style="grid-template-columns:repeat(3,1fr);">
+        <div class="pstate">
+          <span class="tag">로딩</span>
+          <span class="skl" style="width:100%;height:13px;"></span>
+          <span class="skl" style="width:100%;height:26px;"></span>
+          <span class="skl" style="width:70%;height:26px;margin-bottom:0;"></span>
+        </div>
+        <div class="pstate center">
+          <span class="tag">빈 데이터</span>
+          <span class="pt2">아직 데이터가 없습니다</span>
+          <span class="ps2">수집 작업을 실행하면<br>결과를 확인할 수 있습니다.</span>
+        </div>
+        <div class="pstate center">
+          <span class="tag">에러</span>
+          <span class="pt2">데이터를 불러오지 못했습니다</span>
+          <span class="pa"><span class="btn signal sm">다시 시도</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>Variant</b> <code>State=Loading|Empty|Error|Permission|Analyzing</code> — 권한없음·분석중은 <code>variants/report-detail-image-states.html</code>에 존재<br>
+      <b>이미지 상태</b> <code>.istate.load</code>(skeleton) · <code>.istate.fail</code>(재시도) — 별도 Component<br>
+      <b>Skeleton</b> <code>.skl</code> = 재사용 원자 컴포넌트 (P0)</div>
+  </div>
+
+  <!-- ============ 10 PROFILE / SOCIAL ============ -->
+  <h2><span class="n">10</span>Profile / Social</h2>
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Avatar · Identity · Follow · Reaction · Stat</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">Avatar 19개 파일</span></div>
+    <div class="cmp-b">
+      <div class="row" style="margin-bottom:18px;">
+        <span class="pav">MW</span><span class="pav me">나</span><span class="nav-avatar">나</span>
+        <div>
+          <div class="pname">macro_watcher <span class="h">@macro_w</span></div>
+          <div class="pmeta">오전 7:41 · 공개 브리핑</div>
+        </div>
+        <span class="btn signal sm">팔로우</span>
+        <span class="btn following sm">팔로잉</span>
+      </div>
+      <div class="pstats" style="max-width:420px;">
+        <div class="pstat"><b>128</b><span>브리핑</span></div>
+        <div class="pstat"><b>342</b><span>팔로워</span></div>
+        <div class="pstat"><b>89</b><span>팔로잉</span></div>
+        <div class="pstat"><b>23</b><span>보관</span></div>
+      </div>
+      <div class="pacts" style="max-width:420px;margin-top:14px;">
+        <span class="pact saved">⚑ <b>보관됨</b></span><span class="pact"><b>32</b></span><span class="pact">♡ <b>128</b></span><span class="pact">↗ 공유</span>
+      </div>
+    </div>
+    <div class="cmp-f">
+      <b>Avatar</b> <code>.pav</code>(38) · <code>.pav.me</code>(wash) · <code>.nav-avatar</code>(34 — <b>Global Nav "내 프로필" 트리거, 13개 화면에서 사용</b>) · <code>.pavatar-lg</code>(90, 프로필 헤더) → Variant <code>Size=34|38|90</code> · <code>Type=Other|Me</code><br>
+      <b>Follow</b> <code>.btn.signal</code> ↔ <code>.btn.following</code>(hover 시 언팔로우 색) → Variant <code>State=Follow|Following</code><br>
+      <b>Reaction Row</b> <code>.pacts .pact .pact.saved .pact.more</code> → Variant <code>Saved=Default|Saved</code><br>
+      <b>Comment</b> <code>.cmt</code>(3파일) · <b>Visibility Control</b> <code>.dpill</code> + 공유 모달의 공개 전환</div>
+  </div>
+
+  <!-- ============ 11 DATA / REPORT ============ -->
+  <h2><span class="n">11</span>Data / Report</h2>
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Source Trust · Why This · Metadata · Markdown</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">상세 계열 3개 파일</span></div>
+    <div class="cmp-b" style="max-width:760px;">
+      <div class="block" style="margin-bottom:14px;">
+        <div class="bt">출처 <span class="cnt">3건</span></div>
+        <div class="srcrow">
+          <span class="no2">[1]</span><span class="dot"></span>
+          <div style="flex:1;"><div class="sn">한국은행 — 외환시장 동향 공시</div><div class="pub">한국은행 · 2026-07-09 05:10</div></div>
+          <span class="stp">공식 발표</span><span class="go">원문 열기 ↗</span>
+        </div>
+        <div class="srcrow">
+          <span class="no2">[2]</span><span class="dot mid"></span>
+          <div style="flex:1;"><div class="sn">연합뉴스 — 달러 약세 전환</div><div class="pub">연합뉴스 · 2026-07-09 06:02</div></div>
+          <span class="stp">언론</span><span class="go">원문 열기 ↗</span>
+        </div>
+      </div>
+      <div class="dmeta" style="margin-bottom:12px;">오늘 오전 7:00 생성 · 밤사이 수집 42건 중 선별 <span class="dot"></span> <b class="ok">● 신뢰도 높음</b></div>
+      <div class="reason"><span class="rd"></span>왜 나에게 왔나: 관심사 <b>‘원/달러 환율’</b> 트리거 충족</div>
+    </div>
+    <div class="cmp-f">
+      <b>Source Trust Row</b> <code>.srcrow .no2 .dot(.mid) .sn .pub .stp .go</code> → Variant <code>Trust=Official|Press|Community</code>(dot 색)<br>
+      <b>Report Metadata</b> <code>.dmeta</code> · <b>Briefing Status</b> <code>.today .th</code> · <b>Trigger Status</b> <code>.side-foot</code>("트리거 9개 감시 중")<br>
+      <b>Markdown Viewer</b> <code>.md</code> (h2/p/ul/table/blockquote/code) — Figma는 <b>Text Style 조합</b>으로만 등록, Component화 불필요<br>
+      <b>Data Number</b> <code>.pv-row .n</code>(Space Grotesk 11px) · Landing <code>.lp-ticker .n</code>(30px)는 Marketing 전용</div>
+  </div>
+
+  <!-- ============ 12 ADMIN ============ -->
+  <h2><span class="n">12</span>Admin Rough <span style="font-size:11px;color:var(--err);font-weight:600;">— Reference Only</span></h2>
+  <p class="sub">Admin은 <b>시각 디자인 미확정(Rough)</b>입니다. 아래 요소는 구조 참고용이며 <b>Product Final 공통 컴포넌트로 승격하지 않습니다.</b> Figma에서는 <code>06_Admin_Rough</code> 페이지에만 배치합니다.</p>
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Admin / Table · Status Badge · Stat Card · 403</span><span class="sp"></span><span class="pri ref">REFERENCE</span><span class="pri">admin 6개 파일</span></div>
+    <div class="cmp-b">
+      <div class="row" style="margin-bottom:16px;">
+        <div class="adx-card"><div class="l">전체 가입자</div><div class="v">1,248명</div><div class="d">전일 대비 +24명</div></div>
+        <div class="adx-card"><div class="l">브리핑 오픈율 · 북극성 지표</div><div class="v">68.4%</div><div class="d">전주 대비 +1.2%p</div></div>
+      </div>
+      <table class="adx-table" style="margin-bottom:16px;">
+        <tr><th>사용자</th><th>이메일</th><th>플랜</th><th>상태</th><th>관리</th></tr>
+        <tr><td>김여진 <span style="color:var(--ink-dim)">@yeojin</span></td><td>yeojin@example.com</td><td>Free</td><td><span class="adx-badge ok">활성</span></td><td><span class="btn sm">상세</span></td></tr>
+        <tr><td>Macro Brief <span style="color:var(--ink-dim)">@macro_brief</span></td><td>macrobrief@example.com</td><td>Free</td><td><span class="adx-badge">비활성</span></td><td><span class="btn sm">상세</span></td></tr>
+      </table>
+      <div class="adx-403">
+        <div class="code">403</div>
+        <div class="t">관리자 권한이 없습니다</div>
+        <div class="s">로그인은 되어 있으나 관리자 권한이 없습니다. (미로그인은 401 — 다른 화면)</div>
+      </div>
+    </div>
+    <div class="cmp-f"><b>추출 대상</b> Table · Filter(<code>.fchip</code> 재사용) · Status Badge(<code>.abadge</code>) · Stat Card(<code>.acard</code>) · 403 State<br>
+      <b>Pagination</b> — <span style="color:var(--err)">원본에 구조 없음</span>. 임의 생성하지 않았습니다(추후 Figma Wireframe 필요)<br>
+      <b>주의</b> Admin <code>.abadge</code>와 Product <code>.kbadge</code>/<code>.dpill</code>은 <b>다른 컴포넌트</b> — 통합 금지</div>
+  </div>
+
+  <!-- ============ 13 VARIANT MAPPING ============ -->
+  <h2><span class="n">13</span>Figma Variant Mapping</h2>
+  <table class="k">
+    <tr><th>Figma Component</th><th>Variant Properties (실제 존재값만)</th><th>Source</th></tr>
+    <tr><td><code>Button / Product</code></td><td><code>Type=Signal|Default|Ghost|Following</code> · <code>Size=Default|Small</code> · <code>State=Default|Disabled</code></td><td>base.css .btn*</td></tr>
+    <tr><td><code>Button / Marketing</code></td><td><code>Type=Signal|Secondary|Ghost</code> · <code>Size=Default|Big</code></td><td>landing .lp-btn*</td></tr>
+    <tr><td><code>Navigation / Product</code></td><td><code>Notification=None|Unread</code> · <code>Theme=Light|Dark</code></td><td>base.css .nav</td></tr>
+    <tr><td><code>Navigation / Landing</code></td><td>(Variant 없음 — 단일)</td><td>landing .lp-nav</td></tr>
+    <tr><td><code>Card / Report</code></td><td><code>Media=None|Single|Grid</code> · <code>Author=Self|Other</code> · <code>Saved=Default|Saved</code> · <code>Visibility=Private|Public</code></td><td>variants/report-card-*.html</td></tr>
+    <tr><td><code>Card / Knowledge</code></td><td><code>Type=Briefing|OnDemand</code> · <code>Layout=List|Grid</code>(지식창고 보기 방식)</td><td>.kb-card · .kb-cards.grid</td></tr>
+    <tr><td><code>Card / Saved</code></td><td><code>State=Default|Removing</code>(<code>.sv-item.removing</code>)</td><td>saved.html</td></tr>
+    <tr><td><code>Card / Wiki Interest</code></td><td><code>Source=LLM|Manual</code> · <code>State=Active|Paused</code></td><td>wiki.html</td></tr>
+    <tr><td><code>Item / Notification</code></td><td><code>Type=Briefing|Condition|Social</code> · <code>Read=Unread|Read</code></td><td>notifications.html</td></tr>
+    <tr><td><code>Modal</code></td><td><code>Type=Form|Confirm|Guest Signup|Share</code> · <code>Width=380|400|440</code></td><td>product 12파일</td></tr>
+    <tr><td><code>Badge / Status</code></td><td><code>Level=High|Mid|None</code>(신뢰도) — Admin <code>.abadge</code>는 별도 Component</td><td>상세·보관함 / admin</td></tr>
+    <tr><td><code>Chip / Filter</code></td><td><code>State=Default|Selected</code> · <code>Type=Plain|Dropdown</code></td><td>.fchip .fchip.dd</td></tr>
+    <tr><td><code>Chip / Interest</code></td><td><code>State=Default|Selected</code> · <code>Type=Preset|Add|Custom</code></td><td>onboarding</td></tr>
+    <tr><td><code>Input / Search</code></td><td><code>Placement=Nav|In-page</code> · <code>State=Default|Focus</code></td><td>.nav-search .kb-search</td></tr>
+    <tr><td><code>Avatar</code></td><td><code>Size=34|38|90</code> · <code>Type=Other|Me</code></td><td>.nav-avatar .pav .pav.me .pavatar-lg</td></tr>
+    <tr><td><code>State / Screen</code></td><td><code>State=Loading|Empty|Error|Permission|Analyzing</code></td><td>.pstate · variants/report-detail-image-states</td></tr>
+  </table>
+
+  <!-- ============ 14 MERGE AUDIT ============ -->
+  <h2><span class="n">14</span>Duplicate / Merge Audit</h2>
+  <table class="k">
+    <tr><th>판정</th><th>대상</th><th>근거</th></tr>
+    <tr><td><b style="color:var(--ok)">합쳐도 됨</b></td><td>Report Card 3종 → <code>Card / Report</code> + <code>Media</code> Variant</td><td>구조·Props 동일, 미디어 영역만 다름</td></tr>
+    <tr><td><b style="color:var(--ok)">합쳐도 됨</b></td><td>Search Result Item → <code>Card / Knowledge</code> Variant</td><td>search.html이 동일 마크업 재사용 (중복 구현)</td></tr>
+    <tr><td><b style="color:var(--ok)">합쳐도 됨</b></td><td>nav-search / kb-search → <code>Input / Search</code> + <code>Placement</code></td><td>역할 동일, 크기만 다름</td></tr>
+    <tr><td><b style="color:var(--err)">합치지 말 것</b></td><td>Landing Marketing Button ↔ Product Button</td><td>크기뿐 아니라 glow·hover transform·radius가 다름 (§04)</td></tr>
+    <tr><td><b style="color:var(--err)">합치지 말 것</b></td><td>Knowledge Card ↔ Report Card</td><td>제목 15 vs 18px · 액션(MD 복사 vs 반응) · 정보 구조 다름</td></tr>
+    <tr><td><b style="color:var(--err)">합치지 말 것</b></td><td>Marketing Section Display(48px) ↔ UI Section Label(14.5px)</td><td>이름만 유사, 계층 완전히 다름</td></tr>
+    <tr><td><b style="color:var(--err)">합치지 말 것</b></td><td>Landing Orb ↔ Image Component</td><td>Canvas 모션 — Static Image + Motion Spec</td></tr>
+    <tr><td><b style="color:var(--err)">합치지 말 것</b></td><td>Admin Rough Card/Badge ↔ Product Final Card/Badge</td><td>Rough(디자인 미확정) — 승격 금지</td></tr>
+    <tr><td><b style="color:var(--err)">합치지 말 것</b></td><td>Reason Chip ↔ Topic Tag</td><td>개인화 근거는 제품 핵심 의미 — 태그와 역할 다름</td></tr>
+  </table>
+
+  <!-- ============ 15 MISSING STATE ============ -->
+  <h2><span class="n">15</span>Missing State Audit</h2>
+  <table class="k">
+    <tr><th>등급</th><th>누락</th><th>근거</th></tr>
+    <tr><td style="color:var(--err)"><b>Critical</b></td><td>모든 버튼·칩·탭·메뉴에 <b>Keyboard Focus 상태 없음</b></td><td><code>:focus</code>는 input 계열 4곳뿐, <code>:focus-visible</code> 0건</td></tr>
+    <tr><td style="color:var(--err)"><b>Critical</b></td><td>텍스트 심볼/이모지 아이콘의 접근성 라벨 없음</td><td>⚑ ♡ ↗ ⋯ 👍 등 14종 — 스크린리더 미대응</td></tr>
+    <tr><td><b>Before Figma</b></td><td>Button <b>Loading 상태 없음</b> (제품)</td><td>Admin 재실행 버튼의 텍스트 교체만 존재 → 제품 버튼에 Loading Variant 만들지 않음</td></tr>
+    <tr><td><b>Before Figma</b></td><td>Button <b>Disabled 불일치</b></td><td><code>.btn.dis</code> CSS 존재 · HTML 사용 0건 (온보딩 계속하기는 JS로 클래스 토글)</td></tr>
+    <tr><td><b>Before Figma</b></td><td><b>Destructive 버튼 클래스 없음</b></td><td>Admin 비활성화 버튼이 인라인 <code>border-color:var(--err-line)</code>로만 처리</td></tr>
+    <tr><td><b>Before Figma</b></td><td>신뢰도 배지가 <b>클래스 없이 인라인 색</b></td><td><code>style="color:var(--ok)"</code> — Badge Component화 시 클래스 필요</td></tr>
+    <tr><td><b>In Figma</b></td><td>Empty State가 화면마다 개별 마크업</td><td>보관함 <code>.sv-empty</code> / 상태 샘플 <code>.pstate.center</code> — Figma에서 1개 Component로 수렴</td></tr>
+    <tr><td><b>Reference</b></td><td>Admin Pagination 없음</td><td>원본 구조 미존재 — 임의 생성하지 않음</td></tr>
+    <tr><td><b>Decision</b></td><td>Landing Dark · Product Reduced-motion</td><td>Foundations §09 · §10</td></tr>
+  </table>
+
+  <div class="note warn"><b>수집하지 않은 것 (의도적):</b> 제거된 guest 검수 시안 블록(<code>.state-wrap</code> + <code>비로그인 첫 방문</code>) · <code>prototype/auth-google-redirect.html</code>의 <code>.prototype-controls</code> · MotionOrb Canvas 레이어 · 미사용 CSS 클래스 70종(<code>.ptabs .stopchip .wtoggle .savedrow</code> 등).</div>
+
+</div>
+</div>
+</body></html>

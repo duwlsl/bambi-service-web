@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 알림</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-notif">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" style="background:var(--wash);border-color:var(--wash-strong);color:var(--signal-ink);"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="feed">
+          <div class="ntf-head">
+            <div class="hl">
+              <h1>알림</h1>
+              <div class="ssub">보고서 사이에 발생한 중요한 변화를 알려드려요. <a class="link" data-screen="settings" style="font-size:12px;">알림 설정</a></div>
+            </div>
+            <span class="link" style="font-size:12.5px;color:var(--ink-dim);cursor:pointer;">모두 읽음</span>
+          </div>
+
+          <div class="tabs" style="position:static;">
+            <div class="tab on" data-ntab="all"><span class="tl">전체</span></div>
+            <div class="tab" data-ntab="cond"><span class="tl">조건 달성</span></div>
+          </div>
+
+          <div class="ntf-group">오늘 · 7월 10일</div>
+
+          <div class="ntf cond unread" data-cm-open>
+            <span class="nico"></span>
+            <div class="nbody">
+              <div class="nt">원/달러 환율이 설정 조건을 벗어났어요.</div>
+              <div class="nm"><span class="key">전일 대비 −0.8%</span><span>·</span><span>조건 달성</span><span>·</span><span>오전 5:12</span></div>
+            </div>
+            <span class="harr">→</span>
+            <span class="udot"></span>
+          </div>
+
+          <div class="ntf unread" data-screen="detail">
+            <span class="nico"><svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="7" cy="7" r="2.6" fill="currentColor" stroke="none"></circle><line x1="7" y1="1.2" x2="7" y2="2.6"></line><line x1="7" y1="11.4" x2="7" y2="12.8"></line><line x1="1.2" y1="7" x2="2.6" y2="7"></line><line x1="11.4" y1="7" x2="12.8" y2="7"></line></svg></span>
+            <div class="nbody">
+              <div class="nt">오늘 아침 브리핑이 도착했어요.</div>
+              <div class="nm"><span>42건 중 5건 선별</span><span>·</span><span>아침 브리핑</span><span>·</span><span>오전 7:00</span></div>
+            </div>
+            <span class="harr">→</span>
+            <span class="udot"></span>
+          </div>
+
+          <div class="ntf" data-screen="detail">
+            <span class="nico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.3"></circle><path d="M8 4.8V8l2.2 1.6" stroke-linecap="round"></path></svg></span>
+            <div class="nbody">
+              <div class="nt">‘RTX 50 시리즈’ 분석이 완료됐어요.</div>
+              <div class="nm"><span>온디맨드</span><span>·</span><span>오후 2:12</span></div>
+            </div>
+            <span class="harr">→</span>
+          </div>
+
+          <div class="ntf-group">어제 · 7월 9일</div>
+
+          <div class="ntf cond" data-cm-open>
+            <span class="nico"></span>
+            <div class="nbody">
+              <div class="nt">관심 노트북이 설정 조건에 도달했어요.</div>
+              <div class="nm"><span class="key">3개월 최저가 근접</span><span>·</span><span>조건 달성</span><span>·</span><span>오후 3:48</span></div>
+            </div>
+            <span class="harr">→</span>
+          </div>
+
+          <div class="ntf" data-screen="uprofile">
+            <span class="nico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg></span>
+            <div class="nbody">
+              <div class="nt">FX Daily님이 브리핑을 공개했어요 — “환전 타이밍, 트리거로 잡는 법”</div>
+              <div class="nm"><span>브리핑 알림</span><span>·</span><span>오후 10:05</span></div>
+            </div>
+            <span class="harr">→</span>
+          </div>
+
+          <div class="ntf soc" data-screen="detail">
+            <span class="nico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 13.2s-5.4-3.1-5.4-6.7C2.6 4.6 4 3.4 5.7 3.4c1 0 1.9.5 2.3 1.3.4-.8 1.3-1.3 2.3-1.3 1.7 0 3.1 1.2 3.1 3.1 0 3.6-5.4 6.7-5.4 6.7z" stroke-linejoin="round"></path></svg></span>
+            <div class="nbody">
+              <div class="nt">value_kim님이 내 공개 브리핑에 좋아요를 눌렀어요.</div>
+              <div class="nm"><span>소셜</span><span>·</span><span>오후 9:30</span></div>
+            </div>
+            <span class="harr">→</span>
+          </div>
+
+          <div class="ntf soc" data-screen="detail">
+            <span class="nico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg></span>
+            <div class="nbody">
+              <div class="nt">value_kim님이 내 브리핑에 댓글을 남겼어요.</div>
+              <div class="nm"><span>“트리거 폭 저도 좁혀봐야겠네요”</span><span>·</span><span>소셜</span><span>·</span><span>오후 9:32</span></div>
+            </div>
+            <span class="harr">→</span>
+          </div>
+
+          <div class="ntf soc" data-screen="uprofile">
+            <span class="nico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="6.5" cy="5.5" r="2.6"></circle><path d="M2 13.4c.6-2.3 2.4-3.6 4.5-3.6s3.9 1.3 4.5 3.6" stroke-linecap="round"></path><path d="M12 5.5v4M14 7.5h-4" stroke-linecap="round"></path></svg></span>
+            <div class="nbody">
+              <div class="nt">fx_daily님이 나를 팔로우하기 시작했어요.</div>
+              <div class="nm"><span>소셜</span><span>·</span><span>오후 7:15</span></div>
+            </div>
+            <span class="harr">→</span>
+          </div>
+
+          <div class="feed-end">
+            <div class="l">최근 7일 알림을 모두 봤어요</div>
+            <div class="s">알림 조건은 <b>LLM Wiki</b>에서, 수신 방식은 <b>설정</b>에서 관리할 수 있어요.</div>
+          </div>
+
+          <!-- 알림 상태 (샘플) -->
+          <div class="state-wrap" style="margin-top:16px;">
+            <span class="samp">화면 상태 · states</span>
+            <p class="sh">알림 화면의 조건별 상태 샘플입니다. <b>조건 달성 알림</b>은 카드를 클릭하면 이동 대신 전용 모달이 떠요 (앱 사용 중 실시간 발생 시에도 동일 모달).</p>
+            <div class="pstates">
+              <div class="pstate center">
+                <span class="tag">빈 상태</span>
+                <span class="pic"><svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg></span>
+                <span class="pt2">아직 알림이 없어요</span>
+                <span class="ps2">관심사의 알림 조건이 충족되면<br>여기로 바로 알려드릴게요.</span>
+                <span class="pa"><span class="btn signal sm" data-screen="wiki">알림 조건 보러 가기</span></span>
+              </div>
+              <div class="pstate center">
+                <span class="tag">에러</span>
+                <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="7.4"></circle><line x1="10" y1="6.4" x2="10" y2="10.8" stroke-linecap="round"></line><circle cx="10" cy="13.6" r=".9" fill="currentColor" stroke="none"></circle></svg></span>
+                <span class="pt2">알림을 불러오지 못했어요</span>
+                <span class="ps2">잠시 후 다시 시도해 주세요.</span>
+                <span class="pa"><span class="btn signal sm">다시 시도</span></span>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- RIGHT RAIL -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>알림 설정</h4>
+            <div class="rstat"><span>조건 알림</span><b class="ok">켜짐</b></div>
+            <div class="rstat"><span>브리핑 알림</span><b class="ok">켜짐</b></div>
+            <div class="side-foot" style="margin-top:11px;padding:0;"><a class="link" data-screen="settings">설정 관리 →</a></div>
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- 조건 달성 실시간 모달 (앱 사용 중 조건 충족 시 즉시 표시) -->
+      <div class="modal-bg" id="cond-modal" hidden>
+        <div class="modal" role="alertdialog" aria-modal="true" aria-label="조건 달성" style="width:420px;">
+          <div class="cm-head"><span class="cl">조건 달성 · 오전 5:12</span><span class="mx" data-cm-close>✕</span></div>
+          <div class="cm-msg">원/달러 환율이 전일 대비 <b>0.8% 하락</b>했습니다.</div>
+          <div class="cm-sec">설정한 조건</div>
+          <div class="cm-cond">전일 대비 ±0.5% 변동</div>
+          <div class="cm-sec">현재 상태</div>
+          <div class="cm-vals">
+            <div class="cv"><div class="cvl">현재 환율</div><div class="cvv">1,372.40원</div></div>
+            <div class="cv"><div class="cvl">전일 종가</div><div class="cvv">1,383.50원</div></div>
+            <div class="cv"><div class="cvl">변동률</div><div class="cvv key">−0.8%</div></div>
+          </div>
+          <div class="cm-ctx">미국 CPI 발표 이후 달러 약세가 이어지며 설정 범위를 벗어났습니다.</div>
+          <div class="cm-foot"><span class="btn" data-cm-close data-screen="wiki" id="cm-editcond">조건 수정</span><span class="btn signal" data-cm-close data-screen="kb" id="cm-gokb">관련 보고서 보기</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

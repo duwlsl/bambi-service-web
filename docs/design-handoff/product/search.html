@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 검색</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-search">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="feed">
+          <div class="kb-search" style="margin:20px 0 10px;"><span class="sico"></span><input type="text" value="환율" placeholder="브리핑, 토픽, 사용자 검색"></div>
+
+          <div class="tabs" style="position:static;">
+            <div class="tab on" data-stab="all"><span class="tl">전체</span></div>
+            <div class="tab" data-stab="report"><span class="tl">보고서</span></div>
+            <div class="tab" data-stab="user"><span class="tl">사용자</span></div>
+          </div>
+
+          <div class="kb-meta" style="margin:12px 2px 4px;">‘<b>환율</b>’ 검색 결과 · 보고서 <b>24건</b> · 사용자 <b>5명</b> · 토픽 <b>2개</b></div>
+
+          <!-- 토픽 결과 -->
+          <div class="sec-t" data-sgroup="all2">토픽</div>
+          <div class="kb-filters" data-sgroup="all2" style="margin-bottom:4px;">
+            <span class="fchip" data-screen="home">#환율</span>
+            <span class="fchip" data-screen="home">#환테크</span>
+          </div>
+
+          <!-- 사용자 결과 -->
+          <div class="sec-t" data-sgroup="user">사용자</div>
+          <div class="found" data-sgroup="user">
+            <div class="frow2">
+              <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;" data-screen="uprofile"><span class="pav">FX</span><div><div class="fn2">FX Daily</div><div class="fd2">@fx_daily · 환율과 글로벌 시장 흐름을 매일 정리 · 팔로워 1,284</div></div></div>
+              <div class="fa2"><span class="btn signal sm">팔로우</span></div>
+            </div>
+            <div class="frow2">
+              <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;" data-screen="uprofile"><span class="pav">DW</span><div><div class="fn2">Dollar Watch</div><div class="fd2">@dollar_watch · 환율과 달러 흐름 · 팔로워 862</div></div></div>
+              <div class="fa2"><span class="btn signal sm">팔로우</span></div>
+            </div>
+          </div>
+
+          <!-- 보고서 결과 -->
+          <div class="sec-t" data-sgroup="report">보고서</div>
+          <div class="sv-list" data-sgroup="report">
+            <div class="sv-item">
+              <span class="pav" data-screen="uprofile">FX</span>
+              <div class="sv-body">
+              <div class="sv-auth" data-screen="uprofile"><span class="an2">FX Daily</span><span class="ah2">@fx_daily · 7월 10일</span></div>
+              <div class="sv-title" data-screen="detail">원·달러 환율이 다시 오른 세 가지 이유</div>
+              <div class="sv-sum">달러 인덱스 반등, 수입 결제 수요, 위험 회피 심리 — 오늘 상승을 만든 요인을 데이터와 함께 봅니다.</div>
+              <div class="sv-tagr"><span class="tagm">원·달러 환율</span><span>·</span><span>출처 5건 · <span style="color:var(--ok);font-weight:600;">신뢰도 높음</span></span></div>
+              </div>
+            </div>
+            <div class="sv-item">
+              <span class="pav" data-screen="uprofile">박</span>
+              <div class="sv-body">
+              <div class="sv-auth" data-screen="uprofile"><span class="an2">박현우</span><span class="ah2">@hyunwoo_fx · 7월 9일</span></div>
+              <div class="sv-title" data-screen="detail">원·달러 환율 상승이 해외직구 가격에 반영되는 시점</div>
+              <div class="sv-sum">최근 환율 변동이 실제 해외 결제 가격과 배송비에 반영되는 과정을 소비자 관점에서 설명합니다.</div>
+              <div class="sv-tagr"><span class="tagm">원·달러 환율</span><span class="tagm">해외직구</span><span>·</span><span>출처 5건 · <span style="color:var(--ok);font-weight:600;">신뢰도 높음</span></span></div>
+              </div>
+            </div>
+            <div class="sv-item">
+              <span class="pav">나</span>
+              <div class="sv-body">
+              <div class="sv-auth"><span class="an2">내 보고서</span><span class="ah2">지식창고 · 7월 10일</span></div>
+              <div class="sv-title" data-screen="detail">원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족</div>
+              <div class="sv-sum">미 CPI 발표를 앞두고 달러가 약세로 전환, 환전 예정 시점과 관련해 확인할 만한 변동이 감지됐습니다.</div>
+              <div class="sv-tagr"><span class="tagm">원·달러 환율</span><span>·</span><span>출처 3건 · <span style="color:var(--ok);font-weight:600;">신뢰도 높음</span></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="kb-end" data-sgroup="report">검색 결과 더 보기</div>
+
+          <!-- 결과 없음 (샘플) -->
+          <div class="state-wrap" style="margin-top:16px;">
+            <span class="samp">결과 없음 · empty</span>
+            <div class="pstate center" style="min-height:180px;">
+              <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="9" r="5.6"></circle><path d="m13.2 13.2 3.6 3.6" stroke-linecap="round"></path></svg></span>
+              <span class="pt2">‘테슬라’ 결과가 없어요</span>
+              <span class="ps2">다른 검색어로 찾아보거나, 관심사로 등록하면<br>AI가 앞으로 챙겨드려요.</span>
+              <span class="pa"><span class="btn signal sm" data-screen="wiki">관심사로 등록</span></span>
+            </div>
+          </div>
+        </main>
+
+        <!-- RIGHT RAIL -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>인기 토픽</h4>
+            <div class="rchips" style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="tagm">#환율</span><span class="tagm">#미국증시</span><span class="tagm">#오픈소스LLM</span><span class="tagm">#반도체</span><span class="tagm">#환테크</span>
+            </div>
+          </div>
+          <div class="rpanel">
+            <h4>추천 사용자</h4>
+            <div class="urow" data-screen="uprofile"><span class="pav">MN</span><div class="ui"><div class="un">Market Note</div><div class="uh">@market_note · 미국 증시</div></div><span class="btn sm">팔로우</span></div>
+            <div class="urow" data-screen="uprofile"><span class="pav">MB</span><div class="ui"><div class="un">Macro Brief</div><div class="uh">@macro_brief · 거시경제</div></div><span class="btn sm">팔로우</span></div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

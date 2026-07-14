@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 지식창고</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-kb">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi on"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="feed">
+          <div class="kb-head">
+            <h1>지식창고</h1>
+          </div>
+
+          <div class="arch">
+            <div class="an"><b>128개</b>의 보고서가 차곡차곡 쌓였어요.</div>
+            <div class="as">2026년 4월부터 · 이번 주 <b>7건</b> 추가 — AI가 나를 위해 작성한 개인 보고서예요. 제목·본문·출처·메모 모두 검색돼요.</div>
+          </div>
+
+          <div class="kb-srow">
+            <div class="kb-search"><span class="sico"></span><input type="text" placeholder="지식창고에서 검색 — 예: 환율 트리거, CPI, RTX"></div>
+            <span class="kbf-btn" id="kbf-btn"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M1.5 3h11M3.5 7h7M5.5 11h3"/></svg>필터</span>
+          </div>
+
+          <div class="kbf-panel" id="kbf-panel" hidden>
+            <div class="kbf-row"><span class="fl">태그</span><span class="fchip on">전체</span><span class="fchip">#환율</span><span class="fchip">#AI</span><span class="fchip">#반도체</span><span class="fchip">#쇼핑</span></div>
+            <div class="kbf-row"><span class="fl">기간</span><span class="fchip dd">최근 30일</span></div>
+            <div class="kbf-row"><span class="fl">묶기</span><span class="kseg"><span class="ks on" data-kb-by="date">날짜별</span><span class="ks" data-kb-by="cat">카테고리별</span></span></div>
+            <div class="kbf-row"><span class="fl">보기</span><span class="kseg"><span class="ks on" data-kb-view="list" title="리스트 보기"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><line x1="1.5" y1="3" x2="12.5" y2="3"/><line x1="1.5" y1="7" x2="12.5" y2="7"/><line x1="1.5" y1="11" x2="12.5" y2="11"/></svg></span><span class="ks" data-kb-view="grid" title="그리드 보기"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="1.5" width="4.6" height="4.6" rx="1"/><rect x="7.9" y="1.5" width="4.6" height="4.6" rx="1"/><rect x="1.5" y="7.9" width="4.6" height="4.6" rx="1"/><rect x="7.9" y="7.9" width="4.6" height="4.6" rx="1"/></svg></span></span></div>
+            <div class="kbf-div"></div>
+            <div class="kbf-row" style="margin-bottom:0;"><span class="fl">내보내기</span><span class="btn sm" title="마크다운 원문 복사">전체 내보내기 (.md)</span><span class="kb-more" style="cursor:default;color:var(--ink-dim);font-weight:500;">보고서 원문(.md)을 그대로 내려받아요</span></div>
+          </div>
+
+          <div id="kb-list">
+            <div class="kb-by" data-kb-by="date">
+            <div class="kb-group"><span>오늘 · 7월 10일</span><span class="gc">보고서 2건</span></div>
+            <div class="kb-cards">
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">미 CPI 발표를 앞두고 달러가 약세로 전환, 환전 예정 시점과 관련해 확인할 만한 변동이 감지됐습니다.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 3건</span><span>·</span><span>오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">RTX 50 시리즈 국내 출시가 정리 — 관심 GPU 가격 추적 시작</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">엔비디아 신형 GPU 국내 가격이 공개됐습니다. 목표가 대비 현재 위치를 정리했어요.</div>
+                <div class="m"><span class="kbadge od">온디맨드</span><span>#쇼핑</span><span>·</span><span>출처 2건</span><span>·</span><span>오후 2:12</span></div>
+              </div>
+            </div>
+            <div class="kb-group"><span>어제 · 7월 9일</span><span class="gc">보고서 2건</span></div>
+            <div class="kb-cards">
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">오픈소스 LLM 릴리즈 2건 — 벤치마크 갱신, 로컬 구동 요건 완화</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">새 모델 2종이 공개됐습니다. 사용 중인 스택 기준으로 적용 가능성을 정리했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span class="kbadge" style="color:var(--ok);border-color:rgba(52,166,106,.3);background:rgba(52,166,106,.08);">공개</span><span>#AI</span><span>·</span><span>출처 4건</span><span>·</span><span>♡ 54 · 댓글 2 · 조회 1.1만</span><span>·</span><span>오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">유로 강세 지속 — 분할 환전 2차 실행 시점 점검</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">달러 인덱스 하락이 이어지며 유로가 강세입니다. 설정하신 분할 환전 기준으로 2차 시점을 점검했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 2건</span><span>·</span><span>오전 7:00</span></div>
+              </div>
+            </div>
+            <div class="kb-group"><span>7월 8일</span><span class="gc">보고서 2건</span></div>
+            <div class="kb-cards">
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">반도체 수출 규제 변화 — 보유 종목 영향 점검</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">규제 발표 이후 관련 종목 흐름과 증권가 해석을 모았습니다. 보유 종목 기준 영향은 제한적.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#반도체</span><span>·</span><span>출처 5건</span><span>·</span><span>오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">AI 코딩 도구 요금 개편 — 사용 중인 플랜 영향 비교</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">주요 AI 코딩 도구 2곳이 요금제를 바꿨습니다. 현재 플랜 기준 유지/이동 시나리오를 비교했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#AI</span><span>·</span><span>출처 3건</span><span>·</span><span>오전 7:00</span></div>
+              </div>
+            </div>
+            </div>
+            <div class="kb-by" data-kb-by="cat" hidden>
+            <div class="kb-group"><span>#환율 · 41건</span><span class="kb-more">+37건 더보기</span></div>
+            <div class="kb-cards">
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">미 CPI 발표를 앞두고 달러가 약세로 전환, 환전 예정 시점과 관련해 확인할 만한 변동이 감지됐습니다.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 3건</span><span>·</span><span>7월 10일 오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">유로 강세 지속 — 분할 환전 2차 실행 시점 점검</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">달러 인덱스 하락이 이어지며 유로가 강세입니다. 설정하신 분할 환전 기준으로 2차 시점을 점검했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 2건</span><span>·</span><span>7월 9일 오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">주간 환율 리뷰 — 트리거 ±0.5% 재조정 제안</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">이번 주 변동 폭 기준으로 현재 트리거가 자주 걸렸어요. 조정 시나리오 두 가지를 정리했습니다.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 4건</span><span>·</span><span>7월 6일 오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">미 고용지표 발표 임박 — 환율 변동성 주의 구간</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">비농업 고용 발표를 앞두고 시장 예상이 엇갈립니다. 발표 전후 체크포인트를 정리했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#환율</span><span>·</span><span>출처 3건</span><span>·</span><span>7월 4일 오전 7:00</span></div>
+              </div>
+            </div>
+            <div class="kb-group"><span>#AI · 37건</span><span class="kb-more">+33건 더보기</span></div>
+            <div class="kb-cards">
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">오픈소스 LLM 릴리즈 2건 — 벤치마크 갱신, 로컬 구동 요건 완화</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">새 모델 2종이 공개됐습니다. 사용 중인 스택 기준으로 적용 가능성을 정리했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span class="kbadge" style="color:var(--ok);border-color:rgba(52,166,106,.3);background:rgba(52,166,106,.08);">공개</span><span>#AI</span><span>·</span><span>출처 4건</span><span>·</span><span>♡ 54 · 댓글 2 · 조회 1.1만</span><span>·</span><span>7월 9일 오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">AI 코딩 도구 요금 개편 — 사용 중인 플랜 영향 비교</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">주요 AI 코딩 도구 2곳이 요금제를 바꿨습니다. 현재 플랜 기준 유지/이동 시나리오를 비교했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#AI</span><span>·</span><span>출처 3건</span><span>·</span><span>7월 8일 오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">로컬 LLM 구동 요건 비교 — 내 장비 기준 가능 모델</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">보유하신 GPU 메모리 기준으로 구동 가능한 모델과 양자화 옵션을 정리했습니다.</div>
+                <div class="m"><span class="kbadge od">온디맨드</span><span>#AI</span><span>·</span><span>출처 2건</span><span>·</span><span>7월 5일 오후 9:41</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">AI 규제 법안 상임위 통과 — 개인 개발자 영향 요약</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">법안 주요 조항 중 개인·소규모 서비스에 해당하는 부분만 추려서 정리했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#AI</span><span>·</span><span>출처 5건</span><span>·</span><span>7월 3일 오전 7:00</span></div>
+              </div>
+            </div>
+            <div class="kb-group"><span>#쇼핑 · 22건</span><span class="kb-more">+20건 더보기</span></div>
+            <div class="kb-cards">
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">RTX 50 시리즈 국내 출시가 정리 — 관심 GPU 가격 추적 시작</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">엔비디아 신형 GPU 국내 가격이 공개됐습니다. 목표가 대비 현재 위치를 정리했어요.</div>
+                <div class="m"><span class="kbadge od">온디맨드</span><span>#쇼핑</span><span>·</span><span>출처 2건</span><span>·</span><span>7월 10일 오후 2:12</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">관심 노트북 12% 할인 — 3개월 최저가 도달</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">추적 중인 모델이 목표가 아래로 내려왔어요. 판매처별 가격과 재고를 비교했습니다.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#쇼핑</span><span>·</span><span>출처 2건</span><span>·</span><span>7월 7일 오전 7:00</span></div>
+              </div>
+            </div>
+            <div class="kb-group"><span>#반도체 · 18건</span><span class="kb-more">+16건 더보기</span></div>
+            <div class="kb-cards">
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">반도체 수출 규제 변화 — 보유 종목 영향 점검</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">규제 발표 이후 관련 종목 흐름과 증권가 해석을 모았습니다. 보유 종목 기준 영향은 제한적.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#반도체</span><span>·</span><span>출처 5건</span><span>·</span><span>7월 8일 오전 7:00</span></div>
+              </div>
+              <div class="kb-card">
+                <div class="krow1"><div class="t" data-screen="detail">HBM 수요 전망 상향 — 관련 종목 실적 일정 정리</div><span class="copy" title="마크다운 원문 복사">⧉ MD 복사</span></div>
+                <div class="s">메모리 업황 전망이 상향됐습니다. 보유 종목의 실적 발표 일정과 함께 정리했어요.</div>
+                <div class="m"><span class="kbadge">아침 브리핑</span><span>#반도체</span><span>·</span><span>출처 3건</span><span>·</span><span>7월 5일 오전 7:00</span></div>
+              </div>
+            </div>
+            </div>
+          </div>
+
+          <div class="kb-end">전체 128건 중 최근 6건 · 스크롤로 더 보기</div>
+
+          <!-- 지식창고 상태 (샘플) -->
+          <div class="state-wrap" style="margin-top:16px;">
+            <span class="samp">화면 상태 · states</span>
+            <p class="sh">지식창고 화면의 조건별 상태 샘플입니다. (빈 상태 / 검색 결과 없음 / 로딩 / 에러)</p>
+            <div class="pstates">
+              <div class="pstate center">
+                <span class="tag">빈 상태 (첫 사용)</span>
+                <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="2"></rect><path d="M3 8.5h14M7.5 12h5"></path></svg></span>
+                <span class="pt2">아직 쌓인 보고서가 없어요</span>
+                <span class="ps2">첫 브리핑이 완성되면 여기에 자동으로 쌓여요.<br>지금 만들고 있으니 잠시만요.</span>
+                <span class="pa"><span class="btn ghost sm" data-screen="home">홈 피드 보기</span></span>
+              </div>
+              <div class="pstate center">
+                <span class="tag">검색 결과 없음</span>
+                <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="9" r="5.6"></circle><path d="m13.2 13.2 3.6 3.6" stroke-linecap="round"></path></svg></span>
+                <span class="pt2">‘테슬라’ 결과가 없어요</span>
+                <span class="ps2">아직 관련 보고서를 받은 적이 없어요.<br>관심사로 등록하면 앞으로 챙겨드려요.</span>
+                <span class="pa"><span class="btn signal sm" data-screen="wiki">관심사로 등록</span><span class="btn ghost sm">지금 분석 요청</span></span>
+              </div>
+              <div class="pstate">
+                <span class="tag">로딩</span>
+                <span class="skl" style="width:56%;height:16px;"></span>
+                <span class="skl" style="width:100%;height:12px;"></span>
+                <span class="skl" style="width:88%;height:12px;margin-bottom:16px;"></span>
+                <span class="skl" style="width:52%;height:16px;"></span>
+                <span class="skl" style="width:100%;height:12px;"></span>
+                <span class="skl" style="width:91%;height:12px;margin-bottom:0;"></span>
+              </div>
+              <div class="pstate center">
+                <span class="tag">에러</span>
+                <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="7.4"></circle><line x1="10" y1="6.4" x2="10" y2="10.8" stroke-linecap="round"></line><circle cx="10" cy="13.6" r=".9" fill="currentColor" stroke="none"></circle></svg></span>
+                <span class="pt2">목록을 불러오지 못했어요</span>
+                <span class="ps2">네트워크 또는 서버 문제일 수 있어요.<br>잠시 후 다시 시도해 주세요.</span>
+                <span class="pa"><span class="btn signal sm">다시 시도</span></span>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- RIGHT RAIL: 축적 기록 -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>쌓인 기록</h4>
+            <div class="kstat"><span class="kl">7월</span><span class="kbar"><i style="width:64%;opacity:.85;"></i></span><span class="kn">34</span></div>
+            <div class="kstat"><span class="kl">6월</span><span class="kbar"><i style="width:78%;opacity:.55;"></i></span><span class="kn">41</span></div>
+            <div class="kstat"><span class="kl">5월</span><span class="kbar"><i style="width:55%;opacity:.55;"></i></span><span class="kn">29</span></div>
+            <div class="kstat"><span class="kl">4월</span><span class="kbar"><i style="width:46%;opacity:.55;"></i></span><span class="kn">24</span></div>
+            <div class="side-foot" style="margin-top:12px;padding:0;">매일 아침 1건씩, 조용히 쌓이는 중이에요.</div>
+          </div>
+          <div class="rpanel">
+            <h4>다시 찾은 보고서</h4>
+            <div class="rrelated"><span class="rico">◉</span><div><div class="rt">주간 환율 리뷰 — 트리거 ±0.5% 재조정 제안</div><div class="rm">이번 주 3번 다시 열람</div></div></div>
+            <div class="rrelated"><span class="rico">◉</span><div><div class="rt">로컬 LLM 구동 요건 비교</div><div class="rm">저장 후 2번 다시 열람</div></div></div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

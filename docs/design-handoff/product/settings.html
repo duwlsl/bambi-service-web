@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 설정</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-settings">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi on"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="feed">
+          <div class="set-head">
+            <h1>설정</h1>
+            <div class="ssub">계정과 브리핑 수신 방식을 관리해요.</div>
+          </div>
+
+          <div class="set-sec">
+            <div class="st2">브리핑</div>
+            <div class="srow">
+              <div class="sl"><div class="t2">보고서 발행 시간</div><div class="d2">매일 이 시간에 아침 브리핑이 도착해요. 무료 플랜은 <b>하루 1회</b> 발행돼요.</div></div>
+              <span style="position:relative;"><span class="fchip dd on" id="pt-chip">오전 7:00</span>
+                <span class="svpop" id="pt-pop" hidden style="top:34px;">
+                  <span class="pi" data-pt>오전 6:00</span>
+                  <span class="pi" data-pt>오전 6:30</span>
+                  <span class="pi" data-pt>오전 7:00</span>
+                  <span class="pi" data-pt>오전 7:30</span>
+                  <span class="pi" data-pt>오전 8:00</span>
+                  <span class="pi" data-pt>오전 9:00</span>
+                </span></span>
+            </div>
+            <div class="srow">
+              <div class="sl"><div class="t2">조건 달성 알림</div><div class="d2">트리거 조건이 충족되면 <b>알림</b>으로 바로 알려드려요.</div></div>
+              <span class="sw on" role="switch" aria-checked="true"></span>
+            </div>
+            <div class="srow">
+              <div class="sl"><div class="t2">소셜 알림</div><div class="d2">좋아요·댓글·팔로우 소식을 알려드려요.</div></div>
+              <span class="sw on" role="switch" aria-checked="true"></span>
+            </div>
+          </div>
+
+          <div class="set-sec">
+            <div class="st2">공개 범위</div>
+            <div class="srow">
+              <div class="sl"><div class="t2">새 브리핑 기본 공개 설정</div><div class="d2">공개로 두면 다른 사용자가 내 브리핑을 보고 반응할 수 있어요. 언제든 개별로 바꿀 수 있어요.</div></div>
+              <span class="kseg"><span class="ks on">나만 보기</span><span class="ks">공개</span></span>
+            </div>
+          </div>
+
+          <div class="set-sec">
+            <div class="st2">테마</div>
+            <div class="srow">
+              <div class="sl"><div class="t2">화면 테마</div><div class="d2">시스템을 선택하면 기기 설정을 따라가요.</div></div>
+              <span class="kseg"><span class="ks on" data-theme-btn="light">라이트</span><span class="ks" data-theme-btn="dark">다크</span><span class="ks" data-theme-btn="system">시스템</span></span>
+            </div>
+          </div>
+
+          <div class="set-sec">
+            <div class="st2">계정</div>
+            <div class="srow">
+              <div class="sl"><div class="t2">이메일</div><div class="d2" id="em-cur">alphaparami@gmail.com</div></div>
+              <span class="btn sm" id="em-open">변경</span>
+            </div>
+            <div class="srow">
+              <div class="sl"><div class="t2">비밀번호</div><div class="d2" id="pw-meta">마지막 변경 · 2026년 6월</div></div>
+              <span class="btn sm" id="pw-open">비밀번호 변경</span>
+            </div>
+            <div class="srow">
+              <div class="sl"><div class="t2">로그아웃</div><div class="d2">이 기기에서 로그아웃해요.</div></div>
+              <span class="btn sm" data-screen="auth">로그아웃</span>
+            </div>
+            <div class="srow">
+              <div class="sl"><div class="t2 danger">회원 탈퇴</div><div class="d2">계정과 쌓인 보고서가 모두 삭제돼요. 되돌릴 수 없어요.</div></div>
+              <span class="btn sm danger" style="border-color:var(--err-line);" id="del-open">탈퇴</span>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- RIGHT RAIL -->
+        <aside class="side-r">
+          <div class="plan-card">
+            <div class="pn">무료 플랜</div>
+            <div class="pd">아침 브리핑 <b>1일 1회</b><br>조건 달성 알림 무제한<br><span style="color:var(--ink-dim);">온디맨드 분석 — 미제공</span></div>
+          </div>
+          <div class="set-note">△ 세부 한도 수치는 팀 결정 대기 (DECISION-033 후속)</div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+  <!-- 이메일 변경 모달 -->
+  <div class="modal-bg" id="em-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="이메일 변경" style="width:460px;">
+      <div class="mhead"><span class="mt">이메일 변경</span><span class="mx" data-em-close>✕</span></div>
+      <p class="ms">현재 이메일 · <b>alphaparami@gmail.com</b><br>새 이메일로 확인 메일을 보내드려요. 메일의 링크를 누르면 변경이 완료돼요.</p>
+      <div class="pe-lab">새 이메일</div>
+      <input type="email" id="em-input" placeholder="new@example.com">
+      <div class="mfoot"><span class="btn" data-em-close>취소</span><span class="btn signal dis" id="em-send">확인 메일 보내기</span></div>
+    </div>
+  </div>
+  <!-- 비밀번호 변경 모달 -->
+  <div class="modal-bg" id="pw-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="비밀번호 변경" style="width:460px;">
+      <div class="mhead"><span class="mt">비밀번호 변경</span><span class="mx" data-pw-close>✕</span></div>
+      <div class="pe-lab">현재 비밀번호</div>
+      <input type="password" id="pw-cur" placeholder="현재 비밀번호">
+      <div class="pe-lab">새 비밀번호</div>
+      <input type="password" id="pw-new" placeholder="8자 이상">
+      <div class="pe-lab">새 비밀번호 확인</div>
+      <input type="password" id="pw-new2" placeholder="한 번 더 입력">
+      <div class="pe-hint" id="pw-hint">8자 이상, 두 입력이 일치해야 해요.</div>
+      <div class="mfoot"><span class="btn" data-pw-close>취소</span><span class="btn signal dis" id="pw-save">변경</span></div>
+    </div>
+  </div>
+  <!-- 회원 탈퇴 모달 -->
+  <div class="modal-bg" id="del-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="회원 탈퇴" style="width:480px;">
+      <div class="mhead"><span class="mt danger">회원 탈퇴</span><span class="mx" data-del-close>✕</span></div>
+      <p class="ms">탈퇴하면 아래 항목이 <b>영구 삭제</b>되고, 되돌릴 수 없어요.</p>
+      <div style="border:1px solid var(--err-line);background:var(--err-bg);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--ink-mid);line-height:1.8;">
+        받은 보고서 <b>128건</b> · 보관한 브리핑 <b>23건</b> · 관심사 <b>6개</b><br>팔로워·팔로잉 관계와 공개 브리핑의 댓글·좋아요
+      </div>
+      <div class="pe-lab">확인을 위해 가입 이메일 <b class="danger">alphaparami@gmail.com</b>을 입력하세요</div>
+      <input type="text" id="del-input" placeholder="alphaparami@gmail.com">
+      <div class="mfoot"><span class="btn" data-del-close>취소</span><span class="btn danger dis" id="del-go" style="border-color:var(--err-line);">영구 삭제</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

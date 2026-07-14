@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — Design Foundations (Figma 이관 기준본)</title>
+<!--
+  ============================================================
+  AlphaCatcher Design Foundations
+  ============================================================
+  Extracted from Final Export · No Figma MCP Called
+  Source of Truth: figma-export/shared/tokens.css (색) · base.css · product-components.css
+                   figma-export/landing/landing-desktop.html (Marketing 전용)
+                   figma-export/admin/*.html (Rough — 참고만)
+  Last Updated: 2026-07-14
+  Light / Dark: Product = Light+Dark 토큰 존재 / Landing = Light 전용 (Dark 미도입)
+  이 문서는 새 디자인이 아니라 실제 Export 파일에서 추출한 값만 담습니다.
+  ============================================================
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#FFFFFF; --bg-soft:#F5F6F8; --bg-inset:#EEF0F3;
+  --line:#E6E8EC; --line-strong:#D7DBE0;
+  --ink:#141619; --ink-mid:#454B54; --ink-dim:#6B7280;
+  --signal:#FF5A00; --signal-ink:#E35200; --on-signal:#FFFFFF;
+  --wash:rgba(255,90,0,.09); --wash-strong:rgba(255,90,0,.20);
+  --ok:#1F8A54; --mid:#D89A2B; --err:#DC2626; --caution:#8A6D1F;
+  --shadow:0 1px 2px rgba(20,22,25,.05);
+}
+body{background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased;}
+.wrap{width:100%;max-width:1440px;margin:0 auto;padding:0 72px 120px;}
+header.cover{border-bottom:1px solid var(--line);padding:64px 0 40px;margin-bottom:48px;}
+h1{font-size:42px;font-weight:700;letter-spacing:-.02em;margin-bottom:14px;}
+.lead{font-size:16px;line-height:1.75;color:var(--ink-dim);max-width:760px;}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;}
+.pill{font-family:"Space Grotesk",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--signal-ink);background:var(--wash);border:1px solid var(--wash-strong);border-radius:999px;padding:5px 12px;}
+.pill.n{color:var(--ink-dim);background:var(--bg-soft);border-color:var(--line);}
+section{margin-bottom:64px;scroll-margin-top:20px;}
+h2{font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:6px;}
+h2 .num{font-family:"Space Grotesk",monospace;font-size:12px;color:var(--signal-ink);margin-right:10px;letter-spacing:.1em;}
+.sub{font-size:13.5px;color:var(--ink-dim);line-height:1.7;margin-bottom:22px;max-width:840px;}
+h3{font-size:15px;font-weight:700;margin:26px 0 12px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--ink-dim);border-bottom:1px solid var(--line);padding:8px 10px;white-space:nowrap;}
+td{border-bottom:1px solid var(--line);padding:10px;color:var(--ink-mid);vertical-align:middle;}
+code{font-family:"Space Grotesk",monospace;font-size:11.5px;color:var(--signal-ink);background:var(--wash);border-radius:4px;padding:1px 6px;}
+.sw{width:52px;height:34px;border-radius:8px;border:1px solid var(--line-strong);display:inline-block;vertical-align:middle;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+.card{border:1px solid var(--line);border-radius:14px;padding:14px 16px;}
+.card .t{font-size:12.5px;font-weight:700;}
+.card .v{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--ink-dim);margin-top:3px;}
+.card .u{font-size:11.5px;color:var(--ink-dim);margin-top:8px;line-height:1.55;}
+.note{border-left:3px solid var(--signal);background:var(--wash);border-radius:0 8px 8px 0;padding:12px 16px;font-size:12.5px;line-height:1.7;color:var(--ink-mid);margin:16px 0;}
+.warn{border-left-color:var(--err);background:rgba(220,38,38,.06);}
+.dark-demo{background:#181B21;border-radius:14px;padding:18px;}
+.dark-demo .card{border-color:#2C323C;}
+.dark-demo .card .t{color:#EEF1F5;}
+.dark-demo .card .v,.dark-demo .card .u{color:#949CA8;}
+.spec{display:flex;align-items:baseline;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
+.spec .name{width:230px;flex-shrink:0;font-family:"Space Grotesk",monospace;font-size:11px;letter-spacing:.06em;color:var(--signal-ink);text-transform:uppercase;}
+.spec .demo{flex:1;min-width:0;}
+.spec .val{width:330px;flex-shrink:0;font-size:11px;color:var(--ink-dim);font-family:"Space Grotesk",monospace;line-height:1.6;}
+.box{display:inline-flex;align-items:center;justify-content:center;background:var(--wash);border:1px solid var(--wash-strong);color:var(--signal-ink);font-family:"Space Grotesk",monospace;font-size:10px;}
+.rad{width:104px;height:64px;border:1px solid var(--line-strong);background:var(--bg-soft);display:flex;align-items:center;justify-content:center;font-family:"Space Grotesk",monospace;font-size:11px;color:var(--ink-dim);}
+.shadowbox{width:150px;height:78px;border-radius:14px;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-dim);}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--ink-dim);}
+.tag.p0{color:#fff;background:var(--signal);border-color:var(--signal);}
+.tag.mk{color:var(--signal-ink);background:var(--wash);border-color:var(--wash-strong);}
+.tag.ok{color:var(--ok);border-color:rgba(31,138,84,.35);background:rgba(31,138,84,.07);}
+.tag.no{color:var(--err);border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.06);}
+nav.toc{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 0;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;z-index:5;}
+nav.toc a{color:var(--ink-dim);text-decoration:none;}
+nav.toc a:hover{color:var(--signal-ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <h1>AlphaCatcher — Design Foundations</h1>
+  <p class="lead">실제 최종 Export(<code>figma-export/</code>)의 HTML·CSS에서 추출한 기초 규칙입니다. 새로 만든 값은 없습니다.
+  Product(SNS형 고밀도 UI)와 Landing(Marketing)의 <b>의도적 차이</b>를 유지한 채, 공유해야 하는 것만 공유합니다.</p>
+  <div class="meta">
+    <span class="pill">Extracted from Final Export</span>
+    <span class="pill">No Figma MCP Called</span>
+    <span class="pill n">Source of Truth: shared/tokens.css · base.css · product-components.css · landing-desktop.html</span>
+    <span class="pill n">Last Updated: 2026-07-14</span>
+    <span class="pill n">Light / Dark: Product = Light + Dark · Landing = Light 전용</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#color">02 Color</a><a href="#type">03 Typography</a><a href="#space">04 Spacing</a>
+  <a href="#radius">05 Radius</a><a href="#border">06 Border</a><a href="#shadow">07 Shadow</a>
+  <a href="#icon">08 Iconography</a><a href="#motion">09 Motion</a><a href="#mvp">10 Marketing vs Product</a>
+  <a href="#map">11 Figma Mapping</a><a href="#audit">12 Audit Notes</a>
+</nav>
+
+<!-- ===================== 02 COLOR ===================== -->
+<section id="color">
+  <h2><span class="num">02</span>Color</h2>
+  <p class="sub">Source of Truth = <code>shared/tokens.css</code>. Landing(<code>.lp</code>)의 공유 토큰은 2026-07-14 정규화로 <b>Light 값과 완전히 동일</b>합니다. Landing 전용 그래픽 토큰은 별도 그룹으로 분리했습니다(합치지 않음).</p>
+
+  <h3>Background / Surface</h3>
+  <div class="grid">
+    <div class="card"><span class="sw" style="background:#FFFFFF"></span><div class="t">--bg</div><div class="v">#FFFFFF → Dark #181B21</div><div class="u">카드·모달·내비 표면(Surface). Product·Landing 공용</div></div>
+    <div class="card"><span class="sw" style="background:#F5F6F8"></span><div class="t">--bg-soft</div><div class="v">#F5F6F8 → Dark #20242C</div><div class="u">페이지 배경, hover 바탕. Landing `--bg-warm/--bg-alt` = 동일 값</div></div>
+    <div class="card"><span class="sw" style="background:#EEF0F3"></span><div class="t">--bg-inset</div><div class="v">#EEF0F3 → Dark #252A33</div><div class="u">입력 인셋·코드 블록</div></div>
+    <div class="card"><span class="sw" style="background:#FAFBFC"></span><div class="t">--today-bg</div><div class="v">#FAFBFC → Dark #1C2026</div><div class="u">오늘의 브리핑 카드 전용 배경 (Product only)</div></div>
+    <div class="card"><span class="sw" style="background:#FCE4D4"></span><div class="t">--avatar-bg</div><div class="v">#FCE4D4 → Dark #2E2318</div><div class="u">대형 프로필 아바타 배경</div></div>
+    <div class="card"><span class="sw" style="background:#E3E6EA"></span><div class="t">--canvas</div><div class="v">#E3E6EA → Dark #0A0B0D</div><div class="u"><span class="tag no">미사용</span> 목업 캔버스 잔여 토큰 — Figma 미등록 권장</div></div>
+  </div>
+
+  <h3>Text</h3>
+  <div class="grid">
+    <div class="card"><span class="sw" style="background:#141619"></span><div class="t">--ink</div><div class="v">#141619 → Dark #EEF1F5</div><div class="u">제목·본문 강조. 흰 배경 대비 15.8:1</div></div>
+    <div class="card"><span class="sw" style="background:#454B54"></span><div class="t">--ink-mid</div><div class="v">#454B54 → Dark #C4CBD4</div><div class="u">본문(카드 요약·설명). 대비 8.6:1</div></div>
+    <div class="card"><span class="sw" style="background:#6B7280"></span><div class="t">--ink-dim</div><div class="v">#6B7280 → Dark #949CA8</div><div class="u">메타·캡션. 대비 4.8:1 — <b>11px 이하 사용 시 주의</b></div></div>
+    <div class="card"><span class="sw" style="background:#A6ADB6"></span><div class="t">--low</div><div class="v">#A6ADB6 → Dark #7F8792</div><div class="u">placeholder·검색 아이콘. <b>본문 텍스트 금지</b>(대비 2.4:1)</div></div>
+  </div>
+
+  <h3>Border</h3>
+  <div class="grid">
+    <div class="card"><span class="sw" style="background:#E6E8EC"></span><div class="t">--line</div><div class="v">#E6E8EC → Dark #2C323C</div><div class="u">기본 보더·구분선</div></div>
+    <div class="card"><span class="sw" style="background:#D7DBE0"></span><div class="t">--line-strong</div><div class="v">#D7DBE0 → Dark #3B424E</div><div class="u">입력·강조 보더, 아바타 링</div></div>
+    <div class="card"><span class="sw" style="background:#D7DBE0"></span><div class="t">--frame</div><div class="v">#D7DBE0 → Dark #2C323C</div><div class="u">이미지 프레임 (line-strong과 Light에서 동일값 · <b>역할 분리 유지</b>)</div></div>
+  </div>
+
+  <h3>Brand / Signal · Wash</h3>
+  <div class="grid">
+    <div class="card"><span class="sw" style="background:#FF5A00"></span><div class="t">--signal</div><div class="v">#FF5A00 → Dark #FF7A33</div><div class="u">브랜드 오렌지. 버튼 배경·활성 아이콘</div></div>
+    <div class="card"><span class="sw" style="background:#E35200"></span><div class="t">--signal-ink</div><div class="v">#E35200 → Dark #FF8A4D</div><div class="u"><b>텍스트용 오렌지</b>(링크·강조). 흰 배경 대비 3.6:1 — 12px 이상 권장</div></div>
+    <div class="card"><span class="sw" style="background:#FFFFFF"></span><div class="t">--on-signal</div><div class="v">#FFFFFF → Dark #241200</div><div class="u">signal 배경 위 텍스트</div></div>
+    <div class="card"><span class="sw" style="background:rgba(255,90,0,.09)"></span><div class="t">--wash</div><div class="v">rgba(255,90,0,.09) → Dark .14</div><div class="u">선택 상태 배경·강조 배지 바탕</div></div>
+    <div class="card"><span class="sw" style="background:rgba(255,90,0,.20)"></span><div class="t">--wash-strong</div><div class="v">rgba(255,90,0,.20) → Dark .30</div><div class="u">wash 배경의 보더, focus ring</div></div>
+  </div>
+
+  <h3>Semantic — Success / Warning / Error / Caution</h3>
+  <div class="grid">
+    <div class="card"><span class="sw" style="background:#1F8A54"></span><div class="t">--ok</div><div class="v">#1F8A54 → Dark #43C088</div><div class="u">성공·신뢰도 높음 텍스트</div></div>
+    <div class="card"><span class="sw" style="background:#34A66A"></span><div class="t">--ok-dot</div><div class="v">#34A66A → Dark #43C088</div><div class="u">상태 점(dot)</div></div>
+    <div class="card"><span class="sw" style="background:#D89A2B"></span><div class="t">--mid</div><div class="v">#D89A2B → Dark #E0B44E</div><div class="u">중간 신뢰도 표시</div></div>
+    <div class="card"><span class="sw" style="background:#DC2626"></span><div class="t">--err</div><div class="v">#DC2626 → Dark #F87171</div><div class="u">에러 텍스트·실패 배지</div></div>
+    <div class="card"><span class="sw" style="background:#FEF2F2"></span><div class="t">--err-bg / --err-line</div><div class="v">#FEF2F2 / #FBD5D5</div><div class="u">에러 배경·보더</div></div>
+    <div class="card"><span class="sw" style="background:#8A6D1F"></span><div class="t">--caution / -bg / -line</div><div class="v">#8A6D1F / #FDF7EA / #EFE2BE</div><div class="u">주의 노트(설정·미확정 안내)</div></div>
+    <div class="card"><span class="sw" style="background:#EDEFF2"></span><div class="t">--skel1 / --skel2</div><div class="v">#EDEFF2 / #F6F7F9</div><div class="u">스켈레톤 그라디언트</div></div>
+    <div class="card"><span class="sw" style="background:#EEF0F3"></span><div class="t">--img</div><div class="v">#EEF0F3 → Dark #20242C</div><div class="u">이미지 플레이스홀더</div></div>
+  </div>
+
+  <h3>Dark 대응 (Product 전용)</h3>
+  <div class="dark-demo">
+    <div class="grid">
+      <div class="card" style="background:#181B21"><span class="sw" style="background:#181B21;border-color:#3B424E"></span><div class="t">--bg</div><div class="v">#181B21</div><div class="u">Dark Surface</div></div>
+      <div class="card" style="background:#181B21"><span class="sw" style="background:#EEF1F5"></span><div class="t">--ink</div><div class="v">#EEF1F5</div><div class="u">Dark 본문</div></div>
+      <div class="card" style="background:#181B21"><span class="sw" style="background:#FF7A33"></span><div class="t">--signal</div><div class="v">#FF7A33 (Light보다 밝음)</div><div class="u">Dark에서 채도 보정</div></div>
+      <div class="card" style="background:#181B21"><span class="sw" style="background:#241200"></span><div class="t">--on-signal</div><div class="v">#241200</div><div class="u">Dark에서는 어두운 잉크</div></div>
+    </div>
+  </div>
+  <div class="note"><b>Dark 범위:</b> Product 전 화면(<code>.page[data-theme="dark"]</code>)만 정의돼 있습니다. <b>Landing은 Light 전용</b>이며 Dark를 만들지 않았습니다(팀 결정 대기). Admin Rough는 Product 토큰을 그대로 사용합니다.</div>
+
+  <h3>Marketing-only Graphic Token (Landing 전용 · 공통 브랜드 토큰으로 합치지 말 것)</h3>
+  <div class="grid">
+    <div class="card"><span class="sw" style="background:#FF8A3D"></span><div class="t">--signal-soft</div><div class="v">#FF8A3D</div><div class="u">MotionOrb·그라디언트 보조 오렌지. Product의 <code>--signal-ink</code>와 <b>값·역할 모두 다름</b></div></div>
+    <div class="card"><span class="sw" style="background:rgba(255,90,0,.05)"></span><div class="t">--wash-weak</div><div class="v">rgba(255,90,0,.05)</div><div class="u">Final CTA echo 배경 (Landing only)</div></div>
+    <div class="card"><span class="sw" style="background:rgba(255,90,0,.14)"></span><div class="t">--shadow-warm</div><div class="v">rgba(255,90,0,.14)</div><div class="u">Marketing 카드·CTA glow의 색 기준</div></div>
+    <div class="card"><span class="sw" style="background:#171717"></span><div class="t">--contrast</div><div class="v">#171717</div><div class="u">Landing dark 버튼(현재 <span class="tag no">HTML 미사용</span>)</div></div>
+    <div class="card"><span class="sw" style="background:linear-gradient(115deg,#FFF 0%,#FFF 55%,#FDF7F1 78%,#FAF1E8 100%)"></span><div class="t">Hero Gradient</div><div class="v">linear-gradient(115deg,#FFFFFF,#FDF7F1,#FAF1E8) + radial warm wash</div><div class="u"><code>.lp-hero</code> 배경. Figma: Style로 등록(Marketing 전용)</div></div>
+    <div class="card"><span class="sw" style="background:rgba(255,90,0,.55)"></span><div class="t">Orange Glow</div><div class="v">0 12px 26px -12px rgba(255,90,0,.55)</div><div class="u">Marketing signal 버튼 전용. <b>Product 기본 Shadow로 등록 금지</b></div></div>
+    <div class="card"><span class="sw" style="background:rgba(255,120,45,.5)"></span><div class="t">Orb Palette</div><div class="v">rgb(255,90,0) / (255,165,115) / (178,172,166) / ring rgb(255,120,45)</div><div class="u">Canvas 내부 하드코딩 색 — CSS 토큰 아님. Static Image로만 이관</div></div>
+  </div>
+
+  <div class="note warn"><b>Contrast 주의 조합</b><br>
+  ① <code>--low</code>(#A6ADB6) 위 흰 텍스트 / 본문 사용 — 대비 부족(2.4:1). placeholder 전용으로 제한.<br>
+  ② <code>--signal-ink</code>(#E35200) 3.6:1 — 12px 미만 텍스트에 사용 금지(현재 <code>.mdtag</code> 10px, <code>.pv-row .n</code> 11px이 이 규칙을 벗어남 → Audit).<br>
+  ③ Dark에서 <code>--signal</code>(#FF7A33) 위 <code>--on-signal</code>(#241200) 조합은 문제 없음.</div>
+</section>
+
+<!-- ===================== 03 TYPOGRAPHY ===================== -->
+<section id="type">
+  <h2><span class="num">03</span>Typography</h2>
+  <p class="sub">실제 사용 패밀리는 <b>3종</b>입니다(Pretendard Variable · Quicksand · Space Grotesk). Marketing과 Product는 <b>층위가 다르므로 크기를 통합하지 않습니다</b>. Figma Text Style 이름은 <code>Brand / …</code>, <code>Marketing / …</code>, <code>UI / …</code>, <code>Data / …</code>로 분리합니다.</p>
+
+  <table>
+    <tr><th>Family</th><th>사용처</th><th>비고</th></tr>
+    <tr><td><b>Pretendard Variable</b></td><td>Product·Landing 본문 전체 (body)</td><td>기본 서체 — 한글/영문 공용</td></tr>
+    <tr><td><b>Quicksand</b> 400</td><td>Wordmark 전용 (<code>.logo .word</code>, <code>.lp-logo .word</code>, <code>.rbrand .word</code>, <code>.ob-head .word</code>)</td><td>weight 400 통일 완료 (2026-07-14)</td></tr>
+    <tr><td><b>Space Grotesk</b></td><td>Data/Label: <code>.samp</code> <code>.mdtag</code> <code>.pv-row .n</code> <code>.pgrid .gi .more</code> / Landing: <code>.mono</code> eyebrow, <code>.lp-ticker .n</code>, <code>.lp-step .time</code> / Admin: <code>.a403 .code</code></td><td>숫자·라벨·코드 전용</td></tr>
+  </table>
+  <p class="sub" style="margin-top:10px;"><b>최종 Font Family = 3종.</b> Instrument Serif는 2026-07-14 정정으로 <b>완전히 제거</b>되었습니다(폰트 import · <code>.serif</code> 규칙 · 사용처 모두 0건). Landing 클로징 문구 <code>While you sleep, we read.</code>는 <b>Pretendard 23px 일반 텍스트</b>입니다.</p>
+
+  <h3>Brand</h3>
+  <div class="spec"><div class="name">Brand / Wordmark / Marketing</div><div class="demo" style="font-family:Quicksand,sans-serif;font-weight:400;font-size:21px;letter-spacing:.02em;">alphacatcher</div><div class="val">Quicksand 400 · 21px · ls .02em<br>.lp-logo .word — landing-desktop.html</div></div>
+  <div class="spec"><div class="name">Brand / Wordmark / Product</div><div class="demo" style="font-family:Quicksand,sans-serif;font-weight:400;font-size:17px;letter-spacing:.02em;">alphacatcher</div><div class="val">Quicksand 400 · 17px · ls .02em<br>.logo .word — product 전 화면 Global Nav</div></div>
+  <div class="spec"><div class="name">Brand / Wordmark / Compact</div><div class="demo" style="font-family:Quicksand,sans-serif;font-weight:400;font-size:15px;">alphacatcher</div><div class="val">Quicksand 400 · 15px<br>.rbrand .word (우측 레일) · .ob-head .word (온보딩) · admin 헤더</div></div>
+
+  <h3>Marketing (Landing 전용)</h3>
+  <div class="spec"><div class="name">Marketing / Hero Display</div><div class="demo" style="font-size:56px;line-height:1.16;font-weight:700;letter-spacing:-.01em;">아침에 한 장으로</div><div class="val">Pretendard 700 · 56px / 1.16 · ls -.01em<br>.lp-h1 — landing hero</div></div>
+  <div class="spec"><div class="name">Marketing / Section Display</div><div class="demo" style="font-size:48px;font-weight:700;letter-spacing:-.02em;line-height:1.25;">모든 추천에는 이유가 붙습니다</div><div class="val">Pretendard 700 · 48px / 1.25 · ls -.02em<br>.lp-sec-h · Final CTA는 .lp-final h2 = 58px / ls -.022em</div></div>
+  <div class="spec"><div class="name">Marketing / Supporting Body</div><div class="demo" style="font-size:18px;line-height:1.75;color:var(--ink-dim);">밤사이 흩어진 정보 중 나에게 필요한 신호만 골라 전달합니다.</div><div class="val">Pretendard 400 · 18px / 1.75 (.lp-sub)<br>섹션 서브 = 17px / 1.75 (.lp-sec-sub)</div></div>
+  <div class="spec"><div class="name">Marketing / Eyebrow</div><div class="demo" style="font-family:'Space Grotesk',monospace;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);">AI Morning Briefing</div><div class="val">Space Grotesk · 11.5px · ls .16em · UPPERCASE<br>.lp .mono + .lp-eyebrow — UI Micro Label(.08em)과 <b>다른 스타일</b></div></div>
+  <div class="spec"><div class="name">Marketing / Data Number</div><div class="demo" style="font-family:'Space Grotesk',monospace;font-size:30px;font-weight:600;">42</div><div class="val">Space Grotesk 600 · 30px · ls 0<br>.lp-ticker .n — Last Night 티커</div></div>
+  <div class="spec"><div class="name">Marketing / Step Time</div><div class="demo" style="font-family:'Space Grotesk',monospace;font-size:12.5px;letter-spacing:.14em;color:var(--ink-dim);">23:00 — COLLECTION</div><div class="val">Space Grotesk · 12.5px · ls .14em<br>.lp-step .time</div></div>
+  <div class="spec"><div class="name">Marketing / Closing Text</div><div class="demo" style="font-size:23px;color:var(--ink-dim);">While you sleep, we read.</div><div class="val">Pretendard 400 · 23px · color --ink-dim (<b>2026-07-14 정정: italic·serif 제거</b>)<br>.lp-signature — Landing Final CTA 클로징 문구. <b>전용 Brand Signature 스타일 아님</b> — Marketing 일반 텍스트로 분류</div></div>
+
+  <h3>Product UI</h3>
+  <div class="spec"><div class="name">UI / Page Title</div><div class="demo" style="font-size:26px;font-weight:700;letter-spacing:-.015em;">무엇을 챙겨드릴까요?</div><div class="val">700 · 26px · ls -.015em — .ob-title (온보딩)<br>인증 .auth-title = 25px · Wiki .wk-head h1 = 22px</div></div>
+  <div class="spec"><div class="name">UI / Detail Title</div><div class="demo" style="font-size:25px;font-weight:700;line-height:1.38;letter-spacing:-.015em;">원/달러 환율, 밤사이 0.8% 하락</div><div class="val">700 · 25px / 1.38 · ls -.015em<br>.dtitle — report-detail + variants 3파일</div></div>
+  <div class="spec"><div class="name">UI / Section Label</div><div class="demo" style="font-size:14.5px;font-weight:700;">AI가 최근 발견한 관심사</div><div class="val">700 · 14.5px — .sec-t (wiki 등 2파일)<br><b>Marketing / Section Display(48px)와 다른 계층</b></div></div>
+  <div class="spec"><div class="name">UI / Card Title</div><div class="demo" style="font-size:18px;font-weight:700;line-height:1.45;letter-spacing:-.01em;">미 CPI 발표 전날 밤, 채권시장이 먼저 움직인 이유</div><div class="val">700 · 18px / 1.45 · ls -.01em<br>.ptitle (피드 Report Card) · .today .tl 동일값</div></div>
+  <div class="spec"><div class="name">UI / Card Title / Compact</div><div class="demo" style="font-size:15px;font-weight:700;line-height:1.45;letter-spacing:-.01em;">유로 강세 지속 — 2차 시점 점검</div><div class="val">700 · 15px / 1.45 — .kb-card .t (지식창고·보관함)<br><b>Report Card(18px)와 역할이 다른 카드</b></div></div>
+  <div class="spec"><div class="name">UI / Body</div><div class="demo" style="font-size:14px;line-height:1.7;color:var(--ink-mid);">미 CPI 발표를 앞두고 달러가 약세로 전환했습니다.</div><div class="val">400 · 14px / 1.7 — .pbody<br>상세 리드 .dlead = 16px / 1.66</div></div>
+  <div class="spec"><div class="name">UI / Supporting Text</div><div class="demo" style="font-size:13.5px;line-height:1.7;color:var(--ink-mid);">밤사이 42건에서 5건을 골랐어요</div><div class="val">400 · 13.5px / 1.7 — .today .tsum · .srow .sl .t2(600)</div></div>
+  <div class="spec"><div class="name">UI / Navigation Label</div><div class="demo" style="font-size:14.5px;">보관함</div><div class="val">400/700(on) · 14.5px — .mi · .tab(600)<br>Landing .lp-nav-links도 14.5px로 정렬 완료</div></div>
+  <div class="spec"><div class="name">UI / Button Label</div><div class="demo"><span style="display:inline-flex;font-size:13.5px;font-weight:600;padding:9px 15px;border:1px solid var(--line);border-radius:10px;">보관</span></div><div class="val">600 · 13.5px (.btn) · sm = 12.5px<br><b>Marketing 버튼(14/16px)과 별도 스타일</b></div></div>
+  <div class="spec"><div class="name">UI / Metadata</div><div class="demo" style="font-size:12px;color:var(--ink-dim);">오전 7:41 · 공개 브리핑 · 추천</div><div class="val">400 · 12px · --ink-dim — .pmeta · .tagm(12px)</div></div>
+  <div class="spec"><div class="name">UI / Caption</div><div class="demo" style="font-size:11.5px;color:var(--ink-dim);">관심사 6개 · 트리거 9개 감시 중</div><div class="val">400 · 11.5px — .side-foot · .mi .cnt · .kbadge(600)</div></div>
+  <div class="spec"><div class="name">UI / Micro Label</div><div class="demo"><span style="font-family:'Space Grotesk',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);border:1px solid var(--line);background:var(--bg-soft);border-radius:5px;padding:3px 9px;">공통 상태 · states</span></div><div class="val">Space Grotesk · 10.5px · ls .08em · UPPERCASE<br>.samp — 검수/샘플 라벨 (Marketing Eyebrow .16em과 다름)</div></div>
+  <div class="spec"><div class="name">Data / Number</div><div class="demo"><span style="font-family:'Space Grotesk',monospace;font-size:11px;font-weight:600;color:var(--signal-ink);">01</span></div><div class="val">Space Grotesk 600 · 11px — .pv-row .n (순번)<br>Admin 지표 .acard .av = Pretendard 700 · 22px</div></div>
+  <div class="spec"><div class="name">Data / Tag Label</div><div class="demo"><span style="font-family:'Space Grotesk',monospace;font-size:10px;letter-spacing:.04em;color:var(--signal-ink);background:var(--wash);border:1px solid var(--wash-strong);border-radius:5px;padding:2px 8px;">## h2</span></div><div class="val">Space Grotesk · 10px · ls .04em — .mdtag (마크다운 태그)<br><span class="tag no">대비 주의</span> 10px + signal-ink</div></div>
+</section>
+
+<!-- ===================== 04 SPACING ===================== -->
+<section id="space">
+  <h2><span class="num">04</span>Spacing</h2>
+  <p class="sub">실제 CSS에서 반복되는 값만 수집했습니다. 1회성 값은 토큰화하지 않고 "예외값"으로만 기록합니다.</p>
+
+  <h3>Core Spacing — Figma Variable 후보</h3>
+  <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+    <div><div class="box" style="width:4px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">4</div></div>
+    <div><div class="box" style="width:6px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">6</div></div>
+    <div><div class="box" style="width:8px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">8</div></div>
+    <div><div class="box" style="width:9px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">9</div></div>
+    <div><div class="box" style="width:12px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">12</div></div>
+    <div><div class="box" style="width:14px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">14</div></div>
+    <div><div class="box" style="width:16px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">16</div></div>
+    <div><div class="box" style="width:18px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">18</div></div>
+    <div><div class="box" style="width:20px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">20</div></div>
+    <div><div class="box" style="width:22px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">22</div></div>
+    <div><div class="box" style="width:24px;height:44px;"></div><div style="font-size:10px;color:var(--ink-dim);text-align:center;">24</div></div>
+  </div>
+  <table>
+    <tr><th>값</th><th>분류</th><th>실제 사용</th></tr>
+    <tr><td><code>6 / 8 / 9</code></td><td>반복 (Variable 후보)</td><td>아이콘·라벨 gap(.btn gap 6, .logo gap 9), 카드 내부 간격</td></tr>
+    <tr><td><code>12 / 14 / 16</code></td><td>반복 (Variable 후보)</td><td>.mi gap 12 · 카드 간 margin 16 · rail gap 14</td></tr>
+    <tr><td><code>18 / 20 / 22 / 24</code></td><td>반복 (Variable 후보)</td><td>.post padding 16/18 · .nav padding 0 24 · .shell gap 22</td></tr>
+    <tr><td><code>7 / 11 / 13 / 15 / 19</code></td><td>컴포넌트 전용</td><td>.btn padding 9/15 · .btn.sm 7/12 · .mi padding 11/12 — <b>버튼 내부 패딩은 컴포넌트 값으로 고정</b></td></tr>
+    <tr><td><code>1 / 2 / 3 / 5</code></td><td>예외값</td><td>배지 padding, dot 위치 — 토큰화 불필요</td></tr>
+  </table>
+
+  <h3>Layout Spacing</h3>
+  <table>
+    <tr><th>영역</th><th>값</th><th>선택자</th></tr>
+    <tr><td>Global Navigation</td><td>height 58 · padding 0 24 · gap 18</td><td><code>.nav</code> (base.css)</td></tr>
+    <tr><td>3-column Shell</td><td>padding 24 20 56 · gap 22 · side 300 / feed max 760 / rail 300</td><td><code>.shell .side-l .feed .side-r</code></td></tr>
+    <tr><td>Detail Page</td><td>reader max 760 · .dcard padding · .md p margin-bottom 15</td><td><code>.reader .dcard .md</code></td></tr>
+    <tr><td>Modal</td><td>width 380~440 · padding 22 24 · footer gap 9 / margin-top 18</td><td><code>.modal .mfoot</code></td></tr>
+    <tr><td>Settings</td><td>.srow padding 15 0 · gap 14</td><td><code>.srow</code></td></tr>
+    <tr><td>Admin Table (Rough)</td><td>th 9 10 · td 11 10 · .amain padding 22 26 40 · .anav width 210</td><td>admin/*.html (참고용)</td></tr>
+  </table>
+
+  <h3>Marketing Spacing (Landing 전용)</h3>
+  <table>
+    <tr><th>영역</th><th>값</th><th>선택자</th></tr>
+    <tr><td>Section Vertical</td><td><b>140px</b> 상하 · 좌우 72</td><td><code>.lp-sec</code> — Product(24)와 <b>의도적 차이</b></td></tr>
+    <tr><td>Hero</td><td>height 92vh (min 820 / max 1020) · 카피 width 552 · 기준선 72</td><td><code>.lp-hero .lp-hero-copy</code></td></tr>
+    <tr><td>CTA Group</td><td>gap 14 · 버튼 padding 16 32(big)</td><td><code>.lp-hero-actions .lp-btn.big</code></td></tr>
+    <tr><td>Final CTA</td><td>padding 150 72 140</td><td><code>.lp-final</code></td></tr>
+    <tr><td>Marketing Card</td><td>.lp-mock max 920 · padding 36 40 · margin-top 70</td><td><code>.lp-mock</code></td></tr>
+    <tr><td>Timeline / Steps</td><td>.lp-step .scard padding 16 18 · margin-top 24</td><td><code>.lp-step</code></td></tr>
+  </table>
+  <div class="note">Header 좌우 기준선: Landing 72px / Product 24px — <b>의도적 차이(유지)</b>. Landing은 <code>max(72px, calc((100% - 1440px)/2 + 72px))</code>로 1440 중앙 정렬.</div>
+</section>
+
+<!-- ===================== 05 RADIUS ===================== -->
+<section id="radius">
+  <h2><span class="num">05</span>Radius</h2>
+  <p class="sub">역할별로 분리했습니다. Landing과 Product의 차이는 <b>버튼·카드에서만</b> 나타나며, 아래 표에 의도/중복 여부를 표시했습니다.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;">
+    <div class="rad" style="border-radius:5px;">5</div><div class="rad" style="border-radius:7px;">7</div>
+    <div class="rad" style="border-radius:8px;">8</div><div class="rad" style="border-radius:10px;">10</div>
+    <div class="rad" style="border-radius:11px;">11</div><div class="rad" style="border-radius:12px;">12</div>
+    <div class="rad" style="border-radius:14px;">14</div><div class="rad" style="border-radius:16px;">16</div>
+    <div class="rad" style="border-radius:999px;">999</div><div class="rad" style="border-radius:50%;">50%</div>
+  </div>
+  <table>
+    <tr><th>역할</th><th>Product</th><th>Landing</th><th>판정</th></tr>
+    <tr><td>Input</td><td>10~12px (<code>.modal input</code> 10 · <code>.kb-search input</code> 12)</td><td>—</td><td><span class="tag">Product 내부 2값 — Normalize in Figma</span></td></tr>
+    <tr><td>Small Button</td><td><b>8px</b> (<code>.btn.sm</code>)</td><td>—</td><td>—</td></tr>
+    <tr><td>Default Button</td><td><b>10px</b> (<code>.btn</code>)</td><td><b>12px</b> (<code>.lp-btn</code>)</td><td><span class="tag mk">Intentional (마케팅 버튼 크기 자체가 큼)</span></td></tr>
+    <tr><td>Card</td><td><b>14px</b> (<code>.post .today .kb-card .menu</code>)</td><td>16px (<code>.lp-mock .lp-post .lp-whycard</code>)</td><td><span class="tag mk">Intentional (Marketing Card)</span></td></tr>
+    <tr><td>Modal</td><td><b>16px</b> (<code>.modal</code>)</td><td>—</td><td>—</td></tr>
+    <tr><td>Pill / Chip / Badge</td><td><b>999px</b> (<code>.chip .fchip .kbadge .dpill</code>)</td><td>999px (<code>.lp-eyebrow .lp-tag pill</code>)</td><td><span class="tag ok">일치</span></td></tr>
+    <tr><td>Avatar / Dot</td><td>50% (<code>.pav .nav-ico</code>)</td><td>50%</td><td><span class="tag ok">일치</span></td></tr>
+    <tr><td>Micro Label</td><td>5~7px (<code>.samp .mdtag .tagm</code>)</td><td>6px (<code>.lp-tag</code>)</td><td><span class="tag">Normalize in Figma (5/6/7 혼재)</span></td></tr>
+    <tr><td>Search field (nav)</td><td>19px (<code>.nav-search</code> — height 38의 절반)</td><td>—</td><td>계산값 — 토큰 아님</td></tr>
+  </table>
+</section>
+
+<!-- ===================== 06 BORDER ===================== -->
+<section id="border">
+  <h2><span class="num">06</span>Border</h2>
+  <table>
+    <tr><th>역할</th><th>값</th><th>사용</th></tr>
+    <tr><td>Default</td><td><code>1px solid var(--line)</code></td><td>카드·내비·구분선 (Product/Landing/Admin 공통)</td></tr>
+    <tr><td>Strong</td><td><code>1px solid var(--line-strong)</code></td><td>입력·아바타 링·강조 컨테이너</td></tr>
+    <tr><td>Selected / Active</td><td><code>1px solid var(--signal)</code> + 배경 <code>var(--wash)</code></td><td><code>.chip.on</code> <code>.fchip.on</code> — 선택 상태</td></tr>
+    <tr><td>Signal (강조 배지)</td><td><code>1px solid var(--wash-strong)</code></td><td><code>.mdtag</code> <code>.reason</code> <code>.adm-badge</code></td></tr>
+    <tr><td>Semantic</td><td><code>var(--err-line)</code> · <code>var(--caution-line)</code></td><td>에러/주의 노트·배지</td></tr>
+    <tr><td>Divider</td><td><code>1px solid var(--line)</code> (height 1 배경 방식도 사용)</td><td><code>.menu .divider</code> <code>.srow</code> <code>.atable</code></td></tr>
+    <tr><td>Focus Ring</td><td><code>box-shadow: 0 0 0 3px var(--wash)</code> + border-color signal</td><td><code>:focus</code> 4곳 (input 계열) — <b>버튼·칩에는 focus 스타일 없음</b> → Audit</td></tr>
+    <tr><td>Dashed (검수용)</td><td><code>1px dashed var(--line-strong)</code></td><td><code>.state-wrap</code> — 문서/검수 표시용, 제품 UI 아님</td></tr>
+  </table>
+</section>
+
+<!-- ===================== 07 SHADOW ===================== -->
+<section id="shadow">
+  <h2><span class="num">07</span>Shadow</h2>
+  <p class="sub">Product는 거의 평평합니다(그림자 최소). Landing은 따뜻한 오렌지 글로우를 사용합니다 — <b>합치지 않습니다.</b></p>
+  <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:18px;">
+    <div class="shadowbox" style="box-shadow:0 1px 2px rgba(20,22,25,.05);">--shadow</div>
+    <div class="shadowbox" style="box-shadow:0 24px 60px rgba(10,12,15,.28);">Modal</div>
+    <div class="shadowbox" style="box-shadow:0 10px 30px rgba(20,22,25,.08);">Dropdown</div>
+    <div class="shadowbox" style="box-shadow:0 10px 28px rgba(0,0,0,.25);">Toast</div>
+    <div class="shadowbox" style="box-shadow:0 30px 70px -34px rgba(255,90,0,.14),0 6px 20px -12px rgba(17,24,39,.08);">Marketing Card</div>
+    <div class="shadowbox" style="box-shadow:0 12px 26px -12px rgba(255,90,0,.55);">Signal Glow</div>
+  </div>
+  <table>
+    <tr><th>이름</th><th>값</th><th>사용</th><th>Figma</th></tr>
+    <tr><td>Product / Subtle</td><td><code>--shadow: 0 1px 2px rgba(20,22,25,.05)</code> (Dark: rgba(0,0,0,.32))</td><td><code>.ks.on</code> 등 3곳</td><td>Effect Style 등록</td></tr>
+    <tr><td>Product / Modal</td><td><code>0 24px 60px rgba(10,12,15,.28)</code></td><td><code>.modal</code></td><td>Effect Style 등록</td></tr>
+    <tr><td>Product / Dropdown</td><td><code>0 10px 30px rgba(20,22,25,.08)</code> · <code>0 10px 30px rgba(10,12,15,.14)</code></td><td><code>.svpop</code> 등</td><td>2값 혼재 → Normalize in Figma</td></tr>
+    <tr><td>Product / Toast</td><td><code>0 10px 28px rgba(0,0,0,.25)</code></td><td><code>.up-toast</code> <code>.sv-toast</code></td><td>Effect Style 등록</td></tr>
+    <tr><td>Product / Focus Ring</td><td><code>0 0 0 3px var(--wash)</code></td><td>input :focus</td><td>Effect Style 등록</td></tr>
+    <tr><td>Marketing / Card</td><td><code>0 30px 70px -34px var(--shadow-warm), 0 6px 20px -12px rgba(17,24,39,.08)</code></td><td><code>.lp-mock .lp-whycard .lp-post</code></td><td><b>Landing 전용</b></td></tr>
+    <tr><td>Marketing / Signal Glow</td><td><code>0 12px 26px -12px rgba(255,90,0,.55)</code></td><td><code>.lp-btn.signal</code></td><td><b>Landing 전용 — Product Shadow로 등록 금지</b></td></tr>
+    <tr><td>MotionOrb / Atmosphere</td><td>Canvas 내부 radial gradient + halo (CSS <code>.lp-orb-halo</code>)</td><td>Landing Hero</td><td><b>Static Image로만</b> — 벡터 변환 제외</td></tr>
+  </table>
+</section>
+
+<!-- ===================== 08 ICON ===================== -->
+<section id="icon">
+  <h2><span class="num">08</span>Iconography</h2>
+  <p class="sub">현재 아이콘은 <b>인라인 SVG</b>와 <b>텍스트 심볼</b>이 혼재합니다. 이모지는 2종 사용 중입니다. 새 아이콘 세트를 디자인하지 않고, Figma Icon Component로 만들 목록만 정리합니다.</p>
+  <table>
+    <tr><th>표현</th><th>대상</th><th>실제 문자/요소</th><th>분류</th></tr>
+    <tr><td>SVG Icon</td><td>로고 마크 · 알림 벨 · 댓글 · 좋아요(추천) · 검색 · 태양(브리핑)</td><td>인라인 <code>&lt;svg&gt;</code> (home-feed 17개)</td><td><span class="tag ok">Figma Icon Component 권장</span></td></tr>
+    <tr><td>Text Symbol</td><td>보관 <code>⚑</code> · 좋아요 <code>♡</code> · 공유 <code>↗</code> · 더보기 <code>⋯</code> · 홈 <code>⌂</code> · 지식창고 <code>▦</code> · Wiki <code>▤</code> · 프로필 <code>◑</code> · 설정 <code>⚙</code> · 복사 <code>⧉</code> · 닫기 <code>✕</code> · 관심자료 <code>＋</code> · 신뢰도 <code>●</code> · 경고 <code>△</code></td><td>본문 텍스트 노드</td><td><span class="tag ok">Figma Icon Component로 변환 권장</span> (14종)</td></tr>
+    <tr><td>Emoji</td><td>👍 (추천 피드백) · 💬 (Landing 댓글 수)</td><td>product/variants 1종 · landing 1종</td><td><span class="tag no">임시 목업 표현 — 아이콘 교체 권장</span></td></tr>
+    <tr><td>Arrow / Sign</td><td><code>→ ← ↗ −</code></td><td>본문·CTA</td><td>콘텐츠 표현으로 유지 가능</td></tr>
+    <tr><td>Logo Mark</td><td>파티클 구체 로고 (SVG, 4단 opacity 그룹)</td><td>nav·footer·auth·admin</td><td><span class="tag p0">Brand Asset — Figma Component</span></td></tr>
+    <tr><td>Canvas / MotionOrb</td><td><code>&lt;canvas id="lpOrbCanvas"&gt;</code></td><td>Landing Hero</td><td><b>Static Image / Motion Spec</b> — 벡터 변환 제외</td></tr>
+    <tr><td>Image Placeholder</td><td><code>.mockimg</code> SVG · <code>--img</code> 배경</td><td>피드 카드·상세 figure</td><td>Figma에서 Image Fill Placeholder로</td></tr>
+  </table>
+  <div class="note warn"><b>접근성 위험:</b> 텍스트 심볼 아이콘 대부분이 <code>aria-label</code> 없이 텍스트 노드로만 존재합니다(전체 aria-label 31개 · role 39개). 스크린리더가 "⚑"를 그대로 읽습니다 → Figma Icon Component화 + 개발 시 <code>aria-label</code> 부여 필요.</div>
+</section>
+
+<!-- ===================== 09 MOTION ===================== -->
+<section id="motion">
+  <h2><span class="num">09</span>Motion</h2>
+  <p class="sub">코드에 실제 존재하는 모션만 기록합니다.</p>
+  <table>
+    <tr><th>대상</th><th>Duration</th><th>Easing</th><th>Transform / 효과</th><th>Reduced Motion</th><th>처리</th></tr>
+    <tr><td>Product 인터랙션 (입력 focus, chip, hover)</td><td>.12s ~ .25s</td><td>기본(ease)</td><td>background · border-color · box-shadow</td><td>미처리</td><td>Figma: Smart Animate 불필요 — <b>Dev Spec</b></td></tr>
+    <tr><td>Product 테마 전환</td><td>.25s</td><td>ease</td><td><code>.page</code> background</td><td>미처리</td><td>Dev Spec</td></tr>
+    <tr><td>Skeleton (로딩)</td><td>1.4s infinite</td><td>linear (keyframes <code>sh</code>)</td><td>background-position 이동</td><td>미처리</td><td><b>Figma: Loading State 정지 프레임</b></td></tr>
+    <tr><td>Spinner (분석 중)</td><td>3.6s / 1s / .9s infinite</td><td>linear (<code>rot</code>, <code>wspin</code>)</td><td>rotate 360°</td><td>미처리</td><td>Figma: 정지 프레임 + Dev Spec</td></tr>
+    <tr><td>Toast</td><td>3s 후 자동 숨김 (JS)</td><td>—</td><td>hidden 토글</td><td>—</td><td>Figma: Default/Visible 2상태</td></tr>
+    <tr><td>Modal</td><td>즉시 표시 (hidden 토글)</td><td>—</td><td>애니메이션 없음</td><td>—</td><td>Figma: Overlay</td></tr>
+    <tr><td>Landing Button Hover</td><td>.2s</td><td>ease</td><td><code>translateY(-2px)</code> + warm shadow</td><td>비활성화됨</td><td><b>Marketing 전용</b> — Figma Prototype 재현 가능</td></tr>
+    <tr><td>Landing Card Hover</td><td>.25s</td><td>ease</td><td><code>translateY(-5px)</code> + shadow</td><td>비활성화됨</td><td>Marketing 전용</td></tr>
+    <tr><td>Landing Hero 진입</td><td>.8s (delay .15s)</td><td>ease</td><td><code>lp-fadeup</code> — opacity + translateY</td><td>비활성화됨</td><td>Figma Prototype 선택 사항</td></tr>
+    <tr><td>MotionOrb — breathe</td><td>9s infinite</td><td>ease-in-out</td><td><code>scale(1 → 1.014)</code></td><td><b>정적 1프레임</b></td><td><b>Figma: Static Image</b> / Dev: Canvas Spec</td></tr>
+    <tr><td>MotionOrb — Canvas</td><td>지속 (rAF)</td><td>—</td><td>구체 회전(A += dt*.06) · hover 시 입자 응집 · orbital ring 하이라이트</td><td><code>prefers-reduced-motion</code> → <code>draw(0.016)</code> 정지 1프레임</td><td><b>Vector Component 제외</b></td></tr>
+  </table>
+  <div class="note"><b>MotionOrb 분류 (확정):</b> Figma = Static Image / Representative Still · Development = Canvas Motion Spec(원본 스크립트) · Vector Component = <b>제외</b>. Canvas 입자를 Figma 레이어로 변환하지 않습니다.</div>
+  <div class="note warn"><b>Reduced Motion:</b> Landing만 <code>@media (prefers-reduced-motion: reduce)</code>를 처리합니다. <b>Product의 skeleton·spinner는 미처리</b> → 개발 단계 보완 필요(Decision).</div>
+</section>
+
+<!-- ===================== 10 MARKETING VS PRODUCT ===================== -->
+<section id="mvp">
+  <h2><span class="num">10</span>Marketing vs Product</h2>
+  <table>
+    <tr><th>요소</th><th>Landing (Marketing)</th><th>Product (UI)</th><th>판정</th></tr>
+    <tr><td>Color Token</td><td>공유 토큰 = Product Light와 동일 값</td><td>Light + Dark</td><td><span class="tag ok">공유</span> (Landing Dark 없음)</td></tr>
+    <tr><td>그래픽 토큰</td><td>--signal-soft · --wash-weak · --shadow-warm · Hero gradient · Orb 팔레트</td><td>없음</td><td><span class="tag mk">Marketing 전용</span></td></tr>
+    <tr><td>Header</td><td>76px · 좌우 72 · 워드마크 21px</td><td>58px · 좌우 24 · 워드마크 17px</td><td><span class="tag mk">의도적 차이(유지)</span></td></tr>
+    <tr><td>Button</td><td>14/16px · padding 12 24 (big 16 32) · radius 12 · glow · hover translateY</td><td>13.5/12.5px · padding 9 15 (sm 7 12) · radius 10/8 · 그림자 없음</td><td><span class="tag mk">별도 Component</span> (Size Variant로 합치지 말 것)</td></tr>
+    <tr><td>Section 여백</td><td>140px</td><td>16~24px</td><td><span class="tag mk">의도적 차이</span></td></tr>
+    <tr><td>Typography 층위</td><td>Hero 56 · Section 48 · Final 58</td><td>Detail 25 · Card 18 · Body 14</td><td><span class="tag mk">별도 Text Style 계층</span></td></tr>
+    <tr><td>영문 라벨</td><td>Eyebrow: Space Grotesk · .16em · UPPER</td><td>Micro Label: Space Grotesk · .08em · UPPER</td><td>이름 유사, <b>다른 스타일</b></td></tr>
+    <tr><td>Serif</td><td><b>없음</b> (2026-07-14 정정 — 클로징 문구도 Pretendard 23px)</td><td>없음</td><td><span class="tag ok">양쪽 모두 Pretendard 기본 서체</span></td></tr>
+    <tr><td>카드 밀도</td><td>max 920px · padding 36 40</td><td>max 760px · padding 16 18</td><td><span class="tag mk">의도적 차이</span></td></tr>
+    <tr><td>종결어미</td><td>합니다체</td><td>해요체</td><td><span class="tag">Decision Needed (Voice system pending)</span></td></tr>
+  </table>
+</section>
+
+<!-- ===================== 11 FIGMA MAPPING ===================== -->
+<section id="map">
+  <h2><span class="num">11</span>Figma Variable / Style Mapping</h2>
+  <table>
+    <tr><th>Figma 항목</th><th>이름 규칙</th><th>개수</th><th>Source</th></tr>
+    <tr><td>Color Variable (Collection: Theme)</td><td><code>bg/*, text/*, line/*, signal/*, semantic/*</code> · Mode = Light | Dark</td><td>Light 25 / Dark 25</td><td>shared/tokens.css</td></tr>
+    <tr><td>Color Style (Marketing)</td><td><code>Marketing / Graphic / *</code> (Mode 없음, Light 전용)</td><td>6</td><td>landing-desktop.html <code>.lp</code></td></tr>
+    <tr><td>Text Style — Brand</td><td><code>Brand / Wordmark / Marketing | Product | Compact</code></td><td>3</td><td>Quicksand 400 (21/17/15)</td></tr>
+    <tr><td>Text Style — Marketing</td><td><code>Marketing / Hero Display, Section Display, Supporting Body, Eyebrow, Data Number, Step Time, Closing Text</code></td><td>7</td><td>landing CSS (Signature 전용 스타일 폐기 — Closing Text = Pretendard 23px)</td></tr>
+    <tr><td>Text Style — UI</td><td><code>UI / Page Title, Detail Title, Section Label, Card Title, Card Title Compact, Body, Supporting Text, Navigation Label, Button Label, Metadata, Caption, Micro Label</code></td><td>12</td><td>base.css · product-components.css</td></tr>
+    <tr><td>Text Style — Data</td><td><code>Data / Number, Tag Label</code></td><td>2</td><td>Space Grotesk 계열</td></tr>
+    <tr><td>Number Variable — Spacing</td><td><code>space/4…24</code></td><td>11 (반복값만)</td><td>§04</td></tr>
+    <tr><td>Number Variable — Radius</td><td><code>radius/sm(8) md(10) lg(14) xl(16) pill(999)</code> + Marketing 12/16</td><td>7</td><td>§05</td></tr>
+    <tr><td>Effect Style</td><td><code>Product / Subtle, Modal, Dropdown, Toast, Focus</code> · <code>Marketing / Card, Signal Glow</code></td><td>7</td><td>§07</td></tr>
+  </table>
+</section>
+
+<!-- ===================== 12 AUDIT ===================== -->
+<section id="audit">
+  <h2><span class="num">12</span>Audit Notes</h2>
+  <p class="sub">여기서는 <b>수정하지 않고 기록만</b> 합니다. 상세는 <code>DESIGN_SYSTEM_EXPORT_REPORT.md</code> 참고.</p>
+  <table>
+    <tr><th>등급</th><th>항목</th><th>근거</th></tr>
+    <tr><td><span class="tag no">Critical</span></td><td>버튼·칩·탭에 <b>키보드 Focus 스타일 없음</b> (focus 규칙은 input 계열 4곳뿐, <code>:focus-visible</code> 0건)</td><td>base.css · product-components.css</td></tr>
+    <tr><td><span class="tag no">Critical</span></td><td>텍스트 심볼 아이콘 14종에 접근성 라벨 없음 (이모지 👍 💬 포함)</td><td>product/variants/landing HTML</td></tr>
+    <tr><td><span class="tag">Before Figma</span></td><td>미사용 CSS 클래스 <b>70개</b> (.ptabs .ptab .stopchip .wtoggle .savedrow .collrow .side-cta 등) — Component화 대상에서 제외</td><td>CSS 460 클래스 vs HTML 사용분 대조</td></tr>
+    <tr><td><span class="tag">Before Figma</span></td><td>인라인 style <b>421곳</b>(product+variants) · 77곳(admin) · 19곳(landing)</td><td>Figma Component화 시 값 고정 필요</td></tr>
+    <tr><td><span class="tag">Before Figma</span></td><td>HTML 하드코딩 색 <b>2종 8회</b> — <code>rgba(52,166,106,.3)</code>, <code>rgba(52,166,106,.08)</code> (--ok 계열인데 토큰 미사용)</td><td>product/variants</td></tr>
+    <tr><td><span class="tag">In Figma</span></td><td>Dropdown shadow 2값 · Micro label radius 5/6/7 · Input radius 10/12 혼재</td><td>§05 · §07</td></tr>
+    <tr><td><span class="tag mk">Intentional</span></td><td>Landing/Product의 버튼·헤더·여백·타이포 층위 차이</td><td>§10</td></tr>
+    <tr><td><span class="tag">Reference Only</span></td><td>Admin Rough 스타일(.atable .acard .abadge .anav) — Product Final 공통 컴포넌트로 승격 금지</td><td>ADMIN_EXPORT_REPORT §6</td></tr>
+    <tr><td><span class="tag">Decision Needed</span></td><td>Landing Dark Mode 제공 여부 · Product Reduced-motion 대응 · Voice(합니다체/해요체)</td><td>§09 · §10</td></tr>
+    <tr><td><span class="tag">Decision Needed</span></td><td><code>--canvas</code>(목업 잔여 토큰) · <code>--contrast</code>(Landing 미사용) Figma 등록 제외 여부</td><td>§02</td></tr>
+  </table>
+</section>
+
+</div>
+</body></html>

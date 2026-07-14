@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[Rough] AlphaCatcher 어드민 — 수집 파이프라인</title>
+<!--
+  ============================================================
+  AlphaCatcher — 어드민 수집 파이프라인 (Rough Export)
+  ============================================================
+  Status: Rough
+  Purpose: Structure Reference
+  Visual Design: Pending
+  Figma Ready: Structure Only
+  Dev Ready: No (구조 참고)
+  ------------------------------------------------------------
+  원본(무수정): Outputs/디자인산출물_2026-07-07/alphacatcher-admin-mockup-v1.html
+  이 파일은 최종 어드민 디자인이 아닙니다. 기능 구조·정보 계층·상태 위치 확인용
+  구조 기준본이며, Figma에서 제품 디자인 시스템으로 재디자인할 대상입니다.
+  제거: 목업 캔버스 / 화면 전환 Toolbar / 외곽 border·radius / 시점(관리자·일반) 전환 토글
+  보정: 배경 풀블리드 + 콘텐츠 1440 중앙 정렬 + 테이블 가로 스크롤
+  배치 실행 이력 · 실패 확인 · 재실행 위치. 실패 상세 블록은 구조 확인을 위해 기본 표시(원본은 토글 후 표시).
+  ============================================================
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+*{box-sizing:border-box;margin:0;padding:0}
+/* ============ THEME TOKENS ============ */
+.page[data-theme="light"]{
+  --canvas:#E3E6EA;
+  --bg:#FFFFFF; --bg-soft:#F5F6F8; --bg-inset:#EEF0F3;
+  --line:#E6E8EC; --line-strong:#D7DBE0;
+  --ink:#141619; --ink-mid:#454B54; --ink-dim:#6B7280;
+  --signal:#FF5A00; --signal-ink:#E35200; --on-signal:#FFFFFF;
+  --wash:rgba(255,90,0,.09); --wash-strong:rgba(255,90,0,.20);
+  --today-bg:#FAFBFC; --today-line:#E6E8EC; --avatar-bg:#FCE4D4;
+  --ok:#1F8A54; --ok-dot:#34A66A; --mid:#D89A2B; --low:#A6ADB6;
+  --err:#DC2626; --err-bg:#FEF2F2; --err-line:#FBD5D5;
+  --caution:#8A6D1F; --caution-bg:#FDF7EA; --caution-line:#EFE2BE;
+  --frame:#D7DBE0; --skel1:#EDEFF2; --skel2:#F6F7F9; --img:#EEF0F3;
+  --shadow:0 1px 2px rgba(20,22,25,.05);
+}
+.page[data-theme="dark"]{
+  --canvas:#0A0B0D;
+  --bg:#181B21; --bg-soft:#20242C; --bg-inset:#252A33;
+  --line:#2C323C; --line-strong:#3B424E;
+  --ink:#EEF1F5; --ink-mid:#C4CBD4; --ink-dim:#949CA8;
+  --signal:#FF7A33; --signal-ink:#FF8A4D; --on-signal:#241200;
+  --wash:rgba(255,122,51,.14); --wash-strong:rgba(255,122,51,.30);
+  --today-bg:#1C2026; --today-line:#2C323C; --avatar-bg:#2E2318;
+  --ok:#43C088; --ok-dot:#43C088; --mid:#E0B44E; --low:#7F8792;
+  --err:#F87171; --err-bg:#2A1A1C; --err-line:#5A2E30;
+  --caution:#E6C67E; --caution-bg:#282213; --caution-line:#463C1D;
+  --frame:#2C323C; --skel1:#20242C; --skel2:#2A2F38; --img:#20242C;
+  --shadow:0 1px 2px rgba(0,0,0,.32);
+}
+body{background:var(--canvas,#E3E6EA);font-family:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased;padding:0 0 80px;}
+.page{background:var(--canvas);color:var(--ink);min-height:100vh;transition:background .25s;padding:22px 24px 0;}
+.stage{width:1440px;max-width:100%;margin:0 auto;}
+.screen[hidden]{display:none;}
+.app{width:1440px;max-width:100%;margin:0 auto;background:var(--bg-soft);border:1px solid var(--frame);border-radius:16px;overflow:hidden;transition:background .25s,border-color .25s;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:600;padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);white-space:nowrap;cursor:pointer;font-family:inherit;}
+.btn.signal{background:var(--signal);border-color:var(--signal);color:var(--on-signal);}
+.btn.sm{padding:7px 12px;font-size:12.5px;border-radius:8px;}
+.btn.ghost{background:transparent;color:var(--ink-mid);}
+.link{font-size:13px;font-weight:600;color:var(--signal-ink);cursor:pointer;}
+.pav{width:38px;height:38px;border-radius:50%;flex-shrink:0;border:1px solid var(--line-strong);background:var(--bg-soft);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-dim);}
+.pav.me{background:var(--wash);border-color:var(--wash-strong);color:var(--signal-ink);}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.samp{margin:2px 0 12px;font-family:"Space Grotesk",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);border:1px solid var(--line);background:var(--bg-soft);border-radius:5px;padding:3px 9px;display:inline-block;}
+.state-wrap{background:var(--bg);border:1px dashed var(--line-strong);border-radius:14px;padding:16px 18px;margin-bottom:16px;}
+.state-wrap .sh{font-size:12.5px;color:var(--ink-dim);line-height:1.6;margin-bottom:12px;}
+.state-wrap .sh b{color:var(--ink-mid);font-weight:700;}
+
+/* page-level states */
+.pstates{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.pstate{border:1px solid var(--line);border-radius:12px;background:var(--bg);min-height:252px;display:flex;flex-direction:column;padding:18px 16px 14px;position:relative;}
+.pstate .tag{position:absolute;top:11px;right:11px;font-size:10.5px;font-weight:600;color:var(--ink-dim);background:var(--bg-soft);border:1px solid var(--line);border-radius:5px;padding:2px 7px;}
+.pstate.center{align-items:center;justify-content:center;text-align:center;gap:8px;}
+.pstate .pic{width:44px;height:44px;border-radius:50%;background:var(--bg-soft);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-dim);margin-bottom:2px;}
+.pstate .pt2{font-size:14.5px;font-weight:700;color:var(--ink);}
+.pstate .ps2{font-size:12px;color:var(--ink-dim);line-height:1.65;max-width:255px;}
+.pstate .pa{margin-top:7px;display:flex;gap:8px;}
+.skl{display:block;border-radius:7px;background:linear-gradient(90deg,var(--skel1) 25%,var(--skel2) 50%,var(--skel1) 75%);background-size:200% 100%;animation:sh 1.4s infinite;margin-bottom:10px;}
+.spin{animation:rot 3.6s linear infinite;}
+@keyframes rot{to{transform:rotate(360deg)}}
+.prog{width:180px;height:6px;border-radius:3px;background:var(--bg-inset);overflow:hidden;margin-top:5px;}
+.prog i{display:block;width:58%;height:100%;border-radius:3px;background:var(--signal);}
+.pstate .steps{font-size:11.5px;color:var(--ink-dim);margin-top:5px;}
+.pstate .steps b{color:var(--signal-ink);font-weight:600;}
+.pstate .fnote{margin-top:10px;font-size:10.5px;color:var(--caution);background:var(--caution-bg);border:1px solid var(--caution-line);border-radius:5px;padding:2px 8px;}
+.kb-search{position:relative;margin-bottom:12px;}
+.kb-search input{width:100%;height:46px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg);color:var(--ink);font-size:14px;font-family:inherit;padding:0 15px 0 40px;outline:none;transition:border-color .15s,box-shadow .15s;}
+.kb-search input::placeholder{color:var(--low);}
+.kb-search input:focus{border-color:var(--signal);box-shadow:0 0 0 3px var(--wash);}
+.kb-search .sico{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:13px;height:13px;border:1.5px solid var(--low);border-radius:50%;}
+.kb-search .sico::after{content:"";position:absolute;width:5px;height:1.5px;background:var(--low);bottom:-2px;right:-4px;transform:rotate(45deg);}
+.kb-filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:6px;}
+.fchip{font-size:12.5px;font-weight:600;color:var(--ink-mid);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;background:var(--bg);}
+.fchip:hover{border-color:var(--line-strong);color:var(--ink);}
+.fchip.on{background:var(--wash);border-color:var(--signal);color:var(--signal-ink);}
+.fchip.dd::after{content:"\25BE";margin-left:5px;color:var(--ink-dim);}
+.kseg{display:flex;background:var(--bg-soft);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px;}
+.ks{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;color:var(--ink-dim);padding:5px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;}
+.ks.on{background:var(--bg);color:var(--ink);box-shadow:var(--shadow);}
+.srow{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line);}
+.srow:last-child{border-bottom:none;}
+.srow .sl{flex:1;min-width:0;}
+.srow .sl .t2{font-size:13.5px;font-weight:600;color:var(--ink);}
+.srow .sl .d2{font-size:12px;color:var(--ink-dim);margin-top:3px;line-height:1.55;}
+.srow .sl .d2 b{color:var(--ink-mid);font-weight:600;}
+.srow .val{font-size:13px;color:var(--ink-mid);}
+.sw{width:38px;height:22px;border-radius:11px;background:var(--line-strong);position:relative;cursor:pointer;flex-shrink:0;transition:background .15s;}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s;}
+.sw.on{background:var(--signal);}
+.sw.on::after{left:18px;}
+.danger{color:var(--err) !important;}
+.set-note{font-size:11.5px;color:var(--caution);background:var(--caution-bg);border:1px solid var(--caution-line);border-radius:7px;padding:6px 10px;line-height:1.55;margin:2px 0 16px;}
+.up-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:13px;padding:11px 18px;border-radius:11px;z-index:300;box-shadow:0 10px 28px rgba(0,0,0,.25);}
+.up-toast[hidden]{display:none;}
+/* ===== 어드민 대시보드 ===== */
+.adm-head{display:flex;align-items:center;gap:11px;height:58px;padding:0 24px;background:var(--bg);border-bottom:1px solid var(--line);}
+.adm-badge{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--signal-ink);background:var(--wash);border:1px solid var(--wash-strong);border-radius:6px;padding:3px 9px;}
+.adm-title{font-size:14px;font-weight:700;color:var(--ink);}
+.adm-who{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-mid);}
+.adm-who .role{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--ink-dim);border:1px solid var(--line-strong);border-radius:5px;padding:2px 7px;}
+.adm-shell{display:flex;gap:0;min-height:640px;}
+.anav{width:210px;flex-shrink:0;border-right:1px solid var(--line);padding:16px 10px;background:var(--bg);}
+.ai{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--ink-mid);cursor:pointer;margin-bottom:2px;}
+.ai:hover{background:var(--bg-soft);}
+.ai.on{background:var(--wash);color:var(--signal-ink);}
+.amain{flex:1;min-width:0;padding:22px 26px 40px;background:var(--bg);}
+.apane[hidden]{display:none;}
+.ah2{font-size:17px;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin-bottom:4px;}
+.ah2s{font-size:12.5px;color:var(--ink-dim);margin-bottom:18px;}
+.acards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.acard{border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
+.acard .al{font-size:12px;color:var(--ink-dim);}
+.acard .av{font-size:22px;font-weight:700;color:var(--ink);margin-top:6px;letter-spacing:-.01em;}
+.acard .ad{font-size:11.5px;color:var(--ink-dim);margin-top:5px;}
+.acard .ad.up{color:var(--ok);}
+.acard.star{border-color:var(--wash-strong);background:linear-gradient(165deg,var(--wash),var(--bg) 70%);}
+.ablock{border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:14px;}
+.ablock .bt2{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px;}
+.atable{width:100%;border-collapse:collapse;font-size:12.5px;}
+.atable th{text-align:left;padding:9px 10px;color:var(--ink-dim);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;font-size:11.5px;}
+.atable td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--ink-mid);vertical-align:middle;}
+.atable tr:last-child td{border-bottom:none;}
+.atable tr.arow:hover td{background:var(--bg-soft);}
+.abadge{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--ink-dim);white-space:nowrap;}
+.abadge.ok{color:var(--ok);border-color:rgba(52,166,106,.3);background:rgba(52,166,106,.08);}
+.abadge.warn{color:var(--caution);border-color:var(--caution-line);background:var(--caution-bg);}
+.abadge.err{color:var(--err);border-color:var(--err-line);background:var(--err-bg);}
+.abadge.run{color:var(--signal-ink);border-color:var(--wash-strong);background:var(--wash);}
+.auser{display:flex;align-items:center;gap:9px;}
+.auser .pav{width:28px;height:28px;font-size:10px;}
+.auser .an3{font-size:12.5px;font-weight:700;color:var(--ink);}
+.auser .ah3{font-size:11px;color:var(--ink-dim);}
+.aiss{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-mid);padding:8px 0;border-bottom:1px solid var(--line);}
+.aiss:last-child{border-bottom:none;}
+.aiss .dot2{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.abar7{display:flex;align-items:flex-end;gap:7px;height:110px;margin-top:8px;}
+.abar7 .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.abar7 .bfill{width:100%;max-width:38px;border-radius:5px 5px 0 0;background:var(--signal);opacity:.5;}
+.abar7 .bcol.today .bfill{opacity:.9;}
+.abar7 .bl{font-size:10px;color:var(--ink-dim);}
+.a403{min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:40px 20px;}
+.a403 .code{font-family:"Space Grotesk",monospace;font-size:44px;font-weight:600;color:var(--line-strong);letter-spacing:.04em;}
+.a403 .t{font-size:19px;font-weight:700;color:var(--ink);}
+.a403 .s{font-size:13px;color:var(--ink-dim);line-height:1.65;}
+.aview-toggle{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.aptxt{width:100%;min-height:150px;border:1px solid var(--line-strong);border-radius:10px;background:var(--bg-inset);color:var(--ink);font-family:"Space Grotesk",monospace;font-size:12px;line-height:1.7;padding:13px 15px;resize:vertical;outline:none;}
+.aptxt:focus{border-color:var(--signal);}
+.avar{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--signal-ink);background:var(--wash);border:1px solid var(--wash-strong);border-radius:5px;padding:1px 7px;}
+.modal-bg{position:fixed;inset:0;background:rgba(12,14,17,.45);display:flex;align-items:center;justify-content:center;z-index:120;}
+.modal-bg[hidden]{display:none;}
+.modal{width:440px;max-width:calc(100% - 48px);background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 24px 60px rgba(10,12,15,.28);}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.mt{font-size:16.5px;font-weight:700;color:var(--ink);}
+.mx{cursor:pointer;color:var(--ink-dim);font-size:14px;padding:4px 7px;border-radius:7px;}
+.mx:hover{background:var(--bg-soft);color:var(--ink);}
+.ms{font-size:13px;color:var(--ink-mid);line-height:1.65;margin-bottom:14px;}
+.modal input{width:100%;height:46px;border:1px solid var(--line-strong);border-radius:10px;background:var(--bg);color:var(--ink);font-size:14px;font-family:inherit;padding:0 14px;outline:none;transition:border-color .15s,box-shadow .15s;}
+.modal input::placeholder{color:var(--low);}
+.modal input:focus{border-color:var(--signal);box-shadow:0 0 0 3px var(--wash);}
+.mh{font-size:11.5px;color:var(--ink-dim);margin-top:7px;}
+.mfoot{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;}
+
+/* ============================================================
+   [ROUGH EXPORT 보정] 원본 목업 CSS는 위까지 무수정 발췌.
+   아래는 독립 풀사이즈 페이지용 보정만 추가 (색/타이포/간격 재디자인 아님).
+   - 바깥 회색 캔버스 제거, 외곽 border/radius 제거
+   - 배경은 브라우저 전체 폭, 콘텐츠는 1440 중앙 정렬
+   - 긴 테이블은 블록 내부에서 가로 스크롤 (페이지 가로 오버플로 방지)
+   ============================================================ */
+body{background:var(--bg-soft);padding:0;}
+.page{background:var(--bg-soft);padding:0;min-height:100vh;}
+.stage{width:100%;max-width:none;margin:0;}
+.app{width:100%;max-width:none;margin:0;border:0;border-radius:0;background:var(--bg);min-height:100vh;}
+
+/* 상단바: 배경 풀블리드 + 내용물 1440 중앙 */
+.adm-head{padding:0;}
+.adm-head-in{width:100%;max-width:1440px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:11px;height:58px;}
+.adm-wrap{width:100%;max-width:1440px;margin:0 auto;}
+.adm-shell{min-height:calc(100vh - 58px);}
+
+/* 테이블 가로 오버플로 방지 */
+.ablock{overflow-x:auto;}
+.atable{min-width:720px;}
+.a403{min-height:calc(100vh - 58px);}
+
+@media (max-width:1200px){ .acards{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:900px){ .anav{width:160px;} .amain{padding:18px 16px 32px;} .acards{grid-template-columns:1fr;} }
+
+</style>
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+  <section class="screen" id="screen-admin">
+    <div class="app">
+      <div class="adm-head">
+        <div class="adm-head-in">
+          <span class="word" style="font-family:'Quicksand',sans-serif;font-size:15px;color:var(--ink);">alphacatcher</span>
+          <span class="adm-badge">ADMIN CONSOLE</span>
+          <span class="adm-title">수집 파이프라인</span>
+          <span class="aview-toggle">
+            <span class="adm-who"><span class="pav" style="width:28px;height:28px;font-size:10px;">관</span>김관리<span class="role">ADMIN</span></span>
+            <span class="btn sm" onclick="location.href='../product/home-my-reports.html'">서비스로 돌아가기</span>
+          </span>
+        </div>
+      </div>
+      <div class="adm-wrap">
+      <div class="adm-shell">
+        <aside class="anav">
+          <div class="ai" onclick="location.href='admin-overview-rough.html'">개요</div>
+          <div class="ai" onclick="location.href='admin-users-rough.html'">사용자</div>
+          <div class="ai on" onclick="location.href='admin-pipeline-rough.html'">파이프라인</div>
+          <div class="ai" onclick="location.href='admin-sources-rough.html'">소스</div>
+          <div class="ai" onclick="location.href='admin-llm-rough.html'">LLM · 프롬프트</div>
+        </aside>
+        <main class="amain">
+
+<div class="apane" data-apane="pipe">
+            <div class="ah2">수집 파이프라인</div>
+            <div class="ah2s">배치 실행 이력 · 실패 건 재실행 — 외부 연동 안정성</div>
+            <div class="ablock" style="padding:6px 20px;">
+              <table class="atable">
+                <tr><th>실행 ID</th><th>유형</th><th>시작</th><th>소요</th><th>처리</th><th>성공</th><th>실패</th><th>상태</th><th>관리</th></tr>
+                <tr class="arow"><td>#B-1042</td><td>정기 RSS 수집</td><td>07-13 08:00</td><td>2분 18초</td><td>42</td><td>39</td><td style="color:var(--err);font-weight:600;">3</td><td><span class="abadge warn" id="pb-st">일부 실패</span></td><td><span class="btn sm" id="pb-detail">실패 상세</span></td></tr>
+                <tr class="arow"><td>#B-1041</td><td>브리핑 생성 전 수집</td><td>07-13 06:30</td><td>1분 44초</td><td>38</td><td>38</td><td>0</td><td><span class="abadge ok">성공</span></td><td>—</td></tr>
+                <tr class="arow"><td>#B-1040</td><td>수동 재실행</td><td>07-12 22:10</td><td>0분 51초</td><td>2</td><td>0</td><td style="color:var(--err);font-weight:600;">2</td><td><span class="abadge err">실패</span></td><td><span class="btn sm pb-rerun">재실행</span></td></tr>
+                <tr class="arow"><td>#B-1039</td><td>정기 RSS 수집</td><td>07-12 08:00</td><td>진행 중</td><td>—</td><td>—</td><td>—</td><td><span class="abadge run">실행 중</span></td><td>—</td></tr>
+              </table>
+            </div>
+            <div class="ablock" id="pb-fail">
+              <div class="bt2">#B-1042 실패 상세 <span class="abadge err">3건</span></div>
+              <table class="atable">
+                <tr><th>실패 소스</th><th>실패 시각</th><th>오류</th><th>재시도</th><th>마지막 성공</th><th>관리</th></tr>
+                <tr><td>Reuters Markets</td><td>08:01:12</td><td>연결 시간 초과</td><td>2회</td><td>07-12 08:00</td><td><span class="btn sm pb-rerun">재실행</span></td></tr>
+                <tr><td>TechCrunch AI</td><td>08:01:40</td><td>응답 코드 500</td><td>2회</td><td>07-12 08:00</td><td><span class="btn sm pb-rerun">재실행</span></td></tr>
+                <tr><td>Federal Reserve News</td><td>08:02:03</td><td>잘못된 RSS 형식</td><td>1회</td><td>07-11 08:00</td><td><span class="btn sm pb-rerun">재실행</span></td></tr>
+              </table>
+            </div>
+          </div>
+
+        </main>
+      </div>
+      </div>
+
+    </div>
+  </section>
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  </div>
+</div>
+<script>
+/* [Rough] 원본 어드민 JS 발췌 — 구조 확인용 인터랙션만. 화면 전환/테마 토글(목업 전용)은 제거.
+   단독 페이지에서 안전하도록 null 가드 추가. 원본 문자열 깨짐(1건) 복구 — 원본 파일은 미수정. */
+(function(){
+  var toast=(function(){
+    var t=document.getElementById('g-toast'),tt=document.getElementById('g-toast-t'),timer=null;
+    return function(msg){ if(!t||!tt)return; tt.textContent=msg; t.hidden=false;
+      clearTimeout(timer); timer=setTimeout(function(){t.hidden=true;},3000); };
+  })();
+
+  /* 사용자 관리 */
+  var users=[
+    {name:'김여진',email:'yeojin@example.com',join:'2026-03-12 · Free',last:'2시간 전',act:'공개 브리핑 4 · 보관 12 · 팔로워 31 · 팔로잉 18',active:true},
+    {name:'FX Daily',email:'fxdaily@example.com',join:'2026-03-02 · Pro',last:'14분 전',act:'공개 브리핑 18 · 보관 5 · 팔로워 1,284 · 팔로잉 96',active:true},
+    {name:'Market Note',email:'marketnote@example.com',join:'2026-04-21 · Free',last:'1일 전',act:'공개 브리핑 9 · 보관 27 · 팔로워 208 · 팔로잉 77',active:true},
+    {name:'Macro Brief',email:'macrobrief@example.com',join:'2026-05-03 · Free',last:'3주 전',act:'공개 브리핑 12 · 보관 8 · 팔로워 142 · 팔로잉 55',active:false}
+  ];
+  var auModal=document.getElementById('au-modal'),auConfirm=document.getElementById('au-confirm'),cur=-1;
+  function $(id){return document.getElementById(id);}
+  function renderUser(){
+    var u=users[cur]; if(!u)return;
+    $('au-name').textContent=u.name; $('au-email').textContent=u.email;
+    $('au-join').textContent=u.join; $('au-last').textContent=u.last; $('au-act').textContent=u.act;
+    var b=$('au-badge'); b.textContent=u.active?'활성':'비활성'; b.className='abadge'+(u.active?' ok':'');
+    var t=$('au-toggle'); t.textContent=u.active?'사용자 비활성화':'사용자 활성화';
+    var row=document.querySelector('tr[data-au="'+cur+'"] .au-st');
+    if(row){row.textContent=u.active?'활성':'비활성';row.className='abadge au-st'+(u.active?' ok':'');}
+  }
+  document.querySelectorAll('.au-open').forEach(function(b){
+    b.addEventListener('click',function(){cur=+b.closest('tr').getAttribute('data-au');renderUser();auModal.hidden=false;});
+  });
+  document.querySelectorAll('[data-au-close]').forEach(function(b){b.addEventListener('click',function(){auModal.hidden=true;});});
+  var auToggle=$('au-toggle');
+  if(auToggle)auToggle.addEventListener('click',function(){
+    var u=users[cur]; if(!u)return;
+    $('auc-t').textContent=u.active?'이 사용자를 비활성화할까요?':'이 사용자를 활성화할까요?';
+    $('auc-s').textContent=u.active?'비활성화된 사용자는 서비스에 로그인할 수 없습니다. 기존 데이터는 삭제되지 않습니다.':'활성화하면 이 사용자가 다시 로그인할 수 있습니다.';
+    $('auc-ok').textContent=u.active?'비활성화':'활성화';
+    auConfirm.hidden=false;
+  });
+  document.querySelectorAll('[data-auc-close]').forEach(function(b){b.addEventListener('click',function(){auConfirm.hidden=true;});});
+  var aucOk=$('auc-ok');
+  if(aucOk)aucOk.addEventListener('click',function(){
+    users[cur].active=!users[cur].active; renderUser(); auConfirm.hidden=true;
+    toast(users[cur].active?'사용자를 다시 활성화했습니다.':'사용자를 비활성화했습니다.');
+  });
+
+  /* 파이프라인 */
+  var pbd=$('pb-detail');
+  if(pbd)pbd.addEventListener('click',function(){var f=$('pb-fail');if(f)f.hidden=!f.hidden;});
+  document.querySelectorAll('.pb-rerun').forEach(function(b){
+    b.addEventListener('click',function(){
+      var badge=b.closest('tr').querySelector('.abadge');
+      b.textContent='재실행 중';b.style.pointerEvents='none';
+      if(badge){badge.textContent='실행 중';badge.className='abadge run';}
+      toast('실패한 수집 작업을 다시 실행하고 있습니다.');
+      setTimeout(function(){
+        if(badge){badge.textContent='성공';badge.className='abadge ok';}
+        b.textContent='완료';toast('수집 작업을 정상적으로 완료했습니다.');
+      },1800);
+    });
+  });
+
+  /* 소스 */
+  var srcModal=$('asrc-modal'), addBtn=$('asrc-add');
+  if(addBtn)addBtn.addEventListener('click',function(){srcModal.hidden=false;$('asrc-err').hidden=true;});
+  document.querySelectorAll('[data-asrc-close]').forEach(function(b){b.addEventListener('click',function(){srcModal.hidden=true;});});
+  var srcSave=$('asrc-save');
+  if(srcSave)srcSave.addEventListener('click',function(){
+    var url=$('asrc-url').value.trim();
+    if(!/^https?:\/\/.+/.test(url)){$('asrc-err').hidden=false;return;}
+    srcModal.hidden=true;toast('RSS 소스를 등록했습니다.');
+  });
+  document.querySelectorAll('.asrc-toggle').forEach(function(b){
+    b.addEventListener('click',function(){
+      var st=b.closest('tr').querySelector('.asrc-st');
+      var on=st.textContent==='활성';
+      st.textContent=on?'비활성':'활성'; st.className='abadge asrc-st'+(on?'':' ok');
+      b.textContent=on?'활성화':'비활성화';
+      toast(on?'소스를 비활성화했습니다.':'소스를 활성화했습니다.');
+    });
+  });
+
+  /* LLM 서브탭 · 프롬프트 편집 */
+  document.querySelectorAll('[data-llmtab]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('[data-llmtab]').forEach(function(x){x.classList.toggle('on',x===b);});
+      var t=b.getAttribute('data-llmtab');
+      document.querySelectorAll('[data-llmpane]').forEach(function(pn){pn.hidden=(pn.getAttribute('data-llmpane')!==t);});
+    });
+  });
+  document.querySelectorAll('.allm-save').forEach(function(b){
+    b.addEventListener('click',function(){toast('토큰 상한을 변경했습니다. 이후 생성되는 브리핑부터 적용됩니다.');});
+  });
+  document.querySelectorAll('.ap-edit').forEach(function(b){
+    b.addEventListener('click',function(){var e=$('ap-editor');if(e)e.hidden=false;});
+  });
+  var apc=$('ap-cancel'), aps=$('ap-save');
+  if(apc)apc.addEventListener('click',function(){$('ap-editor').hidden=true;});
+  if(aps)aps.addEventListener('click',function(){$('ap-editor').hidden=true;toast('프롬프트를 업데이트했습니다.');});
+
+  /* 설정 토글 스위치(소스 등록 모달) */
+  document.querySelectorAll('.sw').forEach(function(s){
+    s.addEventListener('click',function(){
+      s.classList.toggle('on');
+      s.setAttribute('aria-checked',s.classList.contains('on')?'true':'false');
+    });
+  });
+
+  [auModal,auConfirm,srcModal].forEach(function(m){
+    if(m)m.addEventListener('click',function(e){if(e.target===m)m.hidden=true;});
+  });
+})();
+</script>
+</body></html>

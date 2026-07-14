@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 프로필 — 타인</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+</head>
+<body>
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-uprofile">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="feed">
+          <!-- profile header (타인) -->
+          <div class="pcard">
+            <div class="pcover"></div>
+            <div class="pbody2">
+              <div class="pavatar-lg">FX</div>
+              <div class="prow">
+                <div>
+                  <div class="pname-lg">FX Daily</div>
+                  <div class="phandle">@fx_daily · 가입 2026년 3월</div>
+                </div>
+                <div class="pactions">
+                  <span class="btn sm" id="up-share">↗ 공유</span>
+                  <span class="btn sm" id="up-bell" hidden title="브리핑 알림 받기" style="padding:9px 11px;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg></span>
+                  <span class="btn signal sm" id="up-follow">팔로우</span>
+                </div>
+              </div>
+              <p class="pbio">환율과 글로벌 시장 흐름을 매일 이해하기 쉽게 정리합니다.</p>
+              <div class="pinterests">
+                <span class="tagm">#원·달러 환율</span><span class="tagm">#미국 금리</span><span class="tagm">#글로벌 증시</span><span class="tagm">#달러</span><span class="tagm">#거시경제</span>
+              </div>
+              <div class="pstats">
+                <div class="pstat"><b>18</b><span>브리핑</span></div>
+                <div class="pstat click" title="팔로워 목록 보기" data-ff-open="follower"><b id="up-fcnt">1,284</b><span>팔로워</span></div>
+                <div class="pstat click" title="팔로잉 목록 보기" data-ff-open="following"><b>96</b><span>팔로잉</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <article class="post">
+              <div class="phead">
+                <span class="pav">FX</span>
+                <div>
+                  <div class="pname">FX Daily <span class="h">@fx_daily</span></div>
+                  <div class="pmeta">2시간 전 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">환전 타이밍, 트리거로 잡는 법 — 내 세팅 공개</h3>
+              <p class="pbody">±0.3% 트리거로 좁혔더니 알림이 늘긴 했지만 놓치는 구간이 줄었어요. 제가 쓰는 조건과 이유를 정리했습니다.</p>
+              <div class="pacts">
+                <span class="pact up-save">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>21</b></span>
+                <span class="pact">♡ <b>54</b></span>
+                <span class="pact">조회 <b>9,120</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+            <article class="post">
+              <div class="phead">
+                <span class="pav">FX</span>
+                <div>
+                  <div class="pname">FX Daily <span class="h">@fx_daily</span></div>
+                  <div class="pmeta">오전 7:10 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">원·달러 환율이 다시 오른 세 가지 이유</h3>
+              <p class="pbody">달러 인덱스 반등, 수입 결제 수요, 위험 회피 심리 — 오늘 상승을 만든 요인을 데이터와 함께 봅니다.</p>
+              <div class="pacts">
+                <span class="pact up-save">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>9</b></span>
+                <span class="pact">♡ <b>41</b></span>
+                <span class="pact">조회 <b>6,480</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+            <article class="post">
+              <div class="phead">
+                <span class="pav">FX</span>
+                <div>
+                  <div class="pname">FX Daily <span class="h">@fx_daily</span></div>
+                  <div class="pmeta">어제 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">이번 주 미국 금리 발언에서 봐야 할 신호</h3>
+              <p class="pbody">연준 인사들의 발언 일정과 시장이 가격에 반영 중인 시나리오를 정리했어요.</p>
+              <div class="pacts">
+                <span class="pact up-save">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>5</b></span>
+                <span class="pact">♡ <b>36</b></span>
+                <span class="pact">조회 <b>5,210</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+            <article class="post">
+              <div class="phead">
+                <span class="pav">FX</span>
+                <div>
+                  <div class="pname">FX Daily <span class="h">@fx_daily</span></div>
+                  <div class="pmeta">7월 9일 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">달러 강세가 국내 시장에 미치는 영향</h3>
+              <p class="pbody">수출주와 내수주가 갈리는 지점, 환헤지 관점의 체크포인트를 담았습니다.</p>
+              <div class="pacts">
+                <span class="pact up-save">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>7</b></span>
+                <span class="pact">♡ <b>29</b></span>
+                <span class="pact">조회 <b>4,860</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+            <article class="post">
+              <div class="phead">
+                <span class="pav">FX</span>
+                <div>
+                  <div class="pname">FX Daily <span class="h">@fx_daily</span></div>
+                  <div class="pmeta">7월 8일 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">환율 변동성이 커질 때 확인해야 할 지표</h3>
+              <p class="pbody">변동성 구간에서 제가 매일 아침 확인하는 지표 5개를 공유합니다.</p>
+              <div class="pacts">
+                <span class="pact up-save">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>12</b></span>
+                <span class="pact">♡ <b>63</b></span>
+                <span class="pact">조회 <b>8,340</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+            <article class="post">
+              <div class="phead">
+                <span class="pav">FX</span>
+                <div>
+                  <div class="pname">FX Daily <span class="h">@fx_daily</span></div>
+                  <div class="pmeta">7월 7일 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">이번 주 글로벌 시장 핵심 일정 정리</h3>
+              <p class="pbody">CPI, 고용지표, 주요 실적 발표까지 — 한 주 일정을 시간순으로 정리했어요.</p>
+              <div class="pacts">
+                <span class="pact up-save">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>3</b></span>
+                <span class="pact">♡ <b>25</b></span>
+                <span class="pact">조회 <b>3,970</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <div class="feed-end">
+              <div class="l">FX Daily님의 공개 브리핑 18건 중 6건</div>
+              <div class="s">팔로우하면 새 공개 브리핑이 내 피드에 표시돼요.</div>
+            </div>
+          </div>
+
+          <!-- 상태 (샘플) -->
+          <div class="state-wrap" style="margin-top:16px;">
+            <span class="samp">화면 상태 · states</span>
+            <p class="sh">타인 프로필의 조건별 상태 샘플입니다.</p>
+            <div class="pstates">
+              <div class="pstate">
+                <span class="tag">로딩</span>
+                <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
+                  <span class="skl" style="width:52px;height:52px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                  <div style="flex:1;"><span class="skl" style="width:40%;height:14px;"></span><span class="skl" style="width:60%;height:11px;margin-bottom:0;"></span></div>
+                  <span class="skl" style="width:74px;height:30px;border-radius:9px;margin-bottom:0;flex-shrink:0;"></span>
+                </div>
+                <span class="skl" style="width:88%;height:11px;"></span>
+                <span class="skl" style="width:55%;height:11px;margin-bottom:14px;"></span>
+                <span class="skl" style="width:100%;height:52px;margin-bottom:0;"></span>
+              </div>
+              <div class="pstate center">
+                <span class="tag">공개 브리핑 0건</span>
+                <span class="pic"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="2" transform="scale(0.8) translate(1.5 0)"></rect><path d="M4.9 8h8M4.9 11h5" transform="scale(0.8) translate(1.5 0)"></path></svg></span>
+                <span class="pt2">아직 공개한 브리핑이 없어요</span>
+                <span class="ps2">이 사용자가 브리핑을 공개하면 여기에 표시돼요.</span>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- RIGHT RAIL: 타인 활동 요약 (내 개인 정보 없음) -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>이번 주 활동</h4>
+            <div class="rstat"><span>공개 브리핑</span><b>3건</b></div>
+            <div class="rstat"><span>최근 공개</span><b>2시간 전</b></div>
+            <div class="rstat"><span>전체 공개</span><b>18건</b></div>
+          </div>
+          <div class="rpanel">
+            <h4>주로 다루는 주제</h4>
+            <div class="rchips" style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="tagm">원·달러 환율</span><span class="tagm">미국 금리</span><span class="tagm">글로벌 증시</span><span class="tagm">거시경제</span>
+            </div>
+          </div>
+          <div class="rpanel">
+            <h4>비슷한 관심사의 사용자</h4>
+            <div class="urow" data-screen="uprofile"><span class="pav">MN</span><div class="ui"><div class="un">Market Note</div><div class="uh">@market_note · 미국 증시와 경제지표</div></div><span class="btn sm">팔로우</span></div>
+            <div class="urow" data-screen="uprofile"><span class="pav">DW</span><div class="ui"><div class="un">Dollar Watch</div><div class="uh">@dollar_watch · 환율과 달러 흐름</div></div><span class="btn sm">팔로우</span></div>
+            <div class="urow" data-screen="uprofile"><span class="pav">MB</span><div class="ui"><div class="un">Macro Brief</div><div class="uh">@macro_brief · 글로벌 거시경제 요약</div></div><span class="btn sm">팔로우</span></div>
+            <div class="side-foot" style="margin-top:10px;padding:0;">같은 프로필 템플릿에 데이터만 바뀌어 표시돼요.</div>
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- 팔로워/팔로잉 목록 모달 -->
+      <div class="modal-bg" id="ff-modal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-label="팔로워·팔로잉" style="width:440px;">
+          <div class="mhead"><span class="mt">FX Daily</span><span class="mx" data-ff-close>✕</span></div>
+          <div class="tabs" style="position:static;margin-bottom:8px;">
+            <div class="tab on" data-fftab="follower"><span class="tl">팔로워 1,284</span></div>
+            <div class="tab" data-fftab="following"><span class="tl">팔로잉 96</span></div>
+          </div>
+          <div data-ffpane="follower" style="max-height:320px;overflow-y:auto;">
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">나</span><div class="ui"><div class="un">Parami</div><div class="uh">@parami · 환율·오픈소스 LLM</div></div><span class="btn signal sm">팔로우</span></div>
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">MN</span><div class="ui"><div class="un">Market Note</div><div class="uh">@market_note · 미국 증시와 경제지표</div></div><span class="btn sm following-static" style="color:var(--ink-mid);">팔로잉</span></div>
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">민</span><div class="ui"><div class="un">김민준</div><div class="uh">@minjun_macro · 거시경제 분석</div></div><span class="btn signal sm">팔로우</span></div>
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">DW</span><div class="ui"><div class="un">Dollar Watch</div><div class="uh">@dollar_watch · 환율과 달러 흐름</div></div><span class="btn sm following-static" style="color:var(--ink-mid);">팔로잉</span></div>
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">이</span><div class="ui"><div class="un">이수빈</div><div class="uh">@subin_ai · 생성형 AI·LLM</div></div><span class="btn signal sm">팔로우</span></div>
+          </div>
+          <div data-ffpane="following" hidden style="max-height:320px;overflow-y:auto;">
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">MB</span><div class="ui"><div class="un">Macro Brief</div><div class="uh">@macro_brief · 글로벌 거시경제 요약</div></div><span class="btn sm following-static" style="color:var(--ink-mid);">팔로잉</span></div>
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">서</span><div class="ui"><div class="un">서지우</div><div class="uh">@jiwoo_semi · 반도체·공급망</div></div><span class="btn sm following-static" style="color:var(--ink-mid);">팔로잉</span></div>
+            <div class="urow" data-screen="uprofile" data-ff-close><span class="pav">정</span><div class="ui"><div class="un">정도윤</div><div class="uh">@doyoon_macro · 금리와 경제지표</div></div><span class="btn signal sm">팔로우</span></div>
+          </div>
+          <div class="mh" style="margin-top:10px;">목록은 시안 데이터예요. 항목을 클릭하면 해당 프로필로 이동해요.</div>
+        </div>
+      </div>
+
+      <div class="up-toast" id="up-toast" hidden><span id="up-toast-t">프로필 링크를 복사했어요.</span></div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) — 저장 + 온디맨드 분석 겸용 (A4 시안) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>
