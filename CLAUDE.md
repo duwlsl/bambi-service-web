@@ -1,1 +1,476 @@
-@AGENTS.md
+# CLAUDE.md — bambi-service-web
+
+> 이 파일은 **`bambi-service-web` 레포 전용** 작업 규약이다.
+> 팀 전체 규약은 모노레포 루트 `CLAUDE.md`를 따르며, 이 문서는 **프론트엔드에 적용되는 것 + 이 레포에만 해당하는 것**만 담는다.
+> 루트 규약과 충돌하면 **루트 규약이 우선**이고, 충돌 사실을 보고한다.
+>
+> **§3~§5의 API 스펙은 추측이 아니라 `bambi-service-api/api-smoke-test.http` 실행으로 얻은 실측값이다.** (검증일: 2026-07-15)
+
+---
+
+## 1. Repository Identity
+
+| 항목 | 내용 |
+|---|---|
+| 레포 | `bambi-service-web` |
+| 정체 | **밤새비서(코드명 Bambi / 팀·배포명 AlphaCatcher)** 의 **사용자용 웹 프론트엔드** |
+| 서비스 개요 | 사용자가 저장한 웹 콘텐츠에서 관심사를 추론하고, 수집 정보와 매칭해 **출처 기반 카드 브리핑**을 제공 |
+| 프론트 역할 | Service API가 내려주는 데이터를 화면으로 표현. **비즈니스 로직·AI 처리는 하지 않는다.** |
+| 스택 | Next.js 16 (App Router) · TypeScript · Tailwind CSS · ESLint · Turbopack · npm |
+| 구조 | `src/` 미사용 → `app/`이 루트에 위치 |
+| 개발 단계 | **P0 / 초기 구현.** scaffold + 목업 반입 + 백엔드 로컬 연동 확인 완료. 화면 구현 착수 단계 |
+| Claude Code 작업 범위 | 이 레포 내 프론트엔드 구현 (화면·컴포넌트·API client·인증 처리) |
+
+### 다른 레포와의 역할 구분 (MUST)
+
+| 레포 | 담당 | 이 레포에서 |
+|---|---|---|
+| `bambi-service-web` | **여진** | ← 작업 대상 |
+| `bambi-admin-web` | 소라 | **건드리지 않는다.** 관리자 화면은 이 레포 범위 밖 |
+| `bambi-service-api` | 우석·영현 | 호출만 한다. 코드 수정 금지 |
+| `bambi-agent-api` | 송우(LLM팀)·소라 | **직접 호출 금지** (§8) |
+| `bambi-build` | 우석 | 로컬 실행용. 수정 금지 |
+
+---
+
+## 2. 구현 범위와 우선순위
+
+### P0 — 지금 구현할 화면 **4개만**
+
+| 화면 | 목업 (`docs/design-handoff/product/`) | 주요 기능 | 사용 API | 필수 상태 | 우선순위 |
+|---|---|---|---|---|---|
+| **로그인** | `auth-login.html` | 이메일/비밀번호 로그인 → JWT 저장 | `POST /api/auth/login` **(확정)** | Initial / 제출중 / Error(인라인) / 중복제출 방지 | P0-1 |
+| **회원가입** | `auth-signup-choice.html`(방식 선택)<br>`auth-signup-email.html`(이메일 폼) | 이메일 가입 (비밀번호 8자+) | `POST /api/auth/signup` **(확정)** | Initial / 제출중 / Error(인라인·중복이메일) / 중복제출 방지 | P0-2 |
+| **홈 피드** | `home-feed.html` | 카드 피드 목록 + **관심 자료 추가 모달**(피드 내부, 별도 페이지 금지) | **확인 필요** | Loading / Empty / Error / Unauthorized | P0-3 |
+| **카드(리포트) 상세** | `report-detail.html` | 카드 상세 + 출처 표시 | **확인 필요** | Loading / Empty / Error / NotFound | P0-4 |
+
+- **인증 API는 실측 확정** → 로그인/회원가입은 즉시 구현 가능.
+- **피드/카드 상세 API는 미확정** (영현 도메인 API 착수 전). **경로·스키마를 추측해서 만들지 말 것.** 확정 전까지 화면 구조·상태 처리까지만 진행하고 데이터 연결부는 확인 요청.
+
+### P1 — 목업만 두고 **구현하지 않는다 (MUST NOT)**
+
+`search.html` · `wiki.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · `library.html` · `home-my-reports.html` · `settings.html` · `onboarding.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
+
+> 목업에 있다는 이유로 구현하지 않는다. 범위 확장이 필요하면 먼저 보고한다.
+
+---
+
+## 3. API 응답 규약
+
+### 공통 포맷 (실측 확인됨)
+
+```ts
+type ApiResponse<T> = {
+  success: boolean;
+  data: T | null;
+  error: { code: string; message: string } | null;
+};
+```
+
+```jsonc
+// 성공
+{ "success": true, "data": { /* ... */ }, "error": null }
+
+// 실패
+{ "success": false, "data": null, "error": { "code": "DUPLICATE_RESOURCE", "message": "..." } }
+```
+
+> **예외:** `GET /api/health`는 공통 포맷을 따르지 않고 `{"status":"UP"}`만 반환한다. (헬스체크 전용)
+
+### 원칙 (MUST)
+
+- HTTP status만 보지 않는다. **`success`와 `error.code`를 함께 확인**한다.
+- **화면 컴포넌트에서 응답을 제각각 해석하지 않는다.** 공통 API client + 공통 에러 처리 계층을 반드시 통과시킨다.
+- **서버 `error.message`를 사용자에게 그대로 노출하지 않는다.** `error.code` 기준으로 프론트가 정의한 문구를 보여준다. (message는 로깅·디버깅용)
+- `success: true`여도 **`data`가 `null`/빈 배열일 수 있다.** 항상 처리한다.
+- 응답 타입에 `any` 금지. 제네릭 + 도메인 타입으로 정의한다.
+
+### 실측 기반 타입 (그대로 사용할 것)
+
+```ts
+export type ApiResponse<T> = {
+  success: boolean;
+  data: T | null;
+  error: { code: string; message: string } | null;
+};
+
+export type User = {
+  id: number;
+  email: string;
+  displayName: string;
+  roles: string[];        // 예: ["USER"] / ["ADMIN"]
+};
+
+export type LoginData = {
+  accessToken: string;
+  tokenType: string;        // "Bearer"
+  expiresInMinutes: number; // 120
+  user: User;               // ★ 로그인 응답에 user가 동봉된다
+};
+
+export type SignupData = User;
+```
+
+---
+
+## 4. 에러코드별 화면 처리 방침
+
+백엔드 enum(`bambi-service-api` → `common/error/ErrorCode.java`) 실측 기준 **공통 에러코드 7종**. 프론트 문구 매핑은 **`constants/errors.ts` 단일 소스**.
+
+> **§4 갱신(2026-07-15):** `AUTH_INVALID_CREDENTIALS`(로그인 실패)가 실제 백엔드 enum에 존재하고 `AuthService.login`이 실제로 던지지만, 기존 "6종" 요약에 누락돼 있었다. 로그인 인라인 에러에 필수라 **7번째 코드로 추가**했다.
+
+| code | HTTP | 의미 | 발생 예시 | 프론트 처리 | 사용자 UI | 로그인 이동 | 재시도 |
+|---|---|---|---|---|---|---|---|
+| `VALIDATION_ERROR` | 400 | 요청값 검증 실패 | 비밀번호 8자 미만, 이메일 형식 오류 | 해당 입력 필드에 매핑 | **인라인 필드 오류** | ✕ | 수정 후 재제출 |
+| `AUTH_INVALID_CREDENTIALS` | 401 | 로그인 자격 증명 불일치 | 이메일 없음·비밀번호 틀림 (`AuthService.login`) | 로그인 폼 인라인 에러 | **인라인 안내** ("이메일 또는 비밀번호가 일치하지 않아요") | ✕ | 수정 후 재제출 |
+| `AUTH_INVALID_TOKEN` | 401 | 인증 없음/토큰 만료·무효 | 만료 JWT로 `/api/auth/me` 호출 | **토큰·인증 상태 제거** 후 이동 | 로그인 화면 ("로그인이 만료됐어요") | **○** | ✕ (자동 재요청 금지) |
+| `FORBIDDEN` | 403 | 권한 부족 | USER가 관리자 리소스 접근 | 접근 차단 | 403 안내 화면 | ✕ | ✕ |
+| `NOT_FOUND` | 404 | 리소스 없음 | 삭제된 카드 상세 진입 | 목록 복귀 경로 제공 | Not Found / Empty State | ✕ | ✕ |
+| `DUPLICATE_RESOURCE` | 409 | 중복·충돌 | **이미 가입된 이메일로 회원가입 (실측 확인됨)** | 사용자가 고칠 수 있게 안내 | 인라인 안내 ("이미 가입된 이메일이에요") | ✕ | 수정 후 재제출 |
+| `INTERNAL_ERROR` | 500 | 서버 오류 | 백엔드 예외 | 공통 에러 처리 | **Error State + 재시도 버튼** | ✕ | **○** |
+
+### 규칙 (MUST)
+
+- 위 7종 **외의 코드를 프론트에서 새로 만들지 않는다.** 미정의 코드가 오면 `INTERNAL_ERROR`에 준해 처리하고 보고한다. (코드명은 백엔드 `ErrorCode.java`와 1:1)
+- `AUTH_INVALID_TOKEN` 처리 시 **무한 리다이렉트·무한 재요청 금지.** (이미 로그인 페이지면 이동하지 않음)
+- **에러코드 → 사용자 문구 매핑은 한 곳(상수/유틸)에 모은다.** 페이지마다 문구를 새로 쓰지 않는다.
+
+---
+
+## 5. 인증 규약
+
+### 원칙
+
+- JWT **access token을 `localStorage`에 저장**한다. (P0 확정. httpOnly cookie + refresh token 전환은 P1)
+- 인증 요청에는 **`Authorization: Bearer <token>`** 헤더를 붙인다.
+- **토큰 주입은 공통 API client / 인증 유틸에서만.** 페이지·컴포넌트 개별 구현 **금지**.
+- 로그아웃 시 **JWT + 인증 관련 사용자 상태를 모두 제거**한다.
+- 인증 실패·만료 시 **무한 재요청 금지** (§4).
+- 인증이 필요한 화면은 **인증 상태 확인 전 본문을 노출하지 않는다** (Protected Route).
+
+### 인증 API — **실측 확정**
+
+| 메서드 | 경로 | 요청 | 성공 status |
+|---|---|---|---|
+| POST | `/api/auth/signup` | `{ email, password(8자+), displayName }` | **201** |
+| POST | `/api/auth/login` | `{ email, password }` | **200** |
+| GET | `/api/auth/me` | 헤더 `Authorization: Bearer <token>` | 200 |
+
+**회원가입 성공 응답 (201)**
+```jsonc
+{
+  "success": true,
+  "data": { "id": 2, "email": "...", "displayName": "우석", "roles": ["USER"] },
+  "error": null
+}
+```
+
+**로그인 성공 응답 (200)** ★
+```jsonc
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "tokenType": "Bearer",
+    "expiresInMinutes": 120,
+    "user": { "id": 2, "email": "...", "displayName": "우석", "roles": ["USER"] }
+  },
+  "error": null
+}
+```
+
+**회원가입 중복 이메일 (409)** — 실측 확인됨
+```jsonc
+{ "success": false, "data": null, "error": { "code": "DUPLICATE_RESOURCE", "message": "..." } }
+```
+
+### 확정 사항 (MUST)
+
+| 항목 | 값 |
+|---|---|
+| 토큰 위치 | **`response.data.accessToken`** (최상위 아님) |
+| tokenType | `"Bearer"` |
+| 만료 | `expiresInMinutes: 120` (2시간) |
+| **로그인 후 user 조회** | 로그인 응답의 **`data.user`를 사용한다.** → **로그인 직후 `/api/auth/me` 재호출 금지** (불필요한 왕복) |
+| `/api/auth/me` 용도 | 새로고침·재진입 시 **저장된 토큰 유효성 확인 및 사용자 복구**용 |
+| roles | `string[]` |
+| 토큰 localStorage key | **`bambi.accessToken` — 확정 (2026-07-15 프론트 결정).** 문자열 리터럴을 코드에 흩뿌리지 말고 상수 **`ACCESS_TOKEN_STORAGE_KEY`** 로 **`constants/auth.ts` 1곳에만 정의**한 뒤 전부 이 상수를 import(`@/constants/auth`)한다. 저장·조회·삭제(로그아웃)는 모두 이 상수를 쓰는 인증 유틸을 경유. (레포에 기존 정의 없음 확인 → 신규) |
+
+> **토큰 key 근거:** 서드파티 스크립트와의 키 충돌을 피하려고 `bambi.` 네임스페이스를 붙이고, 응답 필드명(`accessToken`)과 일치시켰다. 값은 팀에도 공유할 것.
+
+> `/api/notes`는 백엔드 CRUD **견본(템플릿)** 이다. 프론트 구현 대상 아님.
+
+---
+
+## 6. API Base URL / 환경변수
+
+```ts
+process.env.NEXT_PUBLIC_API_URL
+```
+
+### 원칙
+
+- **MUST NOT**: 컴포넌트·유틸 어디에도 `localhost`, IP, 배포 도메인을 **직접 작성하지 않는다.**
+- **MUST**: 모든 API 요청 URL은 `NEXT_PUBLIC_API_URL` 기준으로 생성한다.
+- **MUST**: 환경변수 누락 시 **원인을 알 수 있는 오류**를 던진다. (조용히 `undefined`로 요청 보내지 않기)
+- **MUST NOT**: `.env.local` 커밋 금지. `.env.example`에는 **키만** 기록.
+- **MUST NOT**: `NEXT_PUBLIC_*`에 **비밀값을 넣지 않는다.** (브라우저에 그대로 노출됨)
+
+### 환경 값
+
+| 환경 | 값 | 상태 |
+|---|---|---|
+| 로컬 | **`NEXT_PUBLIC_API_URL=http://localhost`** (nginx 80 → backend 8080). `/api`는 base가 아니라 경로에 → `http://localhost/api/health` = `{"status":"UP"}` | **실측 확인됨** |
+| 배포 | **`https://our-faster-psychiatry-officer.trycloudflare.com`** (Cloudflare Tunnel 경유, `/api/health` 응답 확인됨). **Vercel 환경변수에만 설정** — 레포 하드코딩·커밋 금지 | **임시** — 팀장이 "주소 바뀔 수 있음" 명시, 변경 가능성 전제 유지. GCP 정식 배포 시 교체 예정 |
+
+> **`/api` prefix — 확정 (2026-07-15 프론트 결정): `NEXT_PUBLIC_API_URL`은 origin(scheme+host)까지만 담고 `/api`는 요청 경로에 둔다.**
+>
+> - 값 예: 로컬 `http://localhost` — **끝에 `/` 없음, `/api` 없음.**
+> - 요청 예: `` `${NEXT_PUBLIC_API_URL}/api/auth/login` `` · 헬스체크 `` `${NEXT_PUBLIC_API_URL}/api/health` ``
+> - **근거:** 이 문서·smoke test·팀 커뮤니케이션이 전부 `/api/...` **전체 경로**로 엔드포인트를 지칭한다. base에 `/api`를 넣으면 코드상 경로(`/auth/login`)가 문서 계약과 어긋나므로, 경로를 계약과 1:1로 유지하려고 origin-only로 통일한다.
+> - `/api` 결합은 **공통 API client 1곳에서만** 수행한다. 컴포넌트·유틸에서 URL을 조립하지 않는다 (§8).
+> - 배포 주소도 **origin-only 형태로 받는다** (`https://<host>`, 뒤에 `/api` 붙이지 않음).
+
+### 배포
+
+- **Vercel.** 레포 연결 시 push마다 자동 배포.
+- 배포 환경변수는 Vercel 프로젝트 설정에 등록. **레포에 커밋 금지.**
+- 현재 배포 API origin: **`https://our-faster-psychiatry-officer.trycloudflare.com`** (Cloudflare Tunnel, `/api/health` 응답 확인됨). **임시 주소** — 팀장이 변경 가능성을 명시했고 GCP 정식 배포 시 교체한다. Vercel 환경변수 `NEXT_PUBLIC_API_URL`(origin-only)에만 넣고 **레포에 하드코딩·커밋하지 않는다.**
+
+---
+
+## 7. 디자인 / 목업 기준
+
+### 경로
+
+```text
+docs/design-handoff/
+├── product/      # 서비스 화면 목업 (구현 기준)
+├── shared/       # tokens.css · base.css · product-components.css · product-common.js
+├── components/   # ui-kit.html (컴포넌트 인벤토리)
+├── foundations/  # foundations.html (타이포·컬러)
+├── variants/     # 대안 시안 (참고용)
+├── admin/        # 관리자 — 이 레포 범위 아님 (소라 참고용)
+└── landing/      # 랜딩 — P1
+```
+
+### P0 화면 ↔ 목업 매핑
+
+| 화면 | 목업 |
+|---|---|
+| 로그인 | `product/auth-login.html` — 한 파일에 **시작하기 / 계정 만들기 / 로그인 3개 뷰** |
+| 회원가입(방식 선택) | `product/auth-signup-choice.html` |
+| 회원가입(이메일 폼) | `product/auth-signup-email.html` |
+| 홈 피드 | `product/home-feed.html` — **관심 자료 추가 모달(`#am-modal`)**, 가입 유도 모달(`#guest-modal`) 포함 |
+| 카드 상세 | `product/report-detail.html` |
+
+### 원칙
+
+- 목업의 **정보 구조 · 레이아웃 · 문구 의도**를 우선 반영한다.
+- HTML 목업을 **그대로 복사하지 않는다.** Next.js 구조·컴포넌트 체계에 맞게 재구현한다.
+- **디자인 토큰(`shared/tokens.css`)을 우선 사용한다.** `--signal:#FF5A00`, `--ink`, `--bg`, `--line`, 스켈레톤(`--skel1/2`), 에러(`--err`) 등 CSS 변수 + light/dark 테마 정의됨.
+- **shadcn/ui 도입 시 목업 디자인을 shadcn 기본 스타일로 덮어쓰지 않는다.** 토큰에 맞춰 조정한다.
+- 공통 UI는 재사용 컴포넌트로 분리하되 **과도한 추상화 금지** (§11).
+- 반응형 고려. `label` · `focus` · 키보드 인터랙션 등 접근성 구현.
+- **P0 범위 밖 기능·화면은 목업에 있어도 추가하지 않는다.**
+
+### ⚠ 목업 ↔ API 충돌
+
+| # | 충돌 | 상세 | 처리 |
+|---|---|---|---|
+| 1 | **회원가입 `displayName`** | API는 `displayName` **필수(실측 확인)**. 목업 `auth-signup-email.html`에는 **email·password 입력만** 존재 | **✅ 해소 — 목업과 다르게 간다.** 회원가입 폼에 **`displayName` 입력 필드를 추가**한다. 목업의 스타일·디자인 토큰·레이아웃 언어는 그대로 유지하고, 기존 email/password 필드와 **동일한 마크업 패턴**으로 추가할 것. 라벨/placeholder 문구는 목업 톤에 맞춘다. 필드 순서는 displayName → email → password 권장 |
+| 2 | **Google 로그인 버튼** | 목업에 "Google로 계속하기" 존재. 소셜 로그인은 **P1** | P0 미구현. 노출 여부(숨김/비활성) **확인 필요** |
+
+---
+
+## 8. Architecture Invariants (불변식 — 위반 금지)
+
+```text
+Browser / Next.js Web
+        ↓
+Bambi Service API        ← 프론트가 호출하는 유일한 대상
+        ↓
+Agent API · 내부 서비스 · DB
+```
+
+**금지 구조:**
+
+```text
+Browser / Next.js Web
+        ✕
+Agent API 직접 호출
+```
+
+- **MUST**: 프론트엔드는 **Service API만** 호출한다.
+- **MUST NOT**: **Agent API(FastAPI)를 직접 호출하지 않는다.**
+- **MUST NOT**: Agent 내부 구현·모델 제공자에 의존하지 않는다.
+- **MUST NOT**: 브라우저에서 **LLM API key·서버 비밀키를 사용하지 않는다.**
+- **MUST NOT**: DB(PostgreSQL 등)에 직접 접근하지 않는다. (내부 전용)
+- **MUST NOT**: 프론트 편의를 위해 서비스 간 통신 구조를 임의로 변경하지 않는다.
+- **MUST**: 새 API가 필요하면 **프론트에서 우회 구현하지 말고** Service API 변경 사항으로 정리해 제안한다.
+- **MUST**: 모든 외부 요청은 **정의된 API client 계층**을 통과한다. 컴포넌트에서 `fetch` 직접 호출 금지.
+
+---
+
+## 9. 필수 UI State (완료 조건)
+
+> **Loading / Error / Empty State는 선택이 아니라 완료 조건이다.** 하나라도 없으면 미완료.
+
+데이터를 다루는 모든 화면·컴포넌트는 아래를 구현한다.
+
+- [ ] **Initial**
+- [ ] **Loading** — 레이아웃이 과도하게 흔들리지 않게 (스켈레톤 토큰 `--skel1`/`--skel2` 활용 가능)
+- [ ] **Success**
+- [ ] **Empty** — Error와 **명확히 구분**. `success: true`여도 `data`가 비면 Empty
+- [ ] **Error** — 가능한 경우 **재시도 동작 제공**
+- [ ] **Unauthorized / Forbidden** — §4 매핑에 따름
+- [ ] **제출 중(submitting)**
+- [ ] **중복 제출 방지** — 요청 중 버튼 비활성
+
+추가: 인증 확인 전 **보호 화면 본문이 노출되지 않도록** 한다.
+
+---
+
+## 10. 프로젝트 구조
+
+현재 실존 구조:
+
+```text
+app/                  Next.js App Router (루트 위치, src/ 미사용)
+public/
+docs/design-handoff/  디자인 목업 (구현 기준, 빌드 대상 아님)
+```
+
+기능 추가 시 권장 역할 분리 — **필요할 때 생성한다. 미리 빈 폴더를 만들지 않는다.**
+
+| 폴더 | 역할 |
+|---|---|
+| `app/` | route · page · layout |
+| `components/` | 공통 UI · 화면 컴포넌트 |
+| `lib/` | **API client**, auth 유틸, 공통 utility |
+| `types/` | API 응답 · 도메인 타입 |
+| `hooks/` | 공통 client hook |
+| `constants/` | route, error code 매핑, **토큰 key(`constants/auth.ts` → `ACCESS_TOKEN_STORAGE_KEY = "bambi.accessToken"`)** 등 상수 |
+
+---
+
+## 11. 구현 규칙
+
+- **TypeScript 사용.** 불필요한 `any` **금지**.
+- API 응답 타입과 화면 모델 타입을 정의한다. (§3 실측 타입 사용)
+- 페이지 컴포넌트에 **API 처리 + UI 로직을 모두 몰아넣지 않는다.**
+- 공통 컴포넌트를 **과도하게 추상화하지 않는다.** 한 번만 쓰이는 작은 UI까지 무조건 분리하지 않는다. (루트 규약: "MVP 우선, 과한 추상화 금지")
+- 서버 컴포넌트 / 클라이언트 컴포넌트를 **목적에 맞게 구분**. `'use client'`를 페이지 전체에 습관적으로 붙이지 않는다.
+- 환경변수 누락 시 **원인을 알 수 있는 오류** 제공.
+- 완료 코드에 **console log · 임시 데이터 · TODO mock 남기지 않는다.**
+- 기존 설정과 **패키지 매니저(npm)** 우선.
+- **대규모 리팩터링은 요청받은 작업과 직접 관련될 때만.**
+- API Key / Secret / `.env` **커밋 금지**. `.env.example`만 커밋.
+
+---
+
+## 12. 실행 및 검증
+
+### 명령어
+
+| 목적 | 명령어 | 상태 |
+|---|---|---|
+| 의존성 설치 | `npm install` | 확인됨 |
+| 개발 서버 | `npm run dev` → `http://localhost:3000` | **동작 확인됨** |
+| production build | `npm run build` | **확정** — `package.json`에 `build` 존재 |
+| production 서버 | `npm run start` | **확정** — `build` 후 실행용 (`start` 존재) |
+| lint | `npm run lint` (= `eslint`) | **확정** — `package.json`에 `lint` 존재 |
+| type check | `npx tsc --noEmit` | **확정** — 전용 script 없음. `tsconfig.json`이 `noEmit: true`라 타입 검사 전용으로 동작 |
+| 테스트 | **없음** — test script·러너 미설정 | **확정** — P0 범위 밖. 임의로 script·러너 추가 금지 |
+
+> 현재 `package.json` scripts는 **`dev` / `build` / `start` / `lint` 4개뿐이다.** 여기 없는 script(`typecheck`, `test` 등)를 임의로 만들어 문서·명령에 넣지 말 것.
+
+### 백엔드 로컬 실행 (이 레포 밖, 참고용)
+
+```bash
+cd ../bambi-build
+cp .env.example .env      # 최초 1회
+docker compose up --build
+# 헬스: http://localhost/api/health → {"status":"UP"}
+```
+
+- API 스모크 테스트: `bambi-service-api/api-smoke-test.http` (VSCode REST Client 확장으로 실행)
+
+### 작업 완료 전 최소 검증 체크리스트
+
+- [ ] lint 통과
+- [ ] TypeScript 오류 없음
+- [ ] production build 통과
+- [ ] 주요 화면 수동 확인
+- [ ] **Loading / Error / Empty State 확인**
+- [ ] 인증 **성공 및 실패** 흐름 확인
+- [ ] **하드코딩된 API URL 없음 확인**
+- [ ] `.env.local` 등 비밀정보 미커밋 확인
+
+---
+
+## 13. Git 작업 규약
+
+루트 규약: `main`(배포) · `develop`(통합) · `feature/*`, **PR로만 머지.**
+
+```text
+main(또는 develop) 최신화 (git pull)
+→ feature 브랜치 생성
+→ 작업
+→ 로컬 검증 (lint / type check / build)
+→ commit
+→ push
+→ Pull Request
+```
+
+- **MUST NOT**: `main`에 직접 커밋·푸시.
+- 작업 단위별 **`feature/<작업명>`** 브랜치 (예: `feature/yeojin-auth-ui`).
+- 브랜치는 **일회용**. 머지 후 새 작업은 최신 `main`에서 새로 분기.
+- **하나의 PR에 하나의 목적**만. 무관한 대규모 리팩터링 섞지 않기.
+- 커밋 메시지는 **변경 의도**가 드러나게.
+- PR 본문: 작업 내용 / 확인 방법 / 화면 변경(스크린샷) / 남은 이슈.
+- **환경변수 파일·비밀정보 커밋 금지.**
+
+---
+
+## 14. Claude Code 작업 방식
+
+- 작업 전 **관련 문서와 기존 구현을 먼저 읽는다.** (루트 `CLAUDE.md`, 이 파일, `docs/design-handoff/`)
+- **이미 존재하는 컴포넌트·유틸을 우선 재사용**한다.
+- **요청받지 않은 API·기능·화면을 임의로 추가하지 않는다.** (특히 §2 P1 목록)
+- **명세와 구현이 충돌하면 추측하지 말고 충돌 내용을 보고**한다.
+- 파일 수정 전 **영향 범위 확인**.
+- 변경 후 **lint · type check · build 수행**.
+- **테스트하지 못한 항목을 완료했다고 표현하지 않는다.**
+- 백엔드 수정이 필요하면 **프론트에서 임시 우회하지 말고** 필요한 API 변경점을 정리해 보고한다.
+- **목업과 API 명세가 충돌하면** 제품 요구사항과 비교해 충돌을 **명시**한다. (§7 충돌 표)
+- **확인되지 않은 값(토큰 key, 배포 주소, 미확정 API 경로)을 임의로 만들어 넣지 않는다.**
+- 작업이 끝나면 **변경 파일 / 구현 내용 / 검증 결과 / 남은 이슈**를 요약한다.
+
+---
+
+## 15. 확인 필요 목록 (해소 전 임의 결정 금지)
+
+### 팀 확인 대기
+- [ ] **Google 로그인 버튼** 노출 여부 (§7-2)
+- [ ] **홈 피드 / 카드 상세 / 관심 자료 저장 API** 경로·스키마 (영현 도메인 착수 전)
+- [ ] **배포용 `NEXT_PUBLIC_API_URL`** 확정 주소 (우석 제공 예정)
+
+### 프론트 내부 결정 후 문서화
+- (없음 — 아래 「해소 완료 · 프론트 내부 결정」 참조)
+
+### ✅ 해소 완료 (2026-07-15)
+
+**실측 (`api-smoke-test.http` 실행 / 백엔드 소스 확인)**
+- ~~에러 코드 세트~~ → **백엔드 `ErrorCode.java` 기준 7종 확정. `AUTH_INVALID_CREDENTIALS`(로그인 실패) 추가, `constants/errors.ts`에 문구 매핑 (§4)**
+- ~~로그인 응답 내 `accessToken` 위치~~ → **`data.accessToken` 확정**
+- ~~공통 응답 포맷 실제 준수 여부~~ → **`{success, data, error}` 확정**
+- ~~회원가입 `displayName` 필수 여부~~ → **필수 확정 (201)**
+- ~~회원가입 `displayName` 목업 충돌~~ → **목업과 다르게 간다. 회원가입 폼에 displayName 필드 추가로 확정 (§7-1)**
+- ~~중복 이메일 에러 형태~~ → **`DUPLICATE_RESOURCE` 409 확정**
+- ~~로그인 후 사용자 정보 조회 방법~~ → **로그인 응답에 `data.user` 동봉 → `/api/auth/me` 재호출 불필요**
+
+**프론트 내부 결정 (레포 확인 후 문서화)**
+- ~~토큰 localStorage key 이름~~ → **`bambi.accessToken` 확정. `constants/auth.ts`의 `ACCESS_TOKEN_STORAGE_KEY` 상수 1곳에 정의 (§5·§10)**
+- ~~`NEXT_PUBLIC_API_URL`의 `/api` prefix 포함 여부~~ → **base는 origin-only(`http://localhost`), `/api`는 요청 경로에. 공통 client 1곳에서 결합 (§6)**
+- ~~`package.json` script 목록~~ → **`dev` / `build` / `start` / `lint` 4개만 존재. type check는 `npx tsc --noEmit`, test 없음 (§12)**
