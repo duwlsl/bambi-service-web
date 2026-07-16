@@ -50,3 +50,11 @@ body{background:var(--bg-soft);font-family:"Pretendard Variable",Pretendard,"App
 .side-cta{margin-top:12px;}
 .side-cta .btn{width:100%;}
 .side-foot{margin-top:12px;font-size:11.5px;color:var(--ink-dim);line-height:1.6;padding:0 6px;}
+
+/* ── 상태 목업 검수 보정 (2026-07-16): 상태 전환 시 세로 스크롤바가 생기고 사라지며
+   viewport 폭이 변해 중앙 정렬 레이아웃이 좌우로 흔들리는 현상 방지.
+   콘텐츠 높이만 변하고 로고·내비·feed·rail의 x축 위치는 고정된다. ── */
+html{scrollbar-gutter:stable;}
+@supports not (scrollbar-gutter: stable){
+  body{overflow-y:scroll;}
+}
