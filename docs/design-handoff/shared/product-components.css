@@ -385,6 +385,9 @@
 .auth-btn:hover{background:var(--bg-soft);}
 .auth-btn.signal{background:var(--signal);border-color:var(--signal);color:var(--on-signal);}
 .auth-btn.signal:hover{background:var(--signal);filter:brightness(.96);}
+/* signal CTA 비활성: 초기 빈 폼 등에서 입력 완료 전 상태 (색은 --signal-soft 토큰) */
+.auth-btn.signal[disabled]{background:var(--signal-soft);border-color:var(--signal-soft);color:var(--on-signal);cursor:default;}
+.auth-btn.signal[disabled]:hover{filter:none;}
 .auth-switch{font-size:13.5px;color:var(--ink-dim);margin-top:22px;}
 .auth-switch a{color:var(--signal-ink);font-weight:600;cursor:pointer;margin-left:6px;}
 .auth-or{display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--ink-dim);margin:18px 0;}
