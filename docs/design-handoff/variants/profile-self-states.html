@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 프로필(본인) — 상태 (로딩 / 빈 상태 / 오류 구분)</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+<style>
+/* ── 목업 전용 데모 컨트롤 (variant 파일 한정 — 실제 서비스 UI 아님) ── */
+.demo-bar{background:var(--bg);border:1px dashed var(--line-strong);border-radius:14px;padding:12px 16px;margin-bottom:16px;}
+.demo-bar .samp{margin:0 0 8px;}
+.demo-bar .sh{font-size:12px;color:var(--ink-dim);line-height:1.6;margin:0 0 10px;}
+.demo-tabs{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.state-tabs{display:contents;} /* tablist를 상태 탭만 감싸도록 분리 — 시각 배치는 기존과 동일 */
+.demo-tab{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink-mid);border:1px solid var(--line);border-radius:999px;padding:6px 13px;background:var(--bg);cursor:pointer;}
+.demo-tab:hover{border-color:var(--line-strong);color:var(--ink);}
+.demo-tab.on{background:var(--wash);border-color:var(--signal);color:var(--signal-ink);}
+.demo-tab:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+[data-demo-state][hidden]{display:none;}
+.btn:focus-visible,.link:focus-visible,[data-screen]:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){.skl,.istate.load,.spin,.scan-dot{animation:none;}}
+</style>
+</head>
+<body data-route-base="../product/">
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-profile">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav-search" data-screen="search" style="cursor:pointer;"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi on"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">프로필에는 내 공개 브리핑이 쌓입니다.</div>
+        </aside>
+
+        <main class="feed">
+
+          <!-- 목업 전용: 상태 전환 컨트롤 -->
+          <div class="demo-bar">
+            <span class="samp">목업 전용 · 프로필 상태 전환</span>
+            <p class="sh">실제 서비스 UI가 아니라 목업 검수용 컨트롤입니다. 기본 상태는 <b>product/profile-self.html</b> 원본을 참고하세요.
+            현재 프로필(본인)은 탭 없이 <b>공개 브리핑 전용</b> 구조입니다(보관함·지식창고는 좌측 내비 별도 화면) — 프로필 정보 로딩/실패와 콘텐츠(공개 브리핑) 로딩/실패를 구분해 표현합니다.</p>
+            <div class="demo-tabs">
+              <div class="state-tabs" role="tablist" aria-label="상태 전환">
+              <button type="button" class="demo-tab on" data-demo="load-content" role="tab" aria-selected="true" tabindex="0">콘텐츠 로딩</button>
+              <button type="button" class="demo-tab" data-demo="load-all" role="tab" aria-selected="false" tabindex="-1">프로필 전체 로딩</button>
+              <button type="button" class="demo-tab" data-demo="empty" role="tab" aria-selected="false" tabindex="-1">공개 브리핑 없음</button>
+              <button type="button" class="demo-tab" data-demo="err-content" role="tab" aria-selected="false" tabindex="-1">콘텐츠 오류</button>
+              <button type="button" class="demo-tab" data-demo="err-profile" role="tab" aria-selected="false" tabindex="-1">프로필 오류</button>
+              <button type="button" class="demo-tab" data-demo="err-net" role="tab" aria-selected="false" tabindex="-1">네트워크 오류</button>
+              </div>
+              <button class="demo-tab" id="demo-theme" type="button">다크 모드 보기</button>
+            </div>
+          </div>
+
+          <!-- ============ 콘텐츠 로딩 ============
+               프로필 정보는 로드 완료(헤더 실데이터 유지), 하단 공개 브리핑 목록만 로딩 중. -->
+          <div data-demo-state="load-content">
+
+            <!-- profile header (유지) -->
+            <div class="pcard">
+              <div class="pcover"></div>
+              <div class="pbody2">
+                <div class="pavatar-lg">P</div>
+                <div class="prow">
+                  <div>
+                    <div class="pname-lg">Parami</div>
+                    <div class="phandle">@parami · 가입 2026년 3월</div>
+                  </div>
+                  <div class="pactions">
+                    <span class="btn signal sm">프로필 편집</span>
+                    <span class="btn sm">↗ 공유</span>
+                  </div>
+                </div>
+                <p class="pbio">매일 아침 환율·오픈소스 LLM·거시경제 브리핑을 받아 골라 읽고 보관합니다. 관심사 기반으로 나에게 중요한 것만.</p>
+                <div class="pstats">
+                  <div class="pstat"><b>128</b><span>브리핑</span></div>
+                  <div class="pstat"><b>342</b><span>팔로워</span></div>
+                  <div class="pstat"><b>89</b><span>팔로잉</span></div>
+                  <div class="pstat"><b>23</b><span>보관</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 공개 브리핑 목록 skeleton (.post 구조 반영) -->
+            <article class="post" aria-hidden="true">
+              <div class="phead">
+                <span class="skl" style="width:38px;height:38px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                  <span class="skl" style="width:120px;height:12px;margin-bottom:6px;"></span>
+                  <span class="skl" style="width:92px;height:10px;margin-bottom:0;"></span>
+                </div>
+              </div>
+              <span class="skl" style="width:76%;height:18px;margin:6px 0 10px;"></span>
+              <span class="skl" style="width:100%;height:12px;"></span>
+              <span class="skl" style="width:62%;height:12px;margin-bottom:14px;"></span>
+              <div class="pacts">
+                <span class="skl" style="width:56px;height:12px;margin:10px 14px 10px 0;"></span>
+                <span class="skl" style="width:56px;height:12px;margin:10px 0;"></span>
+              </div>
+            </article>
+            <article class="post" aria-hidden="true">
+              <div class="phead">
+                <span class="skl" style="width:38px;height:38px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                  <span class="skl" style="width:120px;height:12px;margin-bottom:6px;"></span>
+                  <span class="skl" style="width:80px;height:10px;margin-bottom:0;"></span>
+                </div>
+              </div>
+              <span class="skl" style="width:68%;height:18px;margin:6px 0 10px;"></span>
+              <span class="skl" style="width:94%;height:12px;margin-bottom:14px;"></span>
+              <div class="pacts">
+                <span class="skl" style="width:56px;height:12px;margin:10px 0;"></span>
+              </div>
+            </article>
+
+          </div>
+
+          <!-- ============ 프로필 전체 로딩 ============
+               첫 진입 — 프로필 헤더 skeleton과 콘텐츠 skeleton을 구분해 표현. -->
+          <div data-demo-state="load-all" hidden>
+
+            <div class="pcard" aria-hidden="true">
+              <div class="pcover" style="background:var(--skel1);"></div>
+              <div class="pbody2">
+                <span class="skl" style="width:90px;height:90px;border-radius:50%;margin:-44px 0 0;border:4px solid var(--bg);"></span>
+                <div class="prow">
+                  <div style="flex:1;">
+                    <span class="skl" style="width:150px;height:20px;margin-bottom:8px;"></span>
+                    <span class="skl" style="width:190px;height:12px;margin-bottom:0;"></span>
+                  </div>
+                </div>
+                <span class="skl" style="width:86%;height:12px;margin:16px 0 8px;"></span>
+                <span class="skl" style="width:54%;height:12px;"></span>
+                <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);">
+                  <span class="skl" style="width:74px;height:15px;margin-bottom:0;"></span>
+                  <span class="skl" style="width:74px;height:15px;margin-bottom:0;"></span>
+                  <span class="skl" style="width:74px;height:15px;margin-bottom:0;"></span>
+                </div>
+              </div>
+            </div>
+
+            <article class="post" aria-hidden="true">
+              <span class="skl" style="width:72%;height:18px;margin:2px 0 10px;"></span>
+              <span class="skl" style="width:100%;height:12px;"></span>
+              <span class="skl" style="width:58%;height:12px;margin-bottom:12px;"></span>
+            </article>
+
+          </div>
+
+          <!-- ============ 공개 브리핑 없음 ============
+               프로필 헤더는 유지 — 화면 전체를 빈 화면으로 만들지 않음. -->
+          <div data-demo-state="empty" hidden>
+
+            <div class="pcard">
+              <div class="pcover"></div>
+              <div class="pbody2">
+                <div class="pavatar-lg">P</div>
+                <div class="prow">
+                  <div>
+                    <div class="pname-lg">Parami</div>
+                    <div class="phandle">@parami · 가입 2026년 7월</div>
+                  </div>
+                  <div class="pactions">
+                    <span class="btn signal sm">프로필 편집</span>
+                    <span class="btn sm">↗ 공유</span>
+                  </div>
+                </div>
+                <div class="pstats">
+                  <div class="pstat"><b>0</b><span>브리핑</span></div>
+                  <div class="pstat"><b>0</b><span>팔로워</span></div>
+                  <div class="pstat"><b>0</b><span>팔로잉</span></div>
+                  <div class="pstat"><b>0</b><span>보관</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstate center" style="min-height:260px;margin-bottom:16px;">
+              <span class="pic"><svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.8"></rect><line x1="4.6" y1="6" x2="11.4" y2="6" stroke-linecap="round"></line><line x1="4.6" y1="8.6" x2="9.4" y2="8.6" stroke-linecap="round"></line></svg></span>
+              <span class="pt2">아직 공개한 브리핑이 없어요</span>
+              <span class="ps2">받은 보고서를 공개로 전환하면 프로필에 쌓이고, 팔로워 피드에도 표시돼요.<br>내가 받은 보고서는 지식창고에서 볼 수 있어요.</span>
+              <span class="pa"><span class="btn signal sm" data-screen="kb" role="button" tabindex="0">내 보고서 보러 가기</span><span class="btn ghost sm" data-screen="home" role="button" tabindex="0">홈으로</span></span>
+            </div>
+
+          </div>
+
+          <!-- ============ 콘텐츠 오류 ============
+               프로필 정보는 정상 로드, 공개 브리핑 목록만 실패 — 헤더 유지. -->
+          <div data-demo-state="err-content" hidden>
+
+            <div class="pcard">
+              <div class="pcover"></div>
+              <div class="pbody2">
+                <div class="pavatar-lg">P</div>
+                <div class="prow">
+                  <div>
+                    <div class="pname-lg">Parami</div>
+                    <div class="phandle">@parami · 가입 2026년 3월</div>
+                  </div>
+                  <div class="pactions">
+                    <span class="btn signal sm">프로필 편집</span>
+                    <span class="btn sm">↗ 공유</span>
+                  </div>
+                </div>
+                <div class="pstats">
+                  <div class="pstat"><b>128</b><span>브리핑</span></div>
+                  <div class="pstat"><b>342</b><span>팔로워</span></div>
+                  <div class="pstat"><b>89</b><span>팔로잉</span></div>
+                  <div class="pstat"><b>23</b><span>보관</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstate center" style="min-height:240px;margin-bottom:16px;">
+              <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="7.4"></circle><line x1="10" y1="6.4" x2="10" y2="10.8" stroke-linecap="round"></line><circle cx="10" cy="13.6" r=".9" fill="currentColor" stroke="none"></circle></svg></span>
+              <span class="pt2">공개 브리핑 목록을 불러오지 못했어요</span>
+              <span class="ps2">일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요.</span>
+              <span class="pa"><span class="btn signal sm" role="button" tabindex="0">다시 시도</span></span>
+            </div>
+
+          </div>
+
+          <!-- ============ 프로필 오류 ============
+               프로필 정보 자체를 불러오지 못한 경우 — 콘텐츠 오류와 문구 구분.
+               데이터가 없어 헤더를 그릴 수 없으므로 내비게이션만 유지하고 전체 오류 안내. -->
+          <div data-demo-state="err-profile" hidden>
+
+            <div class="pstate center" style="min-height:340px;margin-bottom:16px;">
+              <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="7" r="3"></circle><path d="M4.4 16.4c.8-3 3-4.7 5.6-4.7s4.8 1.7 5.6 4.7" stroke-linecap="round"></path></svg></span>
+              <span class="pt2">프로필을 불러오지 못했어요</span>
+              <span class="ps2">프로필 정보를 가져오는 데 실패했어요.<br>잠시 후 다시 시도해 주세요.</span>
+              <span class="pa"><span class="btn signal sm" role="button" tabindex="0">다시 시도</span><span class="btn ghost sm" data-screen="home" role="button" tabindex="0">홈으로</span></span>
+            </div>
+
+          </div>
+
+          <!-- ============ 네트워크 오류 ============ -->
+          <div data-demo-state="err-net" hidden>
+
+            <div class="pstate center" style="min-height:300px;margin-bottom:16px;">
+              <span class="pic"><svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1.8 6.2a9.4 9.4 0 0 1 12.4 0M3.9 8.6a6.2 6.2 0 0 1 8.2 0M6 11a3 3 0 0 1 4 0" stroke-linecap="round"></path><circle cx="8" cy="13.2" r=".9" fill="currentColor" stroke="none"></circle><line x1="2.5" y1="2.5" x2="13.5" y2="13.5" stroke-linecap="round"></line></svg></span>
+              <span class="pt2">연결 상태를 확인해 주세요</span>
+              <span class="ps2">인터넷 연결이 불안정한 것 같아요.<br>연결을 확인한 뒤 다시 시도하면 이어서 볼 수 있어요.</span>
+              <span class="pa"><span class="btn signal sm" role="button" tabindex="0">다시 시도</span></span>
+            </div>
+
+          </div>
+
+        </main>
+
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>내 관심사 <span class="all">LLM Wiki</span></h4>
+            <div class="introw"><span class="d"></span>원/달러 환율<span class="n">활성</span></div>
+            <div class="introw"><span class="d"></span>오픈소스 LLM 동향<span class="n">활성</span></div>
+            <div class="introw"><span class="d off"></span>반도체 업황<span class="n">일시중지</span></div>
+          </div>
+          <div class="rpanel">
+            <h4>이번 주 활동</h4>
+            <div class="rstat"><span>보관한 브리핑</span><b>5</b></div>
+            <div class="rstat"><span>브리핑 오픈</span><b>12</b></div>
+            <div class="rstat"><span>공개 게시</span><b>2</b></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+<script>
+/* 목업 전용: 상태 전환 + 테마 토글 (실서비스 코드 아님) */
+(function(){
+  document.querySelectorAll('.demo-tab[data-demo]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.demo-tab[data-demo]').forEach(function(x){
+        var on=(x===b);x.classList.toggle('on',on);x.setAttribute('aria-selected',on?'true':'false');x.setAttribute('tabindex',on?'0':'-1');
+      });
+      var v=b.getAttribute('data-demo');
+      document.querySelectorAll('[data-demo-state]').forEach(function(s){s.hidden=(s.getAttribute('data-demo-state')!==v);});
+    });
+  });
+  var t=document.getElementById('demo-theme');
+  if(t)t.addEventListener('click',function(){
+    var p=document.getElementById('page');
+    var toDark=p.getAttribute('data-theme')!=='dark';
+    p.setAttribute('data-theme',toDark?'dark':'light');
+    t.textContent=toDark?'라이트 모드 보기':'다크 모드 보기';
+  });
+})();
+</script>
+</body></html>

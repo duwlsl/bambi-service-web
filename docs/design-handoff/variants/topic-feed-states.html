@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 토픽별 브리핑 (#미국증시) — 상태 (정상 / 로딩 / 빈 상태 / API 오류 / 네트워크 오류)</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+<style>
+/* ── 목업 전용 데모 컨트롤 (variant 파일 한정 — 실제 서비스 UI 아님) ── */
+.demo-bar{background:var(--bg);border:1px dashed var(--line-strong);border-radius:14px;padding:12px 16px;margin-bottom:16px;}
+.demo-bar .samp{margin:0 0 8px;}
+.demo-bar .sh{font-size:12px;color:var(--ink-dim);line-height:1.6;margin:0 0 10px;}
+.demo-bar .sh:last-of-type{margin-bottom:10px;}
+.demo-tabs{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.state-tabs{display:contents;} /* tablist를 상태 탭만 감싸도록 분리 — 시각 배치는 기존과 동일 */
+.demo-tab{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink-mid);border:1px solid var(--line);border-radius:999px;padding:6px 13px;background:var(--bg);cursor:pointer;}
+.demo-tab:hover{border-color:var(--line-strong);color:var(--ink);}
+.demo-tab.on{background:var(--wash);border-color:var(--signal);color:var(--signal-ink);}
+.demo-tab:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+[data-demo-state][hidden]{display:none;}
+.btn:focus-visible,.link:focus-visible,[data-screen]:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+/* 토픽 헤더 — 피드 상단의 평평한 섹션 헤더 (카드형 제거, 2026-07-16 검수 반영)
+   SNS 토픽 페이지 상단처럼: 상위 라벨(토픽) + 제목(#만 오렌지) + 설명 + 우측 CTA, 하단 divider로 피드와 구분 */
+.topic-head{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 4px 18px;margin-bottom:16px;}
+.topic-head .tlabel{font-size:11.5px;font-weight:700;color:var(--ink-dim);letter-spacing:.05em;margin-bottom:7px;}
+.topic-head .trow{display:flex;align-items:flex-start;gap:12px;}
+.topic-head h1{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.015em;line-height:1.3;}
+.topic-head h1 .hash{color:var(--signal-ink);margin-right:4px;} /* #와 토픽명 사이 시각적 간격 — 문자열 공백 대신 CSS로 처리 */
+.topic-head .tsub{font-size:13px;color:var(--ink-dim);margin-top:6px;line-height:1.6;}
+.topic-head .tacts{margin-left:auto;flex-shrink:0;display:flex;gap:8px;}
+/* 게시물 본문 해시태그 — 기존 .link 톤 재사용 */
+.pbody .htag{color:var(--signal-ink);font-weight:600;cursor:pointer;}
+.pbody .htag:hover{text-decoration:underline;text-underline-offset:3px;}
+@media (prefers-reduced-motion:reduce){.skl,.istate.load,.spin,.scan-dot{animation:none;}}
+</style>
+</head>
+<body data-route-base="../product/">
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-topic">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav-search" data-screen="search" style="cursor:pointer;"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi" data-screen="home"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">토픽 화면은 해당 주제의 공개 브리핑을 모아 보여줘요.</div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="feed">
+
+          <!-- 목업 전용: 상태 전환 컨트롤 -->
+          <div class="demo-bar">
+            <span class="samp">목업 전용 · 토픽별 브리핑 상태 전환 (신규 화면 제안)</span>
+            <p class="sh">실제 서비스 UI가 아니라 목업 검수용 컨트롤입니다. 우측 rail의 추천 토픽·게시물 본문 해시태그를 클릭했을 때 도착하는 화면 제안입니다.</p>
+            <p class="sh">연결 방식: 실제 라우트(예: /topic/:topicName — <b>프론트 제안, Pending Decision</b>)가 미정이라 href 대신 <b>data-target-type="topic" + data-topic</b> 데이터 속성만 사용합니다. 공통 라우터(product-common.js)의 screen key에 topic을 임의 등록하지 않았습니다. 상세: docs/미정사항_팀확인요청.md §F</p>
+            <div class="demo-tabs">
+              <div class="state-tabs" role="tablist" aria-label="상태 전환">
+              <button type="button" class="demo-tab on" data-demo="normal" role="tab" aria-selected="true" tabindex="0">정상</button>
+              <button type="button" class="demo-tab" data-demo="loading" role="tab" aria-selected="false" tabindex="-1">로딩</button>
+              <button type="button" class="demo-tab" data-demo="empty" role="tab" aria-selected="false" tabindex="-1">관련 브리핑 없음</button>
+              <button type="button" class="demo-tab" data-demo="err-api" role="tab" aria-selected="false" tabindex="-1">API 오류</button>
+              <button type="button" class="demo-tab" data-demo="err-net" role="tab" aria-selected="false" tabindex="-1">네트워크 오류</button>
+              </div>
+              <button class="demo-tab" id="demo-theme" type="button">다크 모드 보기</button>
+            </div>
+          </div>
+
+          <!-- ============ 정상 ============
+               평평한 섹션 헤더(토픽 라벨·제목·설명·관심사에 추가) + 관련 공개 브리핑 목록(home-feed.html 카드 구조 재사용).
+               데이터 근거 없는 요소(브리핑 수·인기 순위·정렬 옵션·급상승·팔로워 수)는 넣지 않는다. -->
+          <div data-demo-state="normal">
+
+            <div class="topic-head" data-target-type="topic" data-topic="미국증시">
+              <div class="tlabel">토픽</div>
+              <div class="trow">
+                <div>
+                  <h1><span class="hash">#</span>미국증시</h1>
+                  <div class="tsub">미국 주식 시장의 지수·실적·금리 관련 공개 브리핑을 모아 보여드려요.</div>
+                </div>
+                <div class="tacts">
+                  <!-- 클릭 시 '관심사에 추가됨'으로 전환 (목업 상호작용 — 기존 팔로우 토글 패턴과 동일) -->
+                  <span class="btn signal sm tp-add" role="button" tabindex="0">＋ 관심사에 추가</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 관련 공개 브리핑 (home-feed.html CARD 구조 재사용) -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav" data-screen="uprofile" style="cursor:pointer;">MW</span>
+                <div data-screen="uprofile" style="cursor:pointer;">
+                  <div class="pname">macro_watcher <span class="h">@macro_w</span></div>
+                  <div class="pmeta">오전 7:41 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">미 CPI 발표 전날 밤, 채권시장이 먼저 움직인 이유</h3>
+              <p class="pbody">10년물 금리가 새벽에 6bp 빠졌습니다. 출처 4건을 원문까지 따라가 보면 시장이 이미 낮은 CPI를 가격에 반영하기 시작했다는 해석이 가능합니다. <span class="htag" data-target-type="topic" data-topic="미국증시" data-demo-topic-link role="link" tabindex="0">#미국증시</span></p>
+              <div class="pimg">
+                <span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 280" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="596" height="280" style="fill:var(--bg-soft)"></rect>
+                    <g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="93" x2="596" y2="93"></line><line x1="0" y1="186" x2="596" y2="186"></line></g>
+                    <polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="24,120 106,112 188,136 270,120 352,150 434,142 516,176 572,170"></polyline>
+                    <circle cx="352" cy="150" r="3.5" style="fill:var(--signal)"></circle>
+                    <text x="24" y="32" style="fill:var(--ink-dim)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13">US 10Y · overnight</text>
+                    <text x="500" y="32" style="fill:var(--ink-mid)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13" font-weight="600">−6bp</text>
+                  </svg>
+                </span>
+                <div class="imgcap"><span class="c">10년물 국채 금리 야간 흐름 — 새벽 3시 이후 하락 전환</span><span class="src">출처 · 미 재무부</span></div>
+              </div>
+              <div class="reason"><span class="rd"></span>토픽 <b>‘#미국증시’</b>의 공개 브리핑</div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>32</b></span>
+                <span class="pact">♡ <b>128</b></span>
+                <span class="pact">조회 <b>1.8만</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <article class="post">
+              <div class="phead">
+                <span class="pav" data-screen="uprofile" style="cursor:pointer;">VK</span>
+                <div data-screen="uprofile" style="cursor:pointer;">
+                  <div class="pname">value_kim <span class="h">@value_kim</span></div>
+                  <div class="pmeta">오전 6:52 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail">보유 종목 실적 발표 3분 정리 — 가이던스가 핵심</h3>
+              <p class="pbody">오늘 장 마감 후 실적을 내는 종목 3개를 짧게 정리했습니다. 매출보다 다음 분기 가이던스에 시장 반응이 갈릴 가능성이 큽니다. <span class="htag" data-target-type="topic" data-topic="미국증시" data-demo-topic-link role="link" tabindex="0">#미국증시</span></p>
+              <div class="reason"><span class="rd"></span>토픽 <b>‘#미국증시’</b>의 공개 브리핑</div>
+              <div class="pacts">
+                <span class="pact">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>9</b></span>
+                <span class="pact">♡ <b>41</b></span>
+                <span class="pact">조회 <b>1.2만</b></span>
+                <span class="pact more">↗ 공유</span>
+              </div>
+            </article>
+
+            <div class="feed-end">
+              <div class="l">이 토픽의 공개 브리핑은 여기까지예요</div>
+              <div class="s">관심사로 추가하면 이 주제가 내 아침 브리핑에도 반영돼요.</div>
+            </div>
+
+          </div>
+
+          <!-- ============ 로딩 ============
+               새 섹션 헤더 구조(라벨·제목·설명·버튼)에 맞춘 skeleton + 피드 카드 skeleton. 내비게이션·레이아웃 유지. -->
+          <div data-demo-state="loading" hidden>
+
+            <div class="topic-head" aria-hidden="true">
+              <span class="skl" style="width:34px;height:11px;margin-bottom:9px;"></span>
+              <div class="trow">
+                <div style="flex:1;">
+                  <span class="skl" style="width:170px;height:22px;margin-bottom:8px;"></span>
+                  <span class="skl" style="width:300px;height:12px;margin-bottom:0;"></span>
+                </div>
+                <span class="skl" style="width:126px;height:32px;border-radius:8px;margin-bottom:0;flex-shrink:0;"></span>
+              </div>
+            </div>
+
+            <article class="post" aria-hidden="true">
+              <div class="phead">
+                <span class="skl" style="width:38px;height:38px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                  <span class="skl" style="width:132px;height:12px;margin-bottom:6px;"></span>
+                  <span class="skl" style="width:88px;height:10px;margin-bottom:0;"></span>
+                </div>
+              </div>
+              <span class="skl" style="width:78%;height:18px;margin:6px 0 10px;"></span>
+              <span class="skl" style="width:100%;height:12px;"></span>
+              <span class="skl" style="width:58%;height:12px;margin-bottom:12px;"></span>
+              <div class="pacts">
+                <span class="skl" style="width:56px;height:12px;margin:10px 14px 10px 0;"></span>
+                <span class="skl" style="width:56px;height:12px;margin:10px 0;"></span>
+              </div>
+            </article>
+            <article class="post" aria-hidden="true">
+              <div class="phead">
+                <span class="skl" style="width:38px;height:38px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                  <span class="skl" style="width:110px;height:12px;margin-bottom:6px;"></span>
+                  <span class="skl" style="width:96px;height:10px;margin-bottom:0;"></span>
+                </div>
+              </div>
+              <span class="skl" style="width:70%;height:18px;margin:6px 0 10px;"></span>
+              <span class="skl" style="width:100%;height:200px;border-radius:11px;margin-bottom:12px;"></span>
+              <div class="pacts">
+                <span class="skl" style="width:56px;height:12px;margin:10px 0;"></span>
+              </div>
+            </article>
+
+          </div>
+
+          <!-- ============ 관련 브리핑 없음 ============
+               섹션 헤더 유지(토픽명이 갑자기 사라지지 않게). '필터 해제' 표현 미사용. -->
+          <div data-demo-state="empty" hidden>
+
+            <div class="topic-head" data-target-type="topic" data-topic="미국증시">
+              <div class="tlabel">토픽</div>
+              <div class="trow">
+                <div>
+                  <h1><span class="hash">#</span>미국증시</h1>
+                  <div class="tsub">미국 주식 시장의 지수·실적·금리 관련 공개 브리핑을 모아 보여드려요.</div>
+                </div>
+                <div class="tacts">
+                  <span class="btn signal sm tp-add" role="button" tabindex="0">＋ 관심사에 추가</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstate center" style="min-height:280px;margin-bottom:16px;">
+              <span class="pic"><svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.8"></rect><line x1="4.6" y1="6" x2="11.4" y2="6" stroke-linecap="round"></line><line x1="4.6" y1="8.6" x2="9.4" y2="8.6" stroke-linecap="round"></line></svg></span>
+              <span class="pt2">아직 #미국증시 관련 공개 브리핑이 없어요</span>
+              <span class="ps2">관련 브리핑이 공개되면 이곳에서 확인할 수 있어요.<br>관심사로 추가하면 이 주제가 내 아침 브리핑에도 반영돼요.</span>
+              <span class="pa"><span class="btn signal sm tp-add" role="button" tabindex="0">＋ 관심사에 추가</span><span class="btn ghost sm" data-screen="feed" role="button" tabindex="0">다른 토픽 둘러보기</span></span>
+            </div>
+
+          </div>
+
+          <!-- ============ API 오류 ============
+               섹션 헤더 유지 — 어떤 토픽을 열다 실패했는지 보이게. -->
+          <div data-demo-state="err-api" hidden>
+
+            <div class="topic-head" data-target-type="topic" data-topic="미국증시">
+              <div class="tlabel">토픽</div>
+              <div class="trow">
+                <div>
+                  <h1><span class="hash">#</span>미국증시</h1>
+                  <div class="tsub">미국 주식 시장의 지수·실적·금리 관련 공개 브리핑을 모아 보여드려요.</div>
+                </div>
+                <div class="tacts">
+                  <span class="btn signal sm tp-add" role="button" tabindex="0">＋ 관심사에 추가</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstate center" style="min-height:280px;margin-bottom:16px;">
+              <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="7.4"></circle><line x1="10" y1="6.4" x2="10" y2="10.8" stroke-linecap="round"></line><circle cx="10" cy="13.6" r=".9" fill="currentColor" stroke="none"></circle></svg></span>
+              <span class="pt2">토픽 브리핑을 불러오지 못했어요</span>
+              <span class="ps2">일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요.</span>
+              <span class="pa"><span class="btn signal sm" role="button" tabindex="0">다시 시도</span><span class="btn ghost sm" data-screen="feed" role="button" tabindex="0">피드로 돌아가기</span></span>
+            </div>
+
+          </div>
+
+          <!-- ============ 네트워크 오류 ============
+               섹션 헤더 유지. 서버 오류와 다른 문구. -->
+          <div data-demo-state="err-net" hidden>
+
+            <div class="topic-head" data-target-type="topic" data-topic="미국증시">
+              <div class="tlabel">토픽</div>
+              <div class="trow">
+                <div>
+                  <h1><span class="hash">#</span>미국증시</h1>
+                  <div class="tsub">미국 주식 시장의 지수·실적·금리 관련 공개 브리핑을 모아 보여드려요.</div>
+                </div>
+                <div class="tacts">
+                  <span class="btn signal sm tp-add" role="button" tabindex="0">＋ 관심사에 추가</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstate center" style="min-height:280px;margin-bottom:16px;">
+              <span class="pic"><svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1.8 6.2a9.4 9.4 0 0 1 12.4 0M3.9 8.6a6.2 6.2 0 0 1 8.2 0M6 11a3 3 0 0 1 4 0" stroke-linecap="round"></path><circle cx="8" cy="13.2" r=".9" fill="currentColor" stroke="none"></circle><line x1="2.5" y1="2.5" x2="13.5" y2="13.5" stroke-linecap="round"></line></svg></span>
+              <span class="pt2">연결 상태를 확인해 주세요</span>
+              <span class="ps2">인터넷 연결이 불안정한 것 같아요.<br>연결을 확인한 뒤 다시 시도하면 이어서 볼 수 있어요.</span>
+              <span class="pa"><span class="btn signal sm" role="button" tabindex="0">다시 시도</span></span>
+            </div>
+
+          </div>
+
+        </main>
+
+        <!-- RIGHT RAIL -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>추천 토픽</h4>
+            <div class="tpcs">
+              <span class="tpc" data-target-type="topic" data-topic="환테크">#환테크</span>
+              <span class="tpc" data-target-type="topic" data-topic="로컬LLM">#로컬LLM</span>
+              <span class="tpc" data-target-type="topic" data-topic="반도체">#반도체</span>
+              <span class="tpc plus">＋ 관심사로 추가</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+<script>
+/* 목업 전용: 상태 전환 + 테마 토글 + 관심사 추가 토글 (실서비스 코드 아님 — 관심사 추가 API는 Pending Decision) */
+(function(){
+  document.querySelectorAll('.demo-tab[data-demo]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.demo-tab[data-demo]').forEach(function(x){
+        var on=(x===b);x.classList.toggle('on',on);x.setAttribute('aria-selected',on?'true':'false');x.setAttribute('tabindex',on?'0':'-1');
+      });
+      var v=b.getAttribute('data-demo');
+      document.querySelectorAll('[data-demo-state]').forEach(function(s){s.hidden=(s.getAttribute('data-demo-state')!==v);});
+    });
+  });
+  var t=document.getElementById('demo-theme');
+  if(t)t.addEventListener('click',function(){
+    var p=document.getElementById('page');
+    var toDark=p.getAttribute('data-theme')!=='dark';
+    p.setAttribute('data-theme',toDark?'dark':'light');
+    t.textContent=toDark?'라이트 모드 보기':'다크 모드 보기';
+  });
+  /* '관심사에 추가' ↔ '관심사에 추가됨' 토글 — 기존 팔로우 토글 패턴과 동일한 목업 상호작용 (상태별 버튼 공통 바인딩) */
+  var toast=document.getElementById('g-toast'),tt=document.getElementById('g-toast-t');
+  function note(msg){if(!toast||!tt)return;tt.textContent=msg;toast.hidden=false;setTimeout(function(){toast.hidden=true;},3000);}
+  document.querySelectorAll('.tp-add').forEach(function(b){
+    b.addEventListener('click',function(){
+      var added=b.classList.toggle('following');
+      b.classList.toggle('signal',!added);
+      b.textContent=added?'✓ 관심사에 추가됨':'＋ 관심사에 추가';
+      note(added?'‘미국증시’를 관심사에 추가했어요. 다음 브리핑부터 반영돼요.':'‘미국증시’를 관심사에서 제거했어요.');
+    });
+    b.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();b.click();}});
+  });
+  /* 해시태그 클릭 예시 — 같은 토픽 화면이므로 상단으로 스크롤만 (실제 라우트는 Pending Decision) */
+  document.querySelectorAll('[data-demo-topic-link]').forEach(function(el){
+    function go(){window.scrollTo({top:0,behavior:'smooth'});}
+    el.addEventListener('click',go);
+    el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+})();
+</script>
+</body></html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 홈 피드 — 상태 (로딩 / 빈 상태 / API 오류 / 네트워크 오류)</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+<style>
+/* ── 목업 전용 데모 컨트롤 (variant 파일 한정 — 실제 서비스 UI 아님) ── */
+.demo-bar{background:var(--bg);border:1px dashed var(--line-strong);border-radius:14px;padding:12px 16px;margin-bottom:16px;}
+.demo-bar .samp{margin:0 0 8px;}
+.demo-bar .sh{font-size:12px;color:var(--ink-dim);line-height:1.6;margin:0 0 10px;}
+.demo-tabs{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.state-tabs{display:contents;} /* tablist를 상태 탭만 감싸도록 분리 — 시각 배치는 기존과 동일 */
+.demo-tab{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink-mid);border:1px solid var(--line);border-radius:999px;padding:6px 13px;background:var(--bg);cursor:pointer;}
+.demo-tab:hover{border-color:var(--line-strong);color:var(--ink);}
+.demo-tab.on{background:var(--wash);border-color:var(--signal);color:var(--signal-ink);}
+.demo-tab:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+[data-demo-state][hidden]{display:none;}
+.btn:focus-visible,.link:focus-visible,[data-screen]:focus-visible{outline:2px solid var(--signal);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){.skl,.istate.load,.spin,.scan-dot{animation:none;}}
+</style>
+</head>
+<body data-route-base="../product/">
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-home">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav-search" data-screen="search" style="cursor:pointer;"><span class="sico"></span>브리핑, 토픽, 사용자 검색</div>
+        <div class="spacer"></div>
+        <span class="btn signal sm" data-am-open>＋ 관심 자료</span>
+        <span class="nav-ico" data-screen="notif" style="cursor:pointer;" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
+        <span class="nav-avatar" data-screen="profile" role="button" tabindex="0" aria-label="내 프로필" title="내 프로필" style="cursor:pointer;">나</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV (로딩·오류 중에도 내비게이션은 skeleton으로 바꾸지 않고 유지) -->
+        <aside class="side-l">
+          <div class="menu">
+            <div class="mi on"><span class="ic">⌂</span>홈</div>
+            <div class="mi" data-screen="saved"><span class="ic">⚑</span>보관함<span class="cnt">23</span></div>
+            <div class="mi" data-screen="kb"><span class="ic">▦</span>지식창고<span class="cnt">128</span></div>
+            <div class="mi" data-screen="wiki"><span class="ic">▤</span>관심사 · LLM Wiki<span class="cnt">6</span></div>
+            <div class="mi" data-screen="profile"><span class="ic">◑</span>프로필</div>
+            <div class="divider"></div>
+            <div class="mi" data-screen="settings"><span class="ic">⚙</span>설정</div>
+          </div>
+          <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
+        </aside>
+
+        <!-- FEED -->
+        <main class="feed">
+
+          <!-- 목업 전용: 상태 전환 컨트롤 -->
+          <div class="demo-bar">
+            <span class="samp">목업 전용 · 홈 피드 상태 전환</span>
+            <p class="sh">실제 서비스 UI가 아니라 목업 검수용 컨트롤입니다. 기본 상태는 <b>product/home-feed.html</b> 원본을 참고하세요.</p>
+            <div class="demo-tabs">
+              <div class="state-tabs" role="tablist" aria-label="상태 전환">
+              <button type="button" class="demo-tab on" data-demo="loading" role="tab" aria-selected="true" tabindex="0">로딩</button>
+              <button type="button" class="demo-tab" data-demo="empty-all" role="tab" aria-selected="false" tabindex="-1">빈 상태</button>
+              <button type="button" class="demo-tab" data-demo="err-api" role="tab" aria-selected="false" tabindex="-1">API 오류</button>
+              <button type="button" class="demo-tab" data-demo="err-net" role="tab" aria-selected="false" tabindex="-1">네트워크 오류</button>
+              </div>
+              <button class="demo-tab" id="demo-theme" type="button">다크 모드 보기</button>
+            </div>
+          </div>
+
+          <div class="tabs">
+            <div class="tab" data-screen="home"><span class="tl">내 보고서</span></div>
+            <div class="tab on"><span class="tl">피드</span></div>
+          </div>
+
+          <!-- ============ 로딩 ============
+               피드 카드(.post) 구조 반영 skeleton — 아바타·이름·제목·본문·근거·액션 영역.
+               로딩 완료 시 레이아웃 점프가 적도록 카드 높이·개수를 기본 화면과 비슷하게 유지. -->
+          <div data-demo-state="loading">
+
+            <!-- 오늘 브리핑 영역(.today) skeleton -->
+            <div class="today" aria-hidden="true">
+              <div class="th">
+                <span class="skl" style="width:16px;height:16px;border-radius:50%;margin-bottom:0;"></span>
+                <span class="skl" style="width:96px;height:12px;margin-bottom:0;"></span>
+                <span class="skl" style="width:140px;height:11px;margin-bottom:0;"></span>
+              </div>
+              <span class="skl" style="width:82%;height:18px;margin:4px 0 10px;"></span>
+              <span class="skl" style="width:100%;height:12px;"></span>
+              <span class="skl" style="width:64%;height:12px;margin-bottom:12px;"></span>
+              <div style="display:flex;gap:7px;">
+                <span class="skl" style="width:52px;height:22px;border-radius:7px;margin-bottom:0;"></span>
+                <span class="skl" style="width:76px;height:22px;border-radius:7px;margin-bottom:0;"></span>
+                <span class="skl" style="width:66px;height:22px;border-radius:7px;margin-bottom:0;"></span>
+              </div>
+            </div>
+
+            <!-- 피드 카드 skeleton ×3 -->
+            <article class="post" aria-hidden="true">
+              <div class="phead">
+                <span class="skl" style="width:38px;height:38px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                  <span class="skl" style="width:132px;height:12px;margin-bottom:6px;"></span>
+                  <span class="skl" style="width:88px;height:10px;margin-bottom:0;"></span>
+                </div>
+              </div>
+              <span class="skl" style="width:78%;height:18px;margin:6px 0 10px;"></span>
+              <span class="skl" style="width:100%;height:12px;"></span>
+              <span class="skl" style="width:92%;height:12px;"></span>
+              <span class="skl" style="width:58%;height:12px;margin-bottom:12px;"></span>
+              <span class="skl" style="width:46%;height:11px;margin-bottom:12px;"></span>
+              <div class="pacts">
+                <span class="skl" style="width:56px;height:12px;margin:10px 14px 10px 0;"></span>
+                <span class="skl" style="width:56px;height:12px;margin:10px 14px 10px 0;"></span>
+                <span class="skl" style="width:56px;height:12px;margin:10px 0;"></span>
+              </div>
+            </article>
+
+            <article class="post" aria-hidden="true">
+              <div class="phead">
+                <span class="skl" style="width:38px;height:38px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                  <span class="skl" style="width:110px;height:12px;margin-bottom:6px;"></span>
+                  <span class="skl" style="width:96px;height:10px;margin-bottom:0;"></span>
+                </div>
+              </div>
+              <span class="skl" style="width:70%;height:18px;margin:6px 0 10px;"></span>
+              <span class="skl" style="width:100%;height:12px;"></span>
+              <span class="skl" style="width:84%;height:12px;margin-bottom:12px;"></span>
+              <!-- 이미지형 카드 자리 -->
+              <span class="skl" style="width:100%;height:200px;border-radius:11px;margin-bottom:12px;"></span>
+              <div class="pacts">
+                <span class="skl" style="width:56px;height:12px;margin:10px 14px 10px 0;"></span>
+                <span class="skl" style="width:56px;height:12px;margin:10px 14px 10px 0;"></span>
+                <span class="skl" style="width:56px;height:12px;margin:10px 0;"></span>
+              </div>
+            </article>
+
+            <article class="post" aria-hidden="true">
+              <div class="phead">
+                <span class="skl" style="width:38px;height:38px;border-radius:50%;margin-bottom:0;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                  <span class="skl" style="width:124px;height:12px;margin-bottom:6px;"></span>
+                  <span class="skl" style="width:80px;height:10px;margin-bottom:0;"></span>
+                </div>
+              </div>
+              <span class="skl" style="width:84%;height:18px;margin:6px 0 10px;"></span>
+              <span class="skl" style="width:96%;height:12px;"></span>
+              <span class="skl" style="width:66%;height:12px;margin-bottom:14px;"></span>
+              <div class="pacts">
+                <span class="skl" style="width:56px;height:12px;margin:10px 14px 10px 0;"></span>
+                <span class="skl" style="width:56px;height:12px;margin:10px 0;"></span>
+              </div>
+            </article>
+
+          </div>
+
+          <!-- ============ 빈 상태 ============
+               공개된 브리핑을 현재 불러올 수 없거나 추천할 콘텐츠가 없는 경우.
+               홈 피드 원본에는 필터 기능이 없으므로 '필터 결과 없음' 상태는 두지 않는다 (2026-07-16 정리).
+               토픽별 결과 없음 상태는 variants/topic-feed-states.html에서 다룬다. -->
+          <div data-demo-state="empty-all" hidden>
+
+            <div class="pstate center" style="min-height:320px;margin-bottom:16px;">
+              <span class="pic"><svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.8"></rect><line x1="4.6" y1="6" x2="11.4" y2="6" stroke-linecap="round"></line><line x1="4.6" y1="8.6" x2="9.4" y2="8.6" stroke-linecap="round"></line></svg></span>
+              <span class="pt2">지금 보여드릴 공개 브리핑이 없어요</span>
+              <span class="ps2">추천할 콘텐츠가 아직 없거나 일시적으로 불러오지 못한 상태예요.<br>관심사를 조정하면 추천 범위가 넓어지고, 잠시 후 다시 확인할 수도 있어요.</span>
+              <span class="pa"><span class="btn signal sm" data-screen="wiki" role="button" tabindex="0">관심사 관리</span><span class="btn ghost sm" role="button" tabindex="0">잠시 후 다시 확인</span></span>
+            </div>
+
+          </div>
+
+          <!-- ============ API 오류 ============
+               서버가 응답했지만 실패한 경우 — HTTP 코드·내부 메시지 미노출. -->
+          <div data-demo-state="err-api" hidden>
+
+            <div class="pstate center" style="min-height:300px;margin-bottom:16px;">
+              <span class="pic"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="7.4"></circle><line x1="10" y1="6.4" x2="10" y2="10.8" stroke-linecap="round"></line><circle cx="10" cy="13.6" r=".9" fill="currentColor" stroke="none"></circle></svg></span>
+              <span class="pt2">피드를 불러오지 못했어요</span>
+              <span class="ps2">일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요.<br>보고 있던 화면과 입력한 내용은 그대로 유지돼요.</span>
+              <span class="pa"><span class="btn signal sm" role="button" tabindex="0">다시 시도</span><span class="btn ghost sm" data-screen="home" role="button" tabindex="0">내 보고서 보기</span></span>
+            </div>
+
+          </div>
+
+          <!-- ============ 네트워크 오류 ============
+               연결 자체가 실패한 경우 — 서버 오류와 다른 문구. 오프라인 단정 대신 확인 요청. -->
+          <div data-demo-state="err-net" hidden>
+
+            <div class="pstate center" style="min-height:300px;margin-bottom:16px;">
+              <span class="pic"><svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1.8 6.2a9.4 9.4 0 0 1 12.4 0M3.9 8.6a6.2 6.2 0 0 1 8.2 0M6 11a3 3 0 0 1 4 0" stroke-linecap="round"></path><circle cx="8" cy="13.2" r=".9" fill="currentColor" stroke="none"></circle><line x1="2.5" y1="2.5" x2="13.5" y2="13.5" stroke-linecap="round"></line></svg></span>
+              <span class="pt2">연결 상태를 확인해 주세요</span>
+              <span class="ps2">인터넷 연결이 불안정한 것 같아요.<br>연결을 확인한 뒤 다시 시도하면 이어서 볼 수 있어요.</span>
+              <span class="pa"><span class="btn signal sm" role="button" tabindex="0">다시 시도</span></span>
+            </div>
+
+          </div>
+
+        </main>
+
+        <!-- RIGHT RAIL (기존 구조 유지 — 피드 오류 시에도 내비·보조 영역은 남김) -->
+        <aside class="side-r">
+          <div class="rpanel">
+            <h4>오늘의 핵심 신호</h4>
+            <div class="sig"><span class="n">01</span><div><div class="st">원/달러 환율 0.8% 하락 — 트리거 충족</div><div class="sm">#환율 · 신뢰도 높음</div></div></div>
+            <div class="sig"><span class="n">02</span><div><div class="st">오픈소스 LLM 릴리즈 2건</div><div class="sm">#AI · 신뢰도 높음</div></div></div>
+          </div>
+          <div class="rpanel">
+            <h4>추천 토픽</h4>
+            <div class="tpcs">
+              <!-- 토픽 클릭 목적지 예시: variants/topic-feed-states.html (라우트는 Pending Decision — data 속성만 사용) -->
+              <span class="tpc" data-target-type="topic" data-topic="미국증시" data-demo-topic-link role="link" tabindex="0">#미국증시</span>
+              <span class="tpc" data-target-type="topic" data-topic="환테크" data-demo-topic-link role="link" tabindex="0">#환테크</span>
+              <span class="tpc" data-target-type="topic" data-topic="로컬LLM" data-demo-topic-link role="link" tabindex="0">#로컬LLM</span>
+              <span class="tpc plus">＋ 관심사로 추가</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="up-toast" id="g-toast" hidden><span id="g-toast-t"></span></div>
+  <!-- 관심 자료 추가 모달 (전 화면 공용) -->
+  <div class="modal-bg" id="am-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="관심 자료 추가" style="width:460px;">
+      <div class="mhead"><span class="mt">관심 자료 추가</span><span class="mx" data-am-close>✕</span></div>
+      <p class="ms">링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.</p>
+      <input type="text" placeholder="링크(URL) 붙여넣기 또는 메모 입력">
+      <div style="height:16px;"></div>
+      <div class="amopt on" data-amopt>
+        <span class="amr"></span>
+        <div><div class="amt">저장하기</div><div class="amd">다음 아침 브리핑부터 반영돼요.</div></div>
+      </div>
+      <div class="amopt locked" title="무료 플랜에서는 제공되지 않아요">
+        <span class="amr"></span>
+        <div><div class="amt">저장하고 지금 분석 받기<span class="amlock">무료 플랜 미제공</span></div><div class="amd">이 주제로 온디맨드 보고서를 바로 만들어드려요.</div></div>
+      </div>
+      <div class="mfoot"><span class="btn" data-am-close>취소</span><span class="btn signal" data-am-close>저장</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+<script>
+/* 목업 전용: 상태 전환 + 테마 토글 (실서비스 코드 아님) */
+(function(){
+  document.querySelectorAll('.demo-tab[data-demo]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.demo-tab[data-demo]').forEach(function(x){
+        var on=(x===b);x.classList.toggle('on',on);x.setAttribute('aria-selected',on?'true':'false');x.setAttribute('tabindex',on?'0':'-1');
+      });
+      var v=b.getAttribute('data-demo');
+      document.querySelectorAll('[data-demo-state]').forEach(function(s){s.hidden=(s.getAttribute('data-demo-state')!==v);});
+    });
+  });
+  var t=document.getElementById('demo-theme');
+  if(t)t.addEventListener('click',function(){
+    var p=document.getElementById('page');
+    var toDark=p.getAttribute('data-theme')!=='dark';
+    p.setAttribute('data-theme',toDark?'dark':'light');
+    t.textContent=toDark?'라이트 모드 보기':'다크 모드 보기';
+  });
+  /* 토픽 클릭 목적지 예시 — 정적 variant 파일 간 이동일 뿐, 실제 라우트(/topic/:name 등)는 Pending Decision */
+  document.querySelectorAll('[data-demo-topic-link]').forEach(function(el){
+    el.style.cursor='pointer';
+    function go(){window.location.href='topic-feed-states.html';}
+    el.addEventListener('click',go);
+    el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+})();
+</script>
+</body></html>
