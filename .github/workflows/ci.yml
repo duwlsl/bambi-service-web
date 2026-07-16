@@ -1,0 +1,62 @@
+name: CI
+
+# service-web(Next.js) PR 자동 검사
+# main / develop 로 향하는 PR과 해당 브랜치 push 시 실행
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+# 같은 브랜치에서 새 커밋이 오면 이전 실행은 취소 (CI 시간 절약)
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint · Typecheck · Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      # lockfile 기준 결정적 설치
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # 타입 검사 (build 전 조기 실패)
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # 프로덕션 빌드 검증. API_URL 은 빌드 통과용 더미(런타임 값 아님)
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # git 히스토리 전체를 스캔하기 위해
+
+      # gitleaks: API Key / .env / 토큰이 커밋됐는지 검사
+      # 도커 이미지는 오픈소스·무료 (조직 라이선스 불필요)
+      - name: Gitleaks
+        run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest
+          detect --source /repo --redact --verbose
