@@ -1,26 +1,235 @@
-@import "tailwindcss";
+/* 목업(base.css)과 동일한 폰트 소스 — Pretendard(본문) · Quicksand(워드마크) · Space Grotesk(숫자)
+   ⚠ url() @import는 반드시 다른 모든 규칙보다 앞(파일 최상단)에 있어야 브라우저가 로드한다. */
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  /* 목업 본문 폰트 스택 (base.css body와 동일) */
+  --font-sans: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-mono: var(--font-geist-mono);
+  /* 목업 전용 추가 토큰 → Tailwind 유틸리티 노출 (text-signal-ink, bg-wash 등) */
+  --color-signal-ink: var(--signal-ink);
+  --color-ink-mid: var(--ink-mid);
+  --color-low: var(--low);
+  --color-wash: var(--wash);
+  --color-wash-strong: var(--wash-strong);
+  --color-ok: var(--ok);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─────────────────────────────────────────────────────────────
+   AlphaCatcher 디자인 토큰 → shadcn 테마 변수 매핑 (LIGHT)
+   원본 토큰: docs/design-handoff/shared/tokens.css  .page[data-theme="light"]
+   목업 CSS(base.css / product-components.css)의 실제 사용처를 근거로 매핑함.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --background: #F5F6F8;           /* --bg-soft   : body/page/app 실제 배경 (base.css) */
+  --foreground: #141619;           /* --ink       : 기본 텍스트 */
+  --card: #FFFFFF;                 /* --bg        : 카드·패널·nav 표면 */
+  --card-foreground: #141619;      /* --ink */
+  --popover: #FFFFFF;              /* --bg */
+  --popover-foreground: #141619;   /* --ink */
+  --primary: #FF5A00;              /* --signal    : 브랜드 액션(.btn.signal) */
+  --primary-foreground: #FFFFFF;   /* --on-signal */
+  --secondary: #EEF0F3;            /* --bg-inset  : 중립 채움 ✅ 확정 2026-07-15 */
+  --secondary-foreground: #141619; /* --ink */
+  --muted: #EEF0F3;                /* --bg-inset  : 뮤트 표면 ✅ 확정 2026-07-15 */
+  --muted-foreground: #6B7280;     /* --ink-dim   : 흐린 보조 텍스트 */
+  --accent: #F5F6F8;               /* --bg-soft   : 중립 hover/active (.mi:hover 등) */
+  --accent-foreground: #141619;    /* --ink */
+  --destructive: #DC2626;          /* --err */
+  --border: #E6E8EC;               /* --line      : 일반 테두리 */
+  --input: #D7DBE0;                /* --line-strong: 입력 테두리(.field input) */
+  --ring: #FF5A00;                 /* --signal    : 포커스 링(input:focus border-color) */
+
+  /* 차트: P0 미사용 → shadcn 기본값 유지 (필요 시 status 팔레트로 재매핑) */
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;              /* 10px — 목업 버튼/입력 radius와 일치. 토큰 없음 → 유지 */
+  /* 사이드바: P0 미사용 → shadcn 기본값 유지 */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* 목업 전용 추가 토큰(shadcn 표준 아님) — 로딩 스켈레톤 (CLAUDE.md §9) */
+  --skel1: #EDEFF2;                /* --skel1 */
+  --skel2: #F6F7F9;                /* --skel2 */
+  /* 목업 전용 추가 토큰 — auth 화면 등에서 사용 */
+  --signal-ink: #E35200;           /* --signal-ink : 링크·강조 텍스트용 주황 */
+  --ink-mid: #454B54;              /* --ink-mid    : 중간 톤 텍스트 */
+  --low: #A6ADB6;                  /* --low        : placeholder */
+  --wash: rgba(255, 90, 0, 0.09);  /* --wash       : 주황 틴트(포커스 링·그라데이션) */
+  /* 목업 전용 추가 토큰 — 홈 피드에서 사용 */
+  --wash-strong: rgba(255, 90, 0, 0.20); /* --wash-strong : 주황 틴트(테두리) */
+  --today-bg: #FAFBFC;             /* --today-bg   : 오늘 브리핑 블록 배경 */
+  --today-line: #E6E8EC;           /* --today-line */
+  --img: #EEF0F3;                  /* --img        : 이미지 영역 배경 */
+  --ok: #1F8A54;                   /* --ok         : 긍정 상태(공개 배지 등) */
+  /* 목업 전용 추가 토큰 — 카드 상세에서 사용 */
+  --ok-dot: #34A66A;               /* --ok-dot     : 출처 신뢰도 높음 점 */
+  --mid: #D89A2B;                  /* --mid        : 출처 신뢰도 중간 점 */
+  --shadow: 0 1px 2px rgba(20, 22, 25, 0.05); /* --shadow : readbar 등 */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   AlphaCatcher 디자인 토큰 → shadcn 테마 변수 매핑 (DARK)
+   원본 토큰: docs/design-handoff/shared/tokens.css  .page[data-theme="dark"]
+   ※ 다크에서는 카드(--bg #181B21)가 배경(--bg-soft #20242C)보다 어둡다 — 목업 의도 그대로.
+   ───────────────────────────────────────────────────────────── */
+.dark {
+  --background: #20242C;           /* --bg-soft */
+  --foreground: #EEF1F5;           /* --ink */
+  --card: #181B21;                 /* --bg */
+  --card-foreground: #EEF1F5;      /* --ink */
+  --popover: #181B21;              /* --bg */
+  --popover-foreground: #EEF1F5;   /* --ink */
+  --primary: #FF7A33;              /* --signal (dark) */
+  --primary-foreground: #241200;   /* --on-signal (dark) */
+  --secondary: #252A33;            /* --bg-inset ✅ 확정 2026-07-15 */
+  --secondary-foreground: #EEF1F5; /* --ink */
+  --muted: #252A33;                /* --bg-inset ✅ 확정 2026-07-15 */
+  --muted-foreground: #949CA8;     /* --ink-dim */
+  --accent: #20242C;               /* --bg-soft : 중립 hover/active */
+  --accent-foreground: #EEF1F5;    /* --ink */
+  --destructive: #F87171;          /* --err (dark) */
+  --border: #2C323C;               /* --line */
+  --input: #3B424E;                /* --line-strong */
+  --ring: #FF7A33;                 /* --signal (dark) */
+
+  /* 차트: P0 미사용 → shadcn 기본값 유지 */
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  /* 사이드바: P0 미사용 → shadcn 기본값 유지 */
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+
+  /* 로딩 스켈레톤 (dark) */
+  --skel1: #20242C;                /* --skel1 */
+  --skel2: #2A2F38;                /* --skel2 */
+  /* 목업 전용 추가 토큰 (dark) */
+  --signal-ink: #FF8A4D;           /* --signal-ink (dark) */
+  --ink-mid: #C4CBD4;              /* --ink-mid (dark) */
+  --low: #7F8792;                  /* --low (dark) */
+  --wash: rgba(255, 122, 51, 0.14);/* --wash (dark) */
+  --wash-strong: rgba(255, 122, 51, 0.30); /* --wash-strong (dark) */
+  --today-bg: #1C2026;             /* --today-bg (dark) */
+  --today-line: #2C323C;           /* --today-line (dark) */
+  --img: #20242C;                  /* --img (dark) */
+  --ok: #43C088;                   /* --ok (dark) */
+  --ok-dot: #43C088;               /* --ok-dot (dark) */
+  --mid: #E0B44E;                  /* --mid (dark) */
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.32); /* --shadow (dark) */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* ─────────────────────────────────────────────────────────────
+   마크다운 뷰어 (.md-viewer) — 목업 product-components.css .md 1:1.
+   카드 상세의 브리핑 본문(content_md 렌더 결과)에 적용.
+   요소 셀렉터 방식인 이유: 실제 API 연동 시 마크다운 렌더러 출력(h2/p/ul/table…)에
+   개별 클래스를 붙일 수 없으므로, 목업과 동일하게 컨테이너 스코프로 스타일링한다.
+   ⚠ 의도적으로 @layer 밖(un-layered)에 둔다: 무레이어 CSS는 모든 카스케이드 레이어보다
+   우선하므로 Tailwind preflight(@layer base의 h2/ul/table 리셋)를 레이어 등장 순서와
+   무관하게 항상 이긴다. @layer components 안에 넣으면 번들 환경에 따라 리셋에 밀린다.
+   (md 요소들엔 Tailwind 유틸리티를 쓰지 않으므로 유틸리티와의 충돌 없음)
+   ───────────────────────────────────────────────────────────── */
+  .md-viewer{font-size:15px;line-height:1.85;color:var(--ink-mid);padding-top:6px;}
+  .md-viewer h2{font-size:18.5px;font-weight:700;color:var(--foreground);margin:26px 0 12px;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;}
+  .md-viewer h2::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--primary);display:inline-block;}
+  .md-viewer h3{font-size:15.5px;font-weight:700;color:var(--foreground);margin:20px 0 8px;}
+  .md-viewer p{margin-bottom:15px;}
+  .md-viewer p b,.md-viewer li b{color:var(--foreground);font-weight:700;}
+  .md-viewer a{color:var(--signal-ink);font-weight:600;text-decoration:none;border-bottom:1px solid var(--wash-strong);}
+  .md-viewer a.ext::after{content:"\2197";font-size:11px;margin-left:3px;}
+  .md-viewer code{background:var(--secondary);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-family:inherit;font-size:13px;color:var(--signal-ink);letter-spacing:0;}
+  .md-viewer ul{list-style:none;margin:0 0 16px;padding:0;}
+  .md-viewer li{position:relative;padding-left:20px;margin-bottom:8px;}
+  .md-viewer ul li::before{content:"–";position:absolute;left:4px;color:var(--muted-foreground);font-weight:700;}
+  .md-viewer ul ul{margin:8px 0 2px;}
+  .md-viewer ul ul li{margin-bottom:5px;font-size:14px;}
+  .md-viewer ul ul li::before{content:"\00B7";}
+  .md-viewer ol{margin:0 0 16px;padding-left:22px;list-style:decimal;}
+  .md-viewer ol li{padding-left:5px;margin-bottom:8px;}
+  .md-viewer ol li::marker{color:var(--signal-ink);font-weight:700;font-size:13px;}
+  .md-viewer blockquote{border-left:3px solid var(--input);background:var(--background);border-radius:0 10px 10px 0;padding:13px 17px;margin:0 0 16px;color:var(--ink-mid);}
+  .md-viewer blockquote .qs{display:block;font-size:11.5px;color:var(--muted-foreground);margin-top:7px;}
+  .md-viewer .code{background:var(--secondary);border:1px solid var(--border);border-radius:10px;padding:15px 17px;font-family:inherit;font-size:13px;line-height:1.75;color:var(--foreground);overflow-x:auto;margin-bottom:16px;letter-spacing:0;}
+  .md-viewer .code .cm{color:var(--muted-foreground);}
+  .md-viewer .code .k{color:var(--signal-ink);}
+  .md-viewer table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:13.5px;}
+  .md-viewer th{background:var(--background);text-align:left;padding:10px 13px;border:1px solid var(--border);font-weight:700;color:var(--foreground);}
+  .md-viewer td{padding:10px 13px;border:1px solid var(--border);color:var(--ink-mid);}
+  .md-viewer td .up{color:var(--ok);font-weight:600;}
+  .md-viewer td .dn{color:var(--destructive);font-weight:600;}
+  .md-viewer .tnote{font-size:11.5px;color:var(--muted-foreground);margin:0 0 16px;}

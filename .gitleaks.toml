@@ -1,0 +1,16 @@
+# gitleaks 설정 — 기본 룰셋은 그대로 두고, 문서 내 "예시 토큰"만 예외 처리한다.
+# 파일/경로 전체를 화이트리스트하지 않으므로, 실제 시크릿이 커밋되면 계속 탐지된다.
+
+title = "bambi-service-web gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "CLAUDE.md 로그인 응답 예시의 플레이스홀더 JWT (헤더 접두사 + '...' 잘림, 실제 서명 없음)"
+regexTarget = "line"
+regexes = [
+  # eyJhbGciOiJIUzI1NiJ9 = base64url({"alg":"HS256"}) 헤더. 뒤가 '...'(리터럴 점 3개)로
+  # 잘려 payload·signature 가 없는 문서용 예시만 매칭한다.
+  '''eyJhbGciOiJIUzI1NiJ9\.\.\.''',
+]
