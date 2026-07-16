@@ -752,3 +752,18 @@
 .ob-view{display:flex;flex-direction:column;flex:1;}
 .auth{min-height:100dvh;}
 .ob{min-height:100dvh;}
+
+/* ============ 한국어 줄바꿈 타이포 규칙 (2026-07-16 전체 목업 정비) ============
+   base.css의 body keep-all 전역 규칙 위에, 텍스트 성격별 줄바꿈 방식만 추가.
+   text-wrap 미지원 브라우저에서는 무시되는 점진적 개선 — 레이아웃 변경 없음. */
+
+/* 제목: 여러 줄일 때 각 줄 길이가 균형을 이루도록 */
+.auth-title,.ob-title,.rhead,.ptitle,.dtitle,.pv-title,.sv-title,.sv-empty .et,.cm-head .t,.wanalyze .t{text-wrap:balance;}
+
+/* 본문·설명·안내·상태 문구: 마지막 한두 단어만 다음 줄에 남는 현상 완화 */
+.auth-sub,.ob-sub,.auth-terms,.auth .field .hint,.rcap,.pv-sum,.pbody,.pbody2,.sv-sum,.sv-empty .es,
+.cm-msg,.set-note,.wnote,.kexp-note,.pe-hint,.mind-sub,.wanalyze .m,.memo-note,.ob-addhint,.side-foot,
+.state-wrap .sh{text-wrap:pretty;}
+
+/* 인증 화면 버튼·전환 링크는 한 줄 유지 */
+.auth-btn,.auth-switch a{white-space:nowrap;}

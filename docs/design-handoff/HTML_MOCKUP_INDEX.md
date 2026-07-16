@@ -38,7 +38,7 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 
 상태 variant 파일 상단의 상태 전환 버튼·다크 모드 버튼은 **목업 검수 전용 컨트롤**이며 실제 제품 UI가 아니다.
 
-## 3. 기본 제품 화면 (15)
+## 3. 기본 제품 화면 (19)
 
 경로는 `docs/design-handoff/` 기준 상대 경로. 구현 우선순위는 `bambi-service-web/CLAUDE.md` §2(P0 4화면) 기준.
 
@@ -47,6 +47,10 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 | Auth | product/auth-login.html | 로그인 | 이메일 로그인 (한 파일에 시작하기/계정 만들기/로그인 3뷰) | Final | P0-1 |
 | Auth | product/auth-signup-choice.html | 가입 방식 선택 | 회원가입 진입 | Final | P0-2 |
 | Auth | product/auth-signup-email.html | 이메일 회원가입 | 이메일 가입 폼 | Final | P0-2 |
+| Auth | product/auth-forgot-password.html | 비밀번호 찾기 | 가입 이메일 입력 → 재설정 링크 요청 | 목업 · Pending Decision(§A) | P1 |
+| Auth | product/auth-reset-email-sent.html | 재설정 이메일 발송 안내 | 링크 발송 완료 안내 · 재전송 | 목업 · Pending Decision(§A) | P1 |
+| Auth | product/auth-reset-password.html | 새 비밀번호 설정 | 새 비밀번호 입력·확인 (일치 검사) | 목업 · Pending Decision(§A) | P1 |
+| Auth | product/auth-reset-complete.html | 비밀번호 변경 완료 | 변경 완료 안내 → 로그인 이동 | 목업 · Pending Decision(§A) | P1 |
 | Home | product/home-feed.html | 홈 — 공개 피드 | 피드 탭 기본 + 관심 자료 모달 | Final | P0-3 |
 | Report | product/report-detail.html | 콘텐츠 상세 | 마크다운 보고서·출처·메모 | Final | P0-4 |
 | Home | product/home-my-reports.html | 홈 — 내 보고서 | 내 보고서 탭 기본 | Final | P1 |
@@ -128,7 +132,7 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 
 | 항목 | 수 | 비고 |
 |---|---|---|
-| 기본 제품 HTML | **15** | §3 |
+| 기본 제품 HTML | **19** | §3 (기존 15 + 2026-07-16 비밀번호 재설정 4) |
 | 상태 variant HTML | **12** | §4 (기존 6 + 2026-07-16 신규 6) |
 | Landing HTML | **1** | §5 |
 | Admin HTML | **6** | §6 (개발 참고 2 + Rough 4) |
@@ -166,6 +170,7 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 
 ## 변경 이력
 
+- **2026-07-16** — 인증 흐름 보완: 비밀번호 재설정 4단계 목업 추가(`product/auth-forgot-password.html`, `auth-reset-email-sent.html`, `auth-reset-password.html`, `auth-reset-complete.html`). 이메일 링크 방식 가정 — 실제 발송/토큰 검증/변경 API는 미연동, 백엔드 방식은 §10·`docs/미정사항_팀확인요청.md` §A Pending. 회원가입 이름 필드 추가 및 전체 목업 공통 줄바꿈 규칙(`shared/base.css`, `shared/product-components.css`) 반영. 기본 제품 HTML 15→19.
 - **2026-07-16** — 팀 합의에 따라 기존 Figma MCP 이관 계획을 중단하고 **Git 기반 HTML 목업 공유 방식으로 전환**. `FIGMA_HANDOFF_INDEX.md`(2026-07-14, Figma Page/Frame/배치 계획)를 본 문서로 전면 개정. Figma 관련 계획(Page·Section·Frame 구성, MCP 호출 배치, Native/Static 구분)은 현재 기준으로 사용하지 않음.
 - **2026-07-16** — 상태 목업 정리: 첫 사용 상태를 `variants/home-my-reports-states.html`에 통합, 중복 파일(`home-first-use-states.html`) 삭제. 홈 피드의 근거 없는 필터 상태 제거. 토픽 화면(`topic-feed-states.html`) 신규 제안. 상태 전환 시 레이아웃 흔들림 보정(base.css)·토픽 헤더 평면화 반영.
 - **2026-07-14** — (구 인덱스 기록) home-feed 게스트 시안 블록 해소, 랜딩 기준본을 최신 MotionOrb 버전으로 확정(`landing/landing-desktop.html` 생성), Review Needed 0건 처리.
