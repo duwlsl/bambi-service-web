@@ -58,3 +58,19 @@ html{scrollbar-gutter:stable;}
 @supports not (scrollbar-gutter: stable){
   body{overflow-y:scroll;}
 }
+
+/* ============ 한국어 줄바꿈 공통 규칙 (2026-07-16 전체 목업 정비) ============
+   - keep-all: 한국어 단어가 중간에서 끊기지 않게 함(공백 단위 줄바꿈).
+   - overflow-wrap: 이메일·URL 등 긴 영문 문자열이 컨테이너를 넘치지 않게 함.
+   - 개별 화면에 같은 규칙을 중복 작성하지 말 것. 예외는 .no-break / .br-desktop 사용. */
+body{word-break:keep-all;overflow-wrap:break-word;}
+
+/* 버튼·짧은 텍스트 링크는 한 줄 유지 (.btn은 기존 규칙에 이미 nowrap) */
+button,.link{white-space:nowrap;}
+
+/* 의미 단위 보호: 이메일 주소, 날짜·시간, 숫자+단위, 짧은 고정 문구 등 */
+.no-break{white-space:nowrap;}
+
+/* 데스크톱 전용 의도된 줄바꿈: <br class="br-desktop"> — 모바일에서는 자연 줄바꿈 */
+.br-desktop{display:inline;}
+@media (max-width:640px){ .br-desktop{display:none;} }

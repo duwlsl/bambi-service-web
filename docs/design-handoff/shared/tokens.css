@@ -7,6 +7,7 @@
   --line:#E6E8EC; --line-strong:#D7DBE0;
   --ink:#141619; --ink-mid:#454B54; --ink-dim:#6B7280;
   --signal:#FF5A00; --signal-ink:#E35200; --on-signal:#FFFFFF;
+  --signal-soft:#FFB58C; /* signal 비활성(muted) — disabled CTA 배경 */
   --wash:rgba(255,90,0,.09); --wash-strong:rgba(255,90,0,.20);
   --today-bg:#FAFBFC; --today-line:#E6E8EC; --avatar-bg:#FCE4D4;
   --ok:#1F8A54; --ok-dot:#34A66A; --mid:#D89A2B; --low:#A6ADB6;
@@ -21,6 +22,7 @@
   --line:#2C323C; --line-strong:#3B424E;
   --ink:#EEF1F5; --ink-mid:#C4CBD4; --ink-dim:#949CA8;
   --signal:#FF7A33; --signal-ink:#FF8A4D; --on-signal:#241200;
+  --signal-soft:#FFC3A3; /* signal 비활성(muted) — disabled CTA 배경 */
   --wash:rgba(255,122,51,.14); --wash-strong:rgba(255,122,51,.30);
   --today-bg:#1C2026; --today-line:#2C323C; --avatar-bg:#2E2318;
   --ok:#43C088; --ok-dot:#43C088; --mid:#E0B44E; --low:#7F8792;
