@@ -41,8 +41,8 @@
 |---|---|---|---|---|---|
 | **로그인** | `auth-login.html` | 이메일/비밀번호 로그인 → JWT 저장 | `POST /api/auth/login` **(확정)** | Initial / 제출중 / Error(인라인) / 중복제출 방지 | P0-1 |
 | **회원가입** | `auth-signup-choice.html`(방식 선택)<br>`auth-signup-email.html`(이메일 폼) | 이메일 가입 (비밀번호 8자+) | `POST /api/auth/signup` **(확정)** | Initial / 제출중 / Error(인라인·중복이메일) / 중복제출 방지 | P0-2 |
-| **홈 피드** | `home-feed.html` | 카드 피드 목록 + **관심 자료 추가 모달**(피드 내부, 별도 페이지 금지) | **확인 필요** | Loading / Empty / Error / Unauthorized | P0-3 |
-| **카드(리포트) 상세** | `report-detail.html` | 카드 상세 + 출처 표시 | **확인 필요** | Loading / Empty / Error / NotFound | P0-4 |
+| **홈 피드** | `home-feed.html`<br>`variants/home-feed-guest.html`(비로그인) | 카드 피드 목록 + **관심 자료 추가 모달**(피드 내부, 별도 페이지 금지) + **guest 상태**(비로그인 헤더 · 피드 단일 탭 · 아이콘 좌측 내비 · 우측 로그인/가입 유도 패널 · 가입 유도 모달 `#guest-modal`) | **확인 필요** | Loading / Empty / Error / Guest(비로그인 공개 열람 — 게이트 아님, §5) | P0-3 |
+| **카드(리포트) 상세** | `report-detail.html`<br>`variants/report-detail-guest.html`(비로그인) | 카드 상세 + 출처 표시 + **guest 상태**(하단 Sticky 로그인·가입 CTA · 보관/공유/MD 복사/댓글 입력은 가입 유도 모달 · 공개 댓글만 표시) | **확인 필요** | Loading / Empty(Preparing) / Error / NotFound / Guest(비로그인 공개 열람) | P0-4 |
 
 - **인증 API는 실측 확정** → 로그인/회원가입은 즉시 구현 가능.
 - **피드/카드 상세 API는 미확정** (영현 도메인 API 착수 전). **경로·스키마를 추측해서 만들지 말 것.** 확정 전까지 화면 구조·상태 처리까지만 진행하고 데이터 연결부는 확인 요청.
@@ -52,6 +52,7 @@
 `search.html` · `wiki.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · `library.html` · `home-my-reports.html` · `settings.html` · `onboarding.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
 
 > 목업에 있다는 이유로 구현하지 않는다. 범위 확장이 필요하면 먼저 보고한다.
+> 단, **비로그인 guest 최소 UI(guest 헤더 · 피드 단일 탭 · 가입 유도 모달 · 상세 Sticky CTA)는 P1이 아니라 P0**다 (§15 2026-07-21 결정).
 
 ---
 
@@ -146,7 +147,8 @@ export type SignupData = User;
 - **토큰 주입은 공통 API client / 인증 유틸에서만.** 페이지·컴포넌트 개별 구현 **금지**.
 - 로그아웃 시 **JWT + 인증 관련 사용자 상태를 모두 제거**한다.
 - 인증 실패·만료 시 **무한 재요청 금지** (§4).
-- 인증이 필요한 화면은 **인증 상태 확인 전 본문을 노출하지 않는다** (Protected Route).
+- **홈 `/`·리포트 상세 `/report/[id]`는 공개 화면** — 비로그인도 본문을 열람할 수 있으며 로그인 리다이렉트 가드를 두지 않는다. 저장·좋아요·공유·MD 복사·댓글 입력·`＋ 관심 자료`·비로그인 제한 내비 아이콘 등 인증 필요 액션만 가입 유도 모달(`#guest-modal`)로 차단한다 (§15 2026-07-21).
+- Protected Route(인증 상태 확인 전 본문 미노출)는 **로그인 전용 화면에만** 적용한다. 공개 화면에서는 본문은 즉시 노출하되, 로그인 전용 UI(아바타·알림·내 보고서 탭 등)만 인증 확인 전 노출하지 않는다.
 
 ### 인증 API — **실측 확정**
 
@@ -261,8 +263,10 @@ docs/design-handoff/
 | 로그인 | `product/auth-login.html` — 한 파일에 **시작하기 / 계정 만들기 / 로그인 3개 뷰** |
 | 회원가입(방식 선택) | `product/auth-signup-choice.html` |
 | 회원가입(이메일 폼) | `product/auth-signup-email.html` |
-| 홈 피드 | `product/home-feed.html` — **관심 자료 추가 모달(`#am-modal`)**, 가입 유도 모달(`#guest-modal`) 포함 |
+| 홈 피드 | `product/home-feed.html` — **관심 자료 추가 모달(`#am-modal`)**, 가입 유도 모달(`#guest-modal` — **P0 실제 제품 UI**) 포함 |
+| 홈 피드 (비로그인) | `variants/home-feed-guest.html` — guest 헤더(검색·알림·아바타 없음, 로그인/가입하기) · 피드 단일 탭 · 인증 필요 액션 → `#guest-modal` |
 | 카드 상세 | `product/report-detail.html` |
+| 카드 상세 (비로그인) | `variants/report-detail-guest.html` — guest 헤더 · 보관/공유 → `#guest-modal` · 하단 Sticky 로그인·가입 CTA |
 
 ### 원칙
 
@@ -458,6 +462,19 @@ main(또는 develop) 최신화 (git pull)
 
 ### 프론트 내부 결정 후 문서화
 - (없음 — 아래 「해소 완료 · 프론트 내부 결정」 참조)
+
+### ✅ 해소 완료 (2026-07-21) — 비로그인 guest 정책
+
+**팀 결정 (여진 확인)** — 기존 공개 피드 정책을 유지하면서 **guest 최소 UI를 P0로 구체화·재편입**했다. (2026-07-14의 게스트 "시안 설명 블록" 제거(DECISION-025)는 목업 주석 블록 정리였고 `#guest-modal`은 제품 UI로 유지돼 왔으므로, 본 결정과 모순되지 않는다.)
+
+- ~~비로그인 사용자의 홈·상세 접근 정책~~ → **홈 `/`·리포트 상세 `/report/[id]` 공개 열람 유지. 로그인 리다이렉트 가드 금지 (§5)**
+- ~~guest 상태 UI 범위~~ → **P0 최소 세트 확정: guest 헤더(검색·알림·아바타 숨김 · CTA 위계 = 가입하기 主(signal) / 로그인 보조 / `＋ 관심 자료` 중립 보조(hover 주황)) · 홈 피드 단일 탭(내 보고서 숨김) · 아이콘 전용 좌측 내비(member 내비와 동일 순서·아이콘: 홈→보관함→지식창고→관심사(Wiki)→프로필→구분선→설정, 카운트·알림 없음 — 홈만 진입, 나머지 게이트, label 대신 tooltip·aria-label) · 홈 우측 로그인/가입 유도 패널(인증 목업 시각 언어의 compact auth card — 로그인형 정보 패널 대체) · 가입 유도 모달(`#guest-modal` — 가입하기 Primary/로그인 Secondary/계속 둘러볼게요 Tertiary, 열릴 때 주 CTA 포커스·Esc 닫기·aria-labelledby/describedby) · 상세 하단 Sticky 로그인·가입 CTA**
+- ~~인증 필요 액션의 비로그인 처리~~ → **저장·좋아요·공유·MD 복사·댓글 입력·`＋ 관심 자료`·제한 내비 아이콘 클릭 시 실행 없이 가입 유도 모달. 홈 카드 공유 아이콘은 버튼화하되 로그인 사용자용 실 공유 기능은 이번 범위에서 구현하지 않음**
+- ~~댓글/메모 명칭~~ → **동일 입력 기능이며 보고서 공개 범위에 따라 명칭만 다름: 「나만 보기」=메모 · 「전체공개」=댓글. 전체공개 전환 시 기존 메모는 공개 댓글로 전환된다(기능 신설 아님). 비로그인은 전체공개 보고서만 열람하므로 guest 상세에는 공개 댓글만 표시**
+- ~~홈 Empty CTA 연결~~ → **Empty 안내 문구는 구현하되 `관심사 관리하기` CTA의 실제 링크 연결은 보류. Wiki 라우트/화면은 P1 유지, `/wiki` 하드코딩 금지**
+- ~~로그아웃 흐름~~ → **백엔드 logout API 없음 → `logout()`의 로컬 토큰 제거 방식 확정. 제거 후 guest 전환, 공개 홈 `/` 유지**
+- ~~가입 버튼 문구~~ → **guest 관련 UI(모달·guest 헤더·Sticky CTA) 전부 `가입하기`로 통일 (목업 원문 "시작하기" 대체)**
+- ~~인증 복구 규칙~~ → **토큰 없으면 `getMe()` 미호출 guest / 토큰 있으면 `getMe()` → 성공 authenticated / 401·403 토큰 제거 후 guest / 500·네트워크 오류는 공개 콘텐츠 유지 + 로그인 전용 UI 숨김 + 재시도 제공**
 
 ### ✅ 해소 완료 (2026-07-15)
 

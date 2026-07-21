@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaCatcher — 홈 — 공개 피드 (비로그인 Guest)</title>
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/product-components.css">
+<style>
+/* ── guest variant 전용 스타일 (variant 한정 — 실제 구현 시 토큰 기반 컴포넌트로 재구성) ── */
+.gadd:hover{border-color:var(--signal);color:var(--signal-ink);}
+.gnav{display:flex;flex-direction:column;gap:8px;}
+.gmi{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:14px;font-size:21px;color:var(--ink-mid);cursor:pointer;}
+.gmi:hover{background:var(--bg-soft);color:var(--ink);}
+.gmi.on{color:var(--signal-ink);background:var(--wash);cursor:default;}
+.gnav .gdiv{width:48px;height:1px;background:var(--line);margin:4px 0;}
+/* compact auth card — 인증 목업(auth-*) 클래스 재사용 + 혜택 목록으로 정보 구조 보완.
+   폭 유지(300px 레일), 높이는 콘텐츠 기준(약 320~350px). 제목 아래 혜택 3개 compact list. */
+.gjoin{text-align:center;padding:30px 24px;}
+.gjoin .auth-orb{width:36px;height:36px;margin:0 auto 14px;}
+.gjoin .auth-title{font-size:18px;margin-bottom:8px;}
+.gjoin .auth-sub{font-size:12.5px;line-height:1.6;margin-bottom:16px;}
+.gjoin .gbenefits{list-style:none;margin:0 0 20px;padding:0;text-align:left;display:flex;flex-direction:column;gap:9px;}
+.gjoin .gbenefits li{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-mid);}
+.gjoin .gbenefits .gck{flex:none;width:16px;height:16px;color:var(--signal);}
+.gjoin .auth-btn{height:48px;margin-bottom:10px;}
+.gjoin .auth-btn:last-of-type{margin-bottom:0;}
+.gjoin .gsub{font-size:11.5px;color:var(--ink-dim);margin:14px 0 0;}
+/* GuestGateModal — backdrop 대비 강화(공용 .modal-bg 무수정) + 모달 내 auth 위계 보정 */
+#guest-modal{background:rgba(12,14,17,.62);}
+#guest-modal .auth-title{font-size:20px;}
+#guest-modal .auth-sub{margin-bottom:22px;}
+</style>
+</head>
+<!-- ============================================================
+  [VARIANT · 비로그인 Guest] 홈 — 공개 피드 (product/home-feed.html Final 기반)
+  근거: CLAUDE.md §5·§15 (2026-07-21) — guest 최소 UI P0 편입. Final 원본은 무수정.
+  Final 대비 변경 (검수 포인트):
+    1. 헤더 — 검색창·알림·아바타 제거. CTA 위계(2026-07-21 수정): 「가입하기」 主(signal) ·
+       「로그인」 보조(ghost) · 「＋ 관심 자료」 중립 보조(.gadd — hover 시 테두리·텍스트만 주황,
+       클릭 → #guest-modal).
+    2. 탭 — [피드] 단일 탭. [내 보고서] 탭과 해당 피드 DOM 미포함.
+    3. 좌측 내비 — 아이콘 전용 내비(.gnav). 순서·아이콘은 member 좌측 내비와 동일:
+       홈 → 보관함 → 지식창고 → 관심사·LLM Wiki → 프로필 → 구분선 → 설정 (카운트·알림 없음).
+       홈만 활성 상태. 나머지는 아이콘만 노출(tooltip·aria-label = member 메뉴명), 클릭 → #guest-modal.
+    4. 우측 레일 — 로그인형 정보 패널(핵심 신호·추천 토픽) 제거 → 인증 목업(auth-login 등)의
+       시각 언어(auth-orb·auth-title·auth-sub·auth-btn)를 재사용한 compact auth card(.gjoin).
+       가입하기 主(signal) · 로그인 보조.
+    5. 개인화 요소 미포함 — 오늘 아침 브리핑 패널(나만 보기), 내 브리핑 카드,
+       추천 사유(.reason), 「· 팔로잉」 표기, 추천 선호도 팝업(⋯ 내부),
+       개인 카운트, 타 사용자 프로필 이동 링크.
+    6. 인증 필요 액션 — 보관·좋아요·공유·＋관심 자료·제한 내비 아이콘에
+       data-guest-gate 부여 → 클릭 시 실행 없이 #guest-modal (shared/product-common.js).
+    7. #guest-modal(GuestGateModal) — 인증 목업 시각 언어로 재설계(2026-07-21 최종):
+       auth-orb 브랜드 마크 + 제목/설명 위계(aria-labelledby/describedby) + 세로 버튼 스택
+       (가입하기 Primary signal / 로그인 Secondary / 계속 둘러볼게요 Tertiary). 폭 420px,
+       backdrop 대비 강화, 열릴 때 가입하기 포커스(data-gm-focus)·Esc 닫기(product-common.js).
+    8. #am-modal 미포함 — 관심 자료 추가는 인증 필요 액션이라 게이트만 존재.
+  모바일 반응형 미포함 (이번 범위 제외).
+============================================================ -->
+<body data-route-base="../product/">
+<div class="page" id="page" data-theme="light">
+  <div class="stage">
+
+  <section class="screen" id="screen-home">
+    <div class="app">
+
+      <nav class="nav">
+        <div class="logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg>
+          <span class="word">alphacatcher</span>
+        </div>
+        <div class="spacer"></div>
+        <!-- guest CTA 위계: 가입하기 主(signal) · 로그인 보조(ghost) · ＋ 관심 자료 중립 보조(hover 주황 · 클릭 → 가입 유도 모달) -->
+        <span class="btn sm gadd" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">＋ 관심 자료</span>
+        <span class="btn ghost sm" data-screen="auth" data-auth="login" style="cursor:pointer;">로그인</span>
+        <span class="btn signal sm" data-screen="auth" style="cursor:pointer;">가입하기</span>
+      </nav>
+
+      <div class="shell">
+
+        <!-- LEFT NAV — guest: 아이콘 전용 내비. 순서·아이콘 = member 좌측 내비와 동일(카운트·알림 없음).
+             홈만 활성 상태. 나머지는 아이콘만 노출 + 클릭 시 가입 유도 모달(#guest-modal). -->
+        <aside class="side-l">
+          <div class="gnav">
+            <span class="gmi on" aria-current="page" aria-label="홈" title="홈">⌂</span>
+            <span class="gmi" data-guest-gate role="button" tabindex="0" aria-label="보관함" title="보관함 — 로그인 후 이용할 수 있어요">⚑</span>
+            <span class="gmi" data-guest-gate role="button" tabindex="0" aria-label="지식창고" title="지식창고 — 로그인 후 이용할 수 있어요">▦</span>
+            <span class="gmi" data-guest-gate role="button" tabindex="0" aria-label="관심사 · LLM Wiki" title="관심사 · LLM Wiki — 로그인 후 이용할 수 있어요">▤</span>
+            <span class="gmi" data-guest-gate role="button" tabindex="0" aria-label="프로필" title="프로필 — 로그인 후 이용할 수 있어요">◑</span>
+            <span class="gdiv" aria-hidden="true"></span>
+            <span class="gmi" data-guest-gate role="button" tabindex="0" aria-label="설정" title="설정 — 로그인 후 이용할 수 있어요">⚙</span>
+          </div>
+        </aside>
+
+        <!-- FEED — guest: [피드] 단일 탭 -->
+        <main class="feed">
+
+          <div class="tabs">
+            <div class="tab on"><span class="tl">피드</span></div>
+          </div>
+
+          <!-- === 공개 FEED === -->
+          <div data-feed="rec">
+
+            <!-- CARD: 이미지 1장형 (공개 브리핑) -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav">MW</span>
+                <div>
+                  <div class="pname">macro_watcher <span class="h">@macro_w</span></div>
+                  <div class="pmeta">오전 7:41 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail-guest">미 CPI 발표 전날 밤, 채권시장이 먼저 움직인 이유</h3>
+              <p class="pbody">10년물 금리가 새벽에 6bp 빠졌습니다. 출처 4건을 원문까지 따라가 보면 시장이 이미 낮은 CPI를 가격에 반영하기 시작했다는 해석이 가능합니다.</p>
+              <div class="pimg">
+                <span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 280" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="596" height="280" style="fill:var(--bg-soft)"></rect>
+                    <g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="93" x2="596" y2="93"></line><line x1="0" y1="186" x2="596" y2="186"></line></g>
+                    <polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="24,120 106,112 188,136 270,120 352,150 434,142 516,176 572,170"></polyline>
+                    <circle cx="352" cy="150" r="3.5" style="fill:var(--signal)"></circle>
+                    <text x="24" y="32" style="fill:var(--ink-dim)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13">US 10Y · overnight</text>
+                    <text x="500" y="32" style="fill:var(--ink-mid)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13" font-weight="600">−6bp</text>
+                  </svg>
+                </span>
+                <div class="imgcap"><span class="c">10년물 국채 금리 야간 흐름 — 새벽 3시 이후 하락 전환</span><span class="src">출처 · 미 재무부</span></div>
+              </div>
+              <div class="pacts">
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>32</b></span>
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">♡ <b>128</b></span>
+                <span class="pact">조회 <b>1.8만</b></span>
+                <span class="pact more" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">↗ 공유</span>
+              </div>
+            </article>
+
+            <!-- CARD: 이미지 그리드형 (공개 브리핑) -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav">AC</span>
+                <div>
+                  <div class="pname">ai_curator <span class="h">@ai_cur</span></div>
+                  <div class="pmeta">오전 8:05 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail-guest">밤사이 나온 오픈소스 LLM 릴리즈 2건 — 코딩 벤치마크 상위권 진입</h3>
+              <p class="pbody">어젯밤 브리핑에 잡힌 릴리즈 정리. 벤치마크 수치는 전부 원문 링크를 달아뒀고, 두 모델 모두 로컬 구동 요구사양이 낮아진 게 포인트입니다.</p>
+              <div class="pgrid">
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-inset)"></rect><g style="fill:var(--signal)"><rect x="34" y="78" width="24" height="48"></rect><rect x="74" y="60" width="24" height="66"></rect><rect x="114" y="44" width="24" height="82"></rect></g><g style="fill:var(--low)"><rect x="170" y="92" width="24" height="34"></rect><rect x="210" y="76" width="24" height="50"></rect><rect x="250" y="64" width="24" height="62"></rect></g></svg>
+                </span>
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-soft)"></rect><g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="49" x2="300" y2="49"></line><line x1="0" y1="98" x2="300" y2="98"></line></g><polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="14,108 64,80 114,88 164,56 214,62 276,34"></polyline></svg>
+                </span>
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-inset)"></rect><g font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" style="fill:var(--ink-dim)" font-size="14"><text x="26" y="52">MMLU</text><text x="26" y="86">HumanEval</text></g><g font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" style="fill:var(--ink-mid)" font-size="14" font-weight="600"><text x="200" y="52">82.4</text><text x="200" y="86">74.1</text></g></svg>
+                </span>
+                <span class="gi">
+                  <svg class="mockimg" viewBox="0 0 300 146" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="146" style="fill:var(--bg-soft)"></rect><rect x="40" y="44" width="150" height="12" rx="6" style="fill:var(--line-strong)"></rect><rect x="40" y="70" width="110" height="12" rx="6" style="fill:var(--line-strong)"></rect><rect x="40" y="96" width="130" height="12" rx="6" style="fill:var(--line)"></rect></svg>
+                  <span class="more">+2</span>
+                </span>
+              </div>
+              <div class="pacts">
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>14</b></span>
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">♡ <b>86</b></span>
+                <span class="pact">조회 <b>9,120</b></span>
+                <span class="pact more" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">↗ 공유</span>
+              </div>
+            </article>
+
+            <!-- CARD: 텍스트형 (공개 브리핑) -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav">VK</span>
+                <div>
+                  <div class="pname">value_kim <span class="h">@value_kim</span></div>
+                  <div class="pmeta">오전 6:52 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail-guest">보유 종목 실적 발표 3분 정리 — 가이던스가 핵심</h3>
+              <p class="pbody">오늘 장 마감 후 실적을 내는 종목 3개를 짧게 정리했습니다. 매출보다 다음 분기 가이던스에 시장 반응이 갈릴 가능성이 큽니다.</p>
+              <div class="pacts">
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>9</b></span>
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">♡ <b>41</b></span>
+                <span class="pact">조회 <b>1.2만</b></span>
+                <span class="pact more" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">↗ 공유</span>
+              </div>
+            </article>
+
+            <!-- CARD: 이미지 1장형 (공개 브리핑) -->
+            <article class="post">
+              <div class="phead">
+                <span class="pav">FX</span>
+                <div>
+                  <div class="pname">fx_daily <span class="h">@fx_daily</span></div>
+                  <div class="pmeta">오전 7:10 · 공개 브리핑</div>
+                </div>
+                <span class="pmore">⋯</span>
+              </div>
+              <h3 class="ptitle" data-screen="detail-guest">환전 타이밍, 트리거로 잡는 법 — 내 세팅 공개</h3>
+              <p class="pbody">±0.3% 트리거로 좁혔더니 알림이 늘긴 했지만 놓치는 구간이 줄었어요. 제가 쓰는 조건과 이유를 정리했습니다.</p>
+              <div class="pimg">
+                <span class="frame">
+                  <svg class="mockimg" viewBox="0 0 596 280" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="596" height="280" style="fill:var(--bg-soft)"></rect>
+                    <g style="stroke:var(--line)" stroke-width="1"><line x1="0" y1="93" x2="596" y2="93"></line><line x1="0" y1="186" x2="596" y2="186"></line></g>
+                    <polyline style="fill:none;stroke:var(--signal)" stroke-width="2.5" points="24,150 106,140 188,158 270,120 352,132 434,98 516,112 572,140"></polyline>
+                    <line x1="0" y1="120" x2="596" y2="120" style="stroke:var(--ink-dim)" stroke-width="1.2" stroke-dasharray="6 6" opacity=".7"></line>
+                    <text x="24" y="32" style="fill:var(--ink-dim)" font-family="Pretendard Variable,Pretendard,Apple SD Gothic Neo,sans-serif" font-size="13">USD/KRW · 트리거 라인</text>
+                  </svg>
+                </span>
+                <div class="imgcap"><span class="c">점선은 작성자가 설정한 목표 환율 트리거</span><span class="src">출처 · 한국은행</span></div>
+              </div>
+              <div class="pacts">
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">⚑ 보관</span>
+                <span class="pact"><svg class="icn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 3.4h11.2c.6 0 1 .5 1 1v5.5c0 .6-.4 1-1 1H6.2L3.2 13.9v-2.9H2.4c-.6 0-1-.4-1-1V4.4c0-.5.4-1 1-1z" stroke-linejoin="round"></path></svg> <b>21</b></span>
+                <span class="pact" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">♡ <b>54</b></span>
+                <span class="pact">조회 <b>6,540</b></span>
+                <span class="pact more" data-guest-gate style="cursor:pointer;" title="로그인 후 이용할 수 있어요">↗ 공유</span>
+              </div>
+            </article>
+
+            <div class="feed-end">
+              <div class="l">오늘 피드는 여기까지예요</div>
+              <div class="s">가입하면 관심사에 맞춘 아침 브리핑을 매일 받아볼 수 있어요.</div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- RIGHT RAIL — guest: compact auth card (인증 목업 auth-* 클래스 재사용 · 폼 입력 없음) -->
+        <aside class="side-r">
+          <div class="rpanel gjoin">
+            <div class="auth-orb"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg></div>
+            <div class="auth-title">나만의 신호를 받아보세요</div>
+            <div class="auth-sub">가입하면 이런 걸 쓸 수 있어요.</div>
+            <ul class="gbenefits">
+              <li><svg class="gck" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"></polyline></svg>관심사 기반 아침 브리핑</li>
+              <li><svg class="gck" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"></polyline></svg>보고서 저장과 보관함</li>
+              <li><svg class="gck" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"></polyline></svg>댓글·공유 기능</li>
+            </ul>
+            <span class="auth-btn signal" data-screen="auth" role="button" tabindex="0">가입하기</span>
+            <span class="auth-btn" data-screen="auth" data-auth="login" role="button" tabindex="0">로그인</span>
+            <p class="gsub">내일 아침, 첫 브리핑이 도착해요.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <!-- 가입 유도 모달(GuestGateModal) — 인증 목업 시각 언어 재사용.
+       가입하기 Primary(signal) / 로그인 Secondary / 계속 둘러볼게요 Tertiary.
+       열릴 때 가입하기(data-gm-focus)에 포커스, Esc·backdrop·[data-gm-close]로 닫기 (product-common.js). -->
+  <div class="modal-bg" id="guest-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="gm-title" aria-describedby="gm-desc" style="width:420px;text-align:center;">
+      <div class="auth-orb"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg></div>
+      <div class="auth-title" id="gm-title">계정이 필요한 기능이에요</div>
+      <div class="auth-sub" id="gm-desc">가입하면 관심사를 설정하고, 보고서를 저장하고,<br>댓글과 공유 기능을 사용할 수 있어요.</div>
+      <span class="auth-btn signal" data-gm-focus tabindex="0" role="button" data-gm-close data-screen="auth">가입하기</span>
+      <span class="auth-btn" tabindex="0" role="button" data-gm-close data-screen="auth" data-auth="login">로그인</span>
+      <div style="margin-top:10px;"><span class="link" data-gm-close tabindex="0" role="button" style="font-size:13px;color:var(--ink-dim);cursor:pointer;">계속 둘러볼게요</span></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/product-common.js"></script>
+</body></html>

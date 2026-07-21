@@ -11,6 +11,8 @@
     onboard:'onboarding.html',settings:'settings.html',notif:'notifications.html',
     saved:'saved.html',search:'search.html',
     feed:'home-feed.html','onboard-pick':'onboarding.html',
+    // 비로그인 guest variant 간 이동 (variants/*-guest.html 전용 — Final 목업은 이 키를 쓰지 않음)
+    'feed-guest':'../variants/home-feed-guest.html','detail-guest':'../variants/report-detail-guest.html',
     // [Prototype Only] 가입/로그인의 'Google로 계속하기'는 정적 목업 검수용 프로토타입 화면으로 이동합니다.
     // 실제 구현에서는 이 내부 중간 페이지 없이 외부 Google OAuth 계정 선택 화면으로 바로 리다이렉트합니다.
     // 이 화면은 제품 화면 수·Figma Frame·MCP 이관·최종 스크린샷 대상이 아닙니다.
@@ -316,6 +318,19 @@
   var gm=document.getElementById('guest-modal');
   var gmDemo=document.getElementById('guest-demo');
   if(gmDemo&&gm)gmDemo.addEventListener('click',function(){gm.hidden=false;});
+  // guest variant 전용 (2026-07-21, CLAUDE.md §15): 인증 필요 액션(data-guest-gate)은
+  // 실행 없이 가입 유도 모달만 연다. 열릴 때 주 CTA(data-gm-focus)에 포커스.
+  // Final 목업에는 data-guest-gate 요소가 없어 동작 변화 없음.
+  if(gm)document.querySelectorAll('[data-guest-gate]').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();gm.hidden=false;
+      var f=gm.querySelector('[data-gm-focus]');if(f)f.focus();
+    });
+  });
+  // Esc 닫기 — 모달이 열려 있을 때만 동작. Final 목업은 #guest-modal을 여는 트리거가 없어 영향 없음.
+  if(gm)document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&!gm.hidden)gm.hidden=true;
+  });
   document.querySelectorAll('[data-gm-close]').forEach(function(b){
     b.addEventListener('click',function(){if(gm)gm.hidden=true;});
   });

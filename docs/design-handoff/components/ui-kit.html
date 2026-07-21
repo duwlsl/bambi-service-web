@@ -100,7 +100,7 @@ table.k code{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--si
   <h2><span class="n">03</span>Navigation</h2>
 
   <div class="cmp">
-    <div class="cmp-h"><span class="nm">Navigation / Product / Global</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 13개 파일 (product 11 · variants 2)</span></div>
+    <div class="cmp-h"><span class="nm">Navigation / Product / Global</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 15개 파일 (product 11 · variants 4)</span></div>
     <div class="cmp-b">
       <nav class="nav" style="border:1px solid var(--line);border-radius:12px;">
         <div class="logo"><span class="word">alphacatcher</span></div>
@@ -111,12 +111,21 @@ table.k code{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--si
         <span class="nav-ico" title="알림"><svg class="icn" style="width:17px;height:17px" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c-1.6 0-2.8 1.3-2.8 2.9 0 2.8-1.1 4.1-1.9 4.8h9.4c-.8-.7-1.9-2-1.9-4.8C10.8 3.3 9.6 2 8 2z" stroke-linejoin="round"></path><path d="M6.6 12.2a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round"></path></svg><span class="badge"></span></span>
         <span class="nav-avatar" title="내 프로필" aria-label="내 프로필">나</span>
       </nav>
-      <div class="mini">우측 순서: ＋ 관심 자료 → 알림(종, unread badge) → 내 프로필</div>
+      <div class="mini">Member — 우측 순서: ＋ 관심 자료 → 알림(종, unread badge) → 내 프로필</div>
+      <nav class="nav" style="border:1px solid var(--line);border-radius:12px;margin-top:10px;">
+        <div class="logo"><span class="word">alphacatcher</span></div>
+        <div class="spacer"></div>
+        <span class="btn sm">＋ 관심 자료</span>
+        <span class="btn ghost sm">로그인</span>
+        <span class="btn signal sm">가입하기</span>
+      </nav>
+      <div class="mini">Guest(비로그인) — 검색·알림·아바타 없음 · CTA 위계: 가입하기 主(signal) · 로그인 보조(ghost) · ＋ 관심 자료 중립 보조(hover 시 테두리·텍스트만 주황 · 클릭 시 가입 유도 모달)</div>
     </div>
     <div class="cmp-f"><b>Anatomy</b> logo(wordmark) → nav-search(중앙 absolute 596px) → <b>＋ 관심 자료 CTA</b> → <b>알림 벨(inline SVG + unread badge)</b> → <b>내 프로필(원형 아바타 트리거 · 34px)</b><br>
-      <b>Size</b> height 58 · padding 0 24 · gap 18 · 아바타 34 (nav-ico 38) · <b>Variant</b> <code>Notification=None|Unread</code> · <code>Theme=Light|Dark</code><br>
-      <b>선택자</b> <code>.nav .logo .nav-search .btn.signal.sm .nav-ico .nav-avatar</code> (base.css) — <b>Landing Nav와 합치지 말 것</b><br>
-      <b>2026-07-14 정정</b> 알림 아이콘을 실제 목업의 종 SVG로 교체 · 내 프로필을 <b>13개 화면</b>(product 11 · variants 2) nav에 실제 추가 → <code>.nav-avatar</code>는 더 이상 미사용 컴포넌트가 아님</div>
+      <b>Size</b> height 58 · padding 0 24 · gap 18 · 아바타 34 (nav-ico 38) · <b>Variant</b> <code>Auth=Member|Guest</code> · <code>Notification=None|Unread</code> · <code>Theme=Light|Dark</code><br>
+      <b>선택자</b> <code>.nav .logo .nav-search .btn.signal.sm .nav-ico .nav-avatar</code> (base.css) — <b>Landing Nav와 합치지 말 것</b> (Guest 변형도 Landing Nav <code>.lpx-cta</code>를 재사용하지 않음)<br>
+      <b>2026-07-14 정정</b> 알림 아이콘을 실제 목업의 종 SVG로 교체 · 내 프로필을 <b>13개 화면</b>(product 11 · variants 2) nav에 실제 추가 → <code>.nav-avatar</code>는 더 이상 미사용 컴포넌트가 아님<br>
+      <b>2026-07-21 추가</b> <code>Auth=Guest</code> 변형 — guest 최소 UI P0 편입(CLAUDE.md §15). 검색·알림·아바타 숨김 · CTA 위계 = <b>가입하기 主(signal)</b> / 로그인 보조(ghost) / ＋ 관심 자료 중립 보조(hover 시 테두리·텍스트만 주황 — variant 한정 <code>.gadd</code>, 클릭 시 <code>#guest-modal</code>). 사용: <code>variants/home-feed-guest.html</code> · <code>variants/report-detail-guest.html</code></div>
   </div>
 
   <div class="cmp">
@@ -133,7 +142,8 @@ table.k code{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--si
       </div>
       <div class="side-foot">다음 브리핑 · 내일 오전 7:00<br>관심사 6개 · 트리거 9개 감시 중</div>
     </div>
-    <div class="cmp-f"><b>Variant</b> <code>State=Default|Active</code> · <code>Count=None|Number</code> · <b>Size</b> item 14.5px / padding 11 12 / radius 10<br><b>선택자</b> <code>.menu .mi .mi.on .cnt .divider .side-foot</code></div>
+    <div class="cmp-f"><b>Variant</b> <code>State=Default|Active</code> · <code>Count=None|Number</code> · <b>Size</b> item 14.5px / padding 11 12 / radius 10<br><b>선택자</b> <code>.menu .mi .mi.on .cnt .divider .side-foot</code><br>
+      <b>2026-07-21</b> guest(비로그인)는 텍스트 메뉴 대신 <b>아이콘 전용 내비</b> — <b>member와 동일한 메뉴 순서·아이콘</b>(⌂ 홈 → ⚑ 보관함 → ▦ 지식창고 → ▤ 관심사·LLM Wiki → ◑ 프로필 → 구분선 → ⚙ 설정). label 대신 <b>tooltip·aria-label</b>(member 메뉴명 그대로), <b>숫자 카운트 숨김</b>, 별도 알림 항목 없음. 홈만 진입 가능하고 나머지는 클릭 시 <code>#guest-modal</code> (variant 한정 <code>.gnav/.gmi/.gdiv</code>): <code>variants/home-feed-guest.html</code> · <code>variants/report-detail-guest.html</code></div>
   </div>
 
   <div class="cmp">
@@ -144,7 +154,7 @@ table.k code{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--si
         <div class="tab"><span class="tl">피드</span></div>
       </div>
     </div>
-    <div class="cmp-f"><b>Variant</b> <code>State=Default|Active</code> · 14.5px/600 · 활성 시 하단 인디케이터(<code>.tab.on .tl::after</code>)<br>프로필 탭(<code>.ptabs/.ptab</code>)은 <b>CSS에만 존재하고 현재 HTML 미사용</b> → Component화 제외</div>
+    <div class="cmp-f"><b>Variant</b> <code>State=Default|Active</code> · 14.5px/600 · 활성 시 하단 인디케이터(<code>.tab.on .tl::after</code>)<br>프로필 탭(<code>.ptabs/.ptab</code>)은 <b>CSS에만 존재하고 현재 HTML 미사용</b> → Component화 제외<br><b>2026-07-21</b> guest 홈은 <b>[피드] 단일 탭</b>([내 보고서] 미노출) — <code>variants/home-feed-guest.html</code></div>
   </div>
 
   <div class="cmp">
@@ -284,7 +294,8 @@ table.k code{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--si
     <div class="cmp-b" style="max-width:620px;">
       <div class="cinput"><span class="cav2">나</span><div class="field">의견을 남겨보세요</div></div>
     </div>
-    <div class="cmp-f"><b>선택자</b> <code>.cinput .cav2 .field</code> — 실제 textarea가 아니라 트리거 필드(목업). Figma: 단일 상태</div>
+    <div class="cmp-f"><b>선택자</b> <code>.cinput .cav2 .field</code> — 실제 textarea가 아니라 트리거 필드(목업). Figma: 단일 상태<br>
+      <b>2026-07-21 용어 정책</b> 메모/댓글은 <b>동일 입력 기능</b>이며 보고서 공개 범위에 따라 명칭만 다름 — 「나만 보기」=메모 · 「전체공개」=댓글 · 전체공개 전환 시 기존 메모는 공개 댓글로 전환. 비로그인 상세에는 공개 댓글만 표시되고 입력 필드는 클릭 시 <code>#guest-modal</code>(<code>variants/report-detail-guest.html</code>)</div>
   </div>
 
   <!-- ============ 06 CHIPS / BADGES ============ -->
@@ -463,17 +474,51 @@ table.k code{font-family:"Space Grotesk",monospace;font-size:11px;color:var(--si
   </div>
 
   <div class="cmp">
-    <div class="cmp-h"><span class="nm">Modal / Guest Signup</span><span class="sp"></span><span class="pri p1">P1</span><span class="pri">사용 2개 파일(home 2종)</span></div>
+    <div class="cmp-h"><span class="nm">Modal / Guest Signup</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 4개 파일(home 2종 · guest variant 2종)</span></div>
     <div class="cmp-b">
-      <div class="modal" style="position:static;box-shadow:0 24px 60px rgba(10,12,15,.28);max-width:400px;text-align:center;">
-        <div style="font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.01em;">여기서부터는 계정이 필요해요</div>
-        <div style="font-size:13px;color:var(--ink-mid);line-height:1.65;margin-top:8px;">보관·반응·팔로우는 시작하기 후에 이용할 수 있어요.<br>내일 아침, 첫 브리핑이 도착해요.</div>
-        <div style="display:flex;gap:9px;justify-content:center;margin-top:20px;">
-          <span class="btn">로그인</span><span class="btn signal">시작하기</span>
-        </div>
+      <div class="modal" style="position:static;box-shadow:0 24px 60px rgba(10,12,15,.28);max-width:420px;text-align:center;">
+        <div class="auth-orb" style="width:38px;height:38px;margin:4px auto 12px;"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg></div>
+        <div class="auth-title" style="font-size:20px;">계정이 필요한 기능이에요</div>
+        <div class="auth-sub" style="margin-bottom:18px;">가입하면 관심사를 설정하고, 보고서를 저장하고, 댓글과 공유 기능을 사용할 수 있어요.</div>
+        <span class="auth-btn signal">가입하기</span>
+        <span class="auth-btn">로그인</span>
+        <div style="margin-top:8px;"><span class="link" style="font-size:13px;color:var(--ink-dim);">계속 둘러볼게요</span></div>
       </div>
     </div>
-    <div class="cmp-f"><b>실제 제품 UI</b>(<code>#guest-modal</code>) — 비로그인 사용자가 보관·반응 시도 시 노출. <b>제거된 guest 검수 시안 블록과 다른 것</b>이며 UI Kit에 포함합니다.</div>
+    <div class="cmp-f"><b>실제 제품 UI</b>(<code>#guest-modal</code>) — 비로그인 사용자가 보관·좋아요·공유·MD 복사·댓글 입력·＋관심 자료·제한 내비 아이콘 등 인증 필요 액션 시도 시 노출. <b>제거된 guest 검수 시안 블록과 다른 것</b>이며 UI Kit에 포함합니다.<br>
+      <b>2026-07-21</b> guest 최소 UI P0 편입(CLAUDE.md §15)으로 <b>P1→P0</b>. 가입 버튼 문구 <b>「시작하기」→「가입하기」로 통일</b>(guest 관련 UI 전체 공통) — 기준본: <code>variants/home-feed-guest.html</code> · <code>variants/report-detail-guest.html</code> (product/home 2종의 구 문구는 Final 무수정 원칙에 따라 유지, 구현 시 「가입하기」 기준)<br>
+      <b>2026-07-21 최종</b> 인증 목업 시각 언어로 재설계 — <code>auth-orb</code> 브랜드 마크 + 제목/설명 위계 + 세로 버튼 스택: <b>가입하기 Primary(signal) / 로그인 Secondary / 계속 둘러볼게요 Tertiary</b>. 폭 420 · backdrop 대비 강화(variant 한정) · 열릴 때 가입하기 포커스(<code>data-gm-focus</code>) · <code>Esc</code> 닫기 · <code>aria-labelledby/aria-describedby</code> 연결. 홈·상세 동일 마크업</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Guest Sticky CTA</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 1개 파일(variants/report-detail-guest)</span></div>
+    <div class="cmp-b">
+      <div style="background:var(--bg);border-top:1px solid var(--line);box-shadow:0 -8px 28px rgba(12,14,17,.07);display:flex;align-items:center;gap:14px;padding:13px 24px;max-width:760px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14.5px;font-weight:700;color:var(--ink);letter-spacing:-.01em;">관심 있는 신호를 놓치지 마세요.</div>
+          <div style="font-size:12.5px;color:var(--ink-mid);margin-top:2px;">로그인하면 저장하고 맞춤 피드를 받아볼 수 있어요.</div>
+        </div>
+        <span class="btn ghost">로그인</span>
+        <span class="btn signal">가입하기</span>
+      </div>
+    </div>
+    <div class="cmp-f"><b>실제 제품 UI</b>(<code>#guest-cta</code>) — 비로그인 콘텐츠 상세 하단에 <b>상시 노출</b>(fixed bottom · z-index 90). 모달이 아님 — 인증 필요 액션을 차단하는 <code>#guest-modal</code>과 <b>병행 사용</b>. <b>가입하기 主(signal) · 로그인 보조(ghost)</b>. 본문(.reader)에 CTA 높이만큼 하단 여백을 확보해 공개 댓글 영역이 가려지지 않게 함. 로그인하면 제거.<br>
+      <b>2026-07-21 신규</b> — guest 최소 UI P0 편입(CLAUDE.md §15)</div>
+  </div>
+
+  <div class="cmp">
+    <div class="cmp-h"><span class="nm">Guest Signup Panel</span><span class="sp"></span><span class="pri p0">P0</span><span class="pri">사용 1개 파일(variants/home-feed-guest)</span></div>
+    <div class="cmp-b">
+      <div class="rpanel" style="max-width:300px;text-align:center;">
+        <div class="auth-orb" style="width:38px;height:38px;margin:4px auto 12px;"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g style="fill:var(--signal)"><circle cx="16" cy="16" r="4"></circle><circle cx="19.7" cy="17.5" r="1.7"></circle><circle cx="17.5" cy="19.7" r="1.7"></circle><circle cx="14.5" cy="19.7" r="1.7"></circle><circle cx="12.3" cy="17.5" r="1.7"></circle><circle cx="12.3" cy="14.5" r="1.7"></circle><circle cx="14.5" cy="12.3" r="1.7"></circle><circle cx="17.5" cy="12.3" r="1.7"></circle><circle cx="19.7" cy="14.5" r="1.7"></circle></g><g style="fill:var(--ink)" opacity=".5"><circle cx="24" cy="18.2" r="1.2"></circle><circle cx="21.9" cy="21.9" r="1.1"></circle><circle cx="18" cy="24.1" r="1.15"></circle><circle cx="13.6" cy="23.9" r="1.2"></circle><circle cx="10" cy="21.4" r="1.1"></circle><circle cx="8" cy="17.7" r="1.1"></circle><circle cx="8.1" cy="13.3" r="1.15"></circle><circle cx="10.4" cy="9.8" r="1.15"></circle><circle cx="14.1" cy="7.9" r="1.1"></circle><circle cx="18.4" cy="8.1" r="1.05"></circle><circle cx="22" cy="10.4" r="1.15"></circle><circle cx="24" cy="14.2" r="1.1"></circle></g></svg></div>
+        <div class="auth-title" style="font-size:19px;margin-bottom:7px;">나만의 신호를 받아보세요</div>
+        <div class="auth-sub" style="font-size:12.5px;margin-bottom:16px;">관심사를 설정하면 아침 브리핑과 맞춤 피드를 받아보고, 보고서를 저장할 수 있어요.</div>
+        <span class="auth-btn signal">가입하기</span>
+        <span class="auth-btn">로그인</span>
+      </div>
+    </div>
+    <div class="cmp-f"><b>실제 제품 UI</b> — 비로그인 홈 우측 레일에서 로그인형 정보 패널(핵심 신호·추천 토픽)을 대체하는 <b>compact auth card</b>: 인증 목업(auth-login 계열)의 <code>auth-orb·auth-title·auth-sub·auth-btn</code> 시각 언어를 재사용하고 폼 입력은 포함하지 않음. <b>가입하기 Primary(signal) · 로그인 Secondary</b>. 로그인하면 로그인형 정보 패널로 복귀.<br>
+      <b>2026-07-21 신규</b> — guest 최소 UI P0 편입(CLAUDE.md §15)</div>
   </div>
 
   <div class="cmp">

@@ -64,7 +64,7 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 | System | product/search.html | 검색 | 토픽·보고서·사용자 통합 검색 | Final | P1 |
 | System | product/settings.html | 설정 | 계정·브리핑 설정 | Final | P1 |
 
-## 4. 상태 및 Variant 목업 (12)
+## 4. 상태 및 Variant 목업 (14)
 
 | 파일 경로 | 기준 화면 | 포함 상태 | 용도 | 상태 |
 |---|---|---|---|---|
@@ -80,6 +80,8 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 | variants/report-card-text.html | 피드 카드 | 텍스트형 카드 단품 | 카드 컴포넌트 참고 (760px) | Final |
 | variants/report-card-single-image.html | 피드 카드 | 단일 이미지 카드 단품 | 카드 컴포넌트 참고 (760px) | Final |
 | variants/report-card-image-grid.html | 피드 카드 | 이미지 그리드 카드 단품 | 카드 컴포넌트 참고 (760px) | Final |
+| variants/home-feed-guest.html | 홈 — 공개 피드 | 비로그인 Guest (guest 헤더 · 피드 단일 탭 · 아이콘 좌측 내비(member 동일 순서) · 우측 compact auth card · 인증 필요 액션 → 가입 유도 모달) | guest 최소 UI 검수 (CLAUDE.md §15 2026-07-21) | Review Needed |
+| variants/report-detail-guest.html | 콘텐츠 상세 | 비로그인 Guest (guest 헤더 · 아이콘 좌측 내비(member 동일 순서) · 보관/공유/MD 복사/댓글 입력 게이트 · 공개 댓글만 표시 · 하단 Sticky 로그인·가입 CTA) | guest 최소 UI 검수 (CLAUDE.md §15 2026-07-21) | Review Needed |
 
 토픽 연결: 우측 rail 추천 토픽·게시물 해시태그 → `variants/topic-feed-states.html`. 실제 라우트(예: `/topic/:topicName`)는 **프론트 제안 — Pending Decision**이라 variant 안에서 `data-target-type="topic"` + `data-topic` 데이터 속성만 사용한다 (공통 라우터 screen key 미등록).
 
@@ -133,7 +135,7 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 | 항목 | 수 | 비고 |
 |---|---|---|
 | 기본 제품 HTML | **19** | §3 (기존 15 + 2026-07-16 비밀번호 재설정 4) |
-| 상태 variant HTML | **12** | §4 (기존 6 + 2026-07-16 신규 6) |
+| 상태 variant HTML | **14** | §4 (기존 6 + 2026-07-16 신규 6 + 2026-07-21 guest 2) |
 | Landing HTML | **1** | §5 |
 | Admin HTML | **6** | §6 (개발 참고 2 + Rough 4) |
 | Prototype | **1** | 집계·리뷰 제외 |
@@ -170,6 +172,7 @@ HTML 파일을 직접 더블클릭해 열 수도 있지만, 상대 CSS·JS 경�
 
 ## 변경 이력
 
+- **2026-07-21** — 비로그인 guest variant 2종 추가(`variants/home-feed-guest.html`, `variants/report-detail-guest.html`): guest 헤더(검색·알림·아바타 없음 · CTA 위계 = 가입하기 主 / 로그인 보조 / ＋관심 자료 중립 보조), 피드 단일 탭, **아이콘 전용 좌측 내비**(member 내비와 동일 순서·아이콘: 홈→보관함→지식창고→관심사(Wiki)→프로필→구분선→설정, 카운트·알림 없음 · 홈만 진입, 나머지 게이트), **홈 우측 compact auth card**(인증 목업 auth-* 시각 언어 재사용 — 로그인형 정보 패널 대체), 인증 필요 액션(보관·좋아요·공유·MD 복사·댓글 입력·＋관심 자료) → 가입 유도 모달(`#guest-modal` — 인증 목업 시각 언어로 재설계: 가입하기 Primary/로그인 Secondary/계속 둘러볼게요 Tertiary, 열릴 때 주 CTA 포커스·Esc 닫기·aria 연결), 상세 하단 Sticky 로그인·가입 CTA. 상세 댓글은 **메모/댓글 용어 정책**(공개 범위에 따라 명칭만 다른 동일 기능 — 나만 보기=메모 · 전체공개=댓글, 전환 시 메모→공개 댓글) 기준으로 공개 댓글만 표시. `shared/product-common.js`에 `data-guest-gate` 트리거와 guest 라우트 키 추가 — Final 목업 동작 무변경. **기존 공개 피드 정책을 유지하면서 guest 최소 UI를 P0로 구체화·재편입**한 결정(`bambi-service-web/CLAUDE.md` §15 2026-07-21) 반영 — 2026-07-14 「게스트 시안 블록 해소」는 시안 설명 블록 정리였고 `#guest-modal`은 제품 UI로 유지돼 왔으므로 본 추가와 모순 없음. 상태 variant HTML 12→14.
 - **2026-07-16** — 인증 흐름 보완: 비밀번호 재설정 4단계 목업 추가(`product/auth-forgot-password.html`, `auth-reset-email-sent.html`, `auth-reset-password.html`, `auth-reset-complete.html`). 이메일 링크 방식 가정 — 실제 발송/토큰 검증/변경 API는 미연동, 백엔드 방식은 §10·`docs/미정사항_팀확인요청.md` §A Pending. 회원가입 이름 필드 추가 및 전체 목업 공통 줄바꿈 규칙(`shared/base.css`, `shared/product-components.css`) 반영. 기본 제품 HTML 15→19.
 - **2026-07-16** — 팀 합의에 따라 기존 Figma MCP 이관 계획을 중단하고 **Git 기반 HTML 목업 공유 방식으로 전환**. `FIGMA_HANDOFF_INDEX.md`(2026-07-14, Figma Page/Frame/배치 계획)를 본 문서로 전면 개정. Figma 관련 계획(Page·Section·Frame 구성, MCP 호출 배치, Native/Static 구분)은 현재 기준으로 사용하지 않음.
 - **2026-07-16** — 상태 목업 정리: 첫 사용 상태를 `variants/home-my-reports-states.html`에 통합, 중복 파일(`home-first-use-states.html`) 삭제. 홈 피드의 근거 없는 필터 상태 제거. 토픽 화면(`topic-feed-states.html`) 신규 제안. 상태 전환 시 레이아웃 흔들림 보정(base.css)·토픽 헤더 평면화 반영.
