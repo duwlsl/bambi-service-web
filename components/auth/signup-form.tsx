@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useAuth } from "@/components/auth/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ERROR_CODES, resolveErrorMessage } from "@/constants/errors";
@@ -28,6 +29,7 @@ type FieldErrors = {
 
 export function SignupForm() {
   const router = useRouter();
+  const { setAuthenticatedUser } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,7 +80,8 @@ export function SignupForm() {
 
     // 2) 가입 성공 → 같은 자격증명으로 자동 로그인 (flow B)
     try {
-      await login(credentials); // 성공 시 토큰 저장은 login() 내부에서
+      const data = await login(credentials); // 성공 시 토큰 저장은 login() 내부에서
+      setAuthenticatedUser(data.user); // 응답 user 로 인증 상태 즉시 반영
       router.push(REDIRECT_AFTER_SIGNUP);
     } catch {
       // 가입은 완료된 상태 — 재가입을 유도하지 않고 로그인 화면에서 안내한다.

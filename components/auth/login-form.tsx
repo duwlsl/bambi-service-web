@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useAuth } from "@/components/auth/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resolveErrorMessage } from "@/constants/errors";
@@ -18,6 +19,7 @@ const FIELD_INPUT_CLASS =
 
 export function LoginForm() {
   const router = useRouter();
+  const { setAuthenticatedUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,9 +36,11 @@ export function LoginForm() {
     setErrorMessage(null);
     setSubmitting(true);
     try {
-      await login({ email: email.trim(), password });
-      // 성공: accessToken 저장은 login() 내부에서 완료. 홈으로 이동하고
-      // submitting 상태를 유지해(재활성화하지 않음) 이동 중 재제출을 막는다.
+      const data = await login({ email: email.trim(), password });
+      // 성공: accessToken 저장은 login() 내부에서 완료. 응답에 동봉된 user 로 인증 상태를
+      // 즉시 반영해(getMe 재호출 없이) 헤더 등이 바로 authenticated 로 갱신되게 한다.
+      setAuthenticatedUser(data.user);
+      // 홈으로 이동하고 submitting 상태를 유지해(재활성화하지 않음) 이동 중 재제출을 막는다.
       router.push(REDIRECT_AFTER_LOGIN);
     } catch (err) {
       // 공통 client가 실패를 ApiError(code)로 던진다. 서버 message 원문은 쓰지 않는다.
