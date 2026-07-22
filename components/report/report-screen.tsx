@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { useRequireAuth } from "@/components/auth/use-require-auth";
@@ -16,38 +15,42 @@ import { ReportBodyPublicMock } from "@/components/report/report-body-public-moc
 import { ReportBodySections } from "@/components/report/report-body-sections";
 import { IconAlert } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
-import { MOCK_SOURCES, type ReportDetail, type ReportLoad } from "@/lib/mock/report";
+import { useReportDetail } from "@/hooks/use-report-detail";
+import { MOCK_SOURCES, type ReportDetail } from "@/lib/mock/report";
 
 /**
- * 카드(리포트) 상세 — 인증 상태 × 데이터 상태로 분기(§9·§15). id 검증·404·경로 종류는
- * app/report/[id]/page.tsx(→ loadReport). load 는 ready / preparing / error(notFound 는 page 에서 처리).
+ * 카드(리포트) 상세 — 인증 상태 × 데이터 상태로 분기(§9·§15). id 존재 검증·404 는 서버
+ * app/report/[id]/page.tsx(→ reportRouteExists)가 처리하고, 여기선 등록된 id 의 데이터 상태만 다룬다.
+ * 데이터는 클라이언트 훅 useReportDetail(id)가 loading / ready / preparing / error 로 정규화한다.
  *
- * 인증(복구) 상태 우선 → 데이터 상태.
- * - loading   → 중립 스켈레톤(로그인 새로고침 시 guest 화면이 한 프레임도 안 뜨게)
- * - error(인증) → 인증 복원 오류 UI + 재시도
- * - error(데이터) → 브리핑 로드 오류 UI + 재시도(서버 재요청)
+ * 인증(복구) 상태 우선 → 데이터 상태 (두 loading 을 분리한다).
+ * - loading(인증)   → 중립 스켈레톤(로그인 새로고침 시 guest 화면이 한 프레임도 안 뜨게)
+ * - error(인증)     → 인증 복원 오류 UI + 재시도
+ * - loading(데이터) → 중립 스켈레톤(인증 확정 후 데이터 로딩 — 차단/본문 어느 것도 노출하지 않음)
+ * - error(데이터)   → 브리핑 로드 오류 UI + 재시도(refetch)
  * - guest & 개인 경로 → 접근 제한(본문 미렌더)
  * - preparing → 생성 중(분석 중) 안내
  * - ready     → 보고서. 내용은 report 로만 결정되고, 크롬(좌측 내비·Sticky CTA)만 로그인 여부로 달라진다.
  *   allowGuest: public 경로(guest·member 동일 열람) / personal 경로(소유자 전용, guest 접근 제한).
  */
-export function ReportScreen({ load }: { load: Exclude<ReportLoad, { status: "notFound" }> }) {
+export function ReportScreen({ id }: { id: string }) {
   const { status, refreshAuth } = useAuth();
-  const router = useRouter();
+  const detail = useReportDetail(id);
 
   // 1) 인증(복구) 상태 — 인증 확정 전엔 공개/비공개 화면을 내보내지 않는다(§15).
   if (status === "loading") return <ReportSkeleton />;
   if (status === "error") return <ReportAuthError onRetry={refreshAuth} />;
 
-  // 2) 데이터(리포트) 상태.
-  if (load.status === "error") return <ReportDataError onRetry={() => router.refresh()} />;
+  // 2) 데이터(리포트) 상태 — 인증 확정 이후에만 평가한다.
+  if (detail.status === "loading") return <ReportSkeleton />;
+  if (detail.status === "error") return <ReportDataError onRetry={detail.refetch} />;
   // 개인(owner-only) 경로에 guest 접근 → 본문·생성상태 대신 접근 제한 UI (ready·preparing 공통)
-  if (status === "guest" && !load.allowGuest) return <ReportAccessRestricted />;
-  if (load.status === "preparing") return <ReportPreparing />;
+  if (status === "guest" && !detail.allowGuest) return <ReportAccessRestricted />;
+  if (detail.status === "preparing") return <ReportPreparing />;
 
   const isMember = status === "authenticated";
   // key: 로그인 여부 전환 시 remount 해 보관/공유 등 로컬 state 를 초기화
-  return <ReportView key={isMember ? "member" : "guest"} report={load.report} isMember={isMember} />;
+  return <ReportView key={isMember ? "member" : "guest"} report={detail.report} isMember={isMember} />;
 }
 
 /** 실제 상세 렌더 — 내용은 report 로, 크롬(내비·Sticky CTA)은 isMember(로그인 여부)로 결정한다. */
