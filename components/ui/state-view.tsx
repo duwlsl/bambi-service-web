@@ -59,9 +59,9 @@ export function StateView({
           {icon}
         </span>
       )}
-      <h2 className="text-[15px] font-bold text-foreground">{title}</h2>
+      <h2 className="text-balance text-[15px] font-bold text-foreground">{title}</h2>
       {description != null && (
-        <div className="max-w-[340px] text-[13px] leading-[1.7] text-ink-mid">{description}</div>
+        <div className="text-pretty max-w-[340px] text-[13px] leading-[1.7] text-ink-mid">{description}</div>
       )}
       {actions && actions.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
