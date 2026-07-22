@@ -13,6 +13,7 @@ import { Segments } from "@/components/home/post-card";
 import { ReportBodyMock } from "@/components/report/report-body-mock";
 import { ReportBodyPublicMock } from "@/components/report/report-body-public-mock";
 import { ReportBodySections } from "@/components/report/report-body-sections";
+import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
 import { useReportDetail } from "@/hooks/use-report-detail";
@@ -440,40 +441,25 @@ function ReportAuthError({ onRetry }: { onRetry: () => void }) {
  */
 function ReportAccessRestricted() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-[100dvh] flex-col bg-background">
       <HomeNav onAddOpen={() => {}} />
-      <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
-        <div
-          role="alert"
-          className="w-[420px] max-w-full rounded-2xl border border-border bg-card px-6 py-[30px] text-center"
-        >
-          <div className="mx-auto mb-3.5 h-11 w-11">
-            <Orb size={44} />
-          </div>
-          <div className="text-lg font-bold tracking-[-0.01em] text-foreground">
-            로그인이 필요한 페이지예요
-          </div>
-          <p className="mt-2 text-[13px] leading-[1.65] text-ink-mid">
+      <PageState
+        role="alert"
+        iconTone="brand"
+        icon={<Orb size={22} />}
+        title="로그인이 필요한 페이지예요"
+        description={
+          <>
             이 브리핑은 작성자 본인만 볼 수 있어요.
             <br />
             로그인하면 오늘 아침 브리핑을 확인할 수 있어요.
-          </p>
-          <div className="mt-5 flex flex-col gap-2.5">
-            <Link
-              href="/login"
-              className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-primary bg-primary text-[14.5px] font-semibold text-primary-foreground hover:brightness-[.96]"
-            >
-              로그인
-            </Link>
-            <Link
-              href="/"
-              className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-border bg-card text-[14.5px] font-semibold text-foreground hover:bg-background"
-            >
-              공개 홈으로
-            </Link>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+        actions={[
+          { label: "로그인", href: "/login", variant: "primary" },
+          { label: "공개 홈으로", href: "/", variant: "ghost" },
+        ]}
+      />
     </div>
   );
 }
