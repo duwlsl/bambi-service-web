@@ -6,11 +6,15 @@ import { MOCK_FEED_END, MOCK_POSTS, MOCK_TODAY } from "@/lib/mock/feed";
 /**
  * [피드] 탭 — 목업 data-feed="rec" 1:1 (오늘 브리핑 + 포스트 5건 + 피드 끝).
  * "자세히 보기"·제목 클릭 → 카드 상세(P0-4)는 다음 구현 → 시각 전용.
+ *
+ * guest: "오늘 아침 브리핑(나만 보기)" 개인 전용 패널을 숨긴다(§15 — 인증 전 개인정보 미노출).
+ * 공개 포스트 카드는 유지한다.
  */
-export function FeedRec() {
+export function FeedRec({ guest = false }: { guest?: boolean }) {
   return (
     <div>
-      {/* .today */}
+      {/* .today — 개인 전용(나만 보기): guest 에게는 숨김 */}
+      {!guest && (
       <div className="mb-4 rounded-[14px] border border-[var(--today-line)] bg-[var(--today-bg)] px-[18px] py-4">
         {/* .th */}
         <div className="mb-[11px] flex items-center gap-2">
@@ -46,9 +50,10 @@ export function FeedRec() {
           </Link>
         </div>
       </div>
+      )}
 
       {MOCK_POSTS.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <PostCard key={post.id} post={post} guest={guest} />
       ))}
 
       {/* .feed-end */}

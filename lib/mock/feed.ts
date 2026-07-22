@@ -84,7 +84,8 @@ export const MOCK_TODAY = {
 export const MOCK_POSTS: FeedPost[] = [
   {
     id: "post-fx-trigger",
-    author: { initials: "나", name: "Parami", handleText: "@parami", isMe: true },
+    // 공개 피드 카드라 아바타는 작성자(Parami)의 실제 이니셜. isMe(본인 강조)는 member 에서만 스타일 적용.
+    author: { initials: "P", name: "Parami", handleText: "@parami", isMe: true },
     meta: "오전 7:20 · 내 브리핑에서 공유",
     title: "원/달러 환율, 밤사이 0.8% 하락 — 설정한 트리거 조건 충족",
     body: "미 CPI 발표를 앞두고 달러가 약세로 전환했습니다. 새벽 3시 이후 낙폭이 커졌고, 환전 예정 시점(이달 말)과 관련해 확인할 만한 변동이 감지됐어요. ",

@@ -1,11 +1,10 @@
-import Link from "next/link";
-
 import { Segments } from "@/components/home/post-card";
 import { MOCK_FEED_END, MOCK_REPORT_GROUPS, MOCK_REPORTS_META, type ReportBadge } from "@/lib/mock/feed";
 
 /**
  * [내 보고서] 탭 — 목업 data-feed="mine" 1:1 (kb-meta + 날짜 그룹 + kb-card).
- * 제목 클릭(상세 P0-4)·MD 복사·지식창고 링크는 연결 전 → 시각 전용.
+ * 내 보고서(rep-*)는 개인 보고서라 상세 mock 이 없다 → 제목은 링크가 아니라 텍스트(죽은 링크 방지).
+ * MD 복사·지식창고 링크도 연결 전 → 시각 전용.
  */
 export function FeedMine() {
   return (
@@ -32,13 +31,10 @@ export function FeedMine() {
             >
               {/* .krow1 */}
               <div className="flex items-start gap-2.5">
-                {/* 제목 클릭 → 카드 상세(P0-4) */}
-                <Link
-                  href={`/report/${card.id}`}
-                  className="flex-1 text-[15px] leading-[1.45] font-bold tracking-[-0.01em] text-foreground hover:text-signal-ink"
-                >
+                {/* 개인 보고서라 상세 mock 없음 → 링크 아님(죽은 링크 방지). 계약 확정 후 개인 상세 연결. */}
+                <span className="flex-1 text-[15px] leading-[1.45] font-bold tracking-[-0.01em] text-foreground">
                   {card.title}
-                </Link>
+                </span>
                 {/* .copy — MD 복사, 연결 전 시각 전용 */}
                 <button
                   type="button"

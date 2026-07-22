@@ -3,28 +3,84 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { useAuth } from "@/components/auth/use-auth";
+import { useRequireAuth } from "@/components/auth/use-require-auth";
+import { Orb } from "@/components/brand/orb";
 import { AddMaterialModal } from "@/components/home/add-material-modal";
 import { HomeNav } from "@/components/home/home-nav";
 import { SideLeft } from "@/components/home/side-left";
 import { Segments } from "@/components/home/post-card";
 import { ReportBodyMock } from "@/components/report/report-body-mock";
-import {
-  MOCK_DETAIL_RAIL,
-  MOCK_DETAIL_SIDE_FOOT,
-  MOCK_MEMO,
-  MOCK_REPORT,
-  MOCK_SOURCES,
-} from "@/lib/mock/report";
+import { ReportBodyPublicMock } from "@/components/report/report-body-public-mock";
+import { ReportBodySections } from "@/components/report/report-body-sections";
+import { MOCK_SOURCES, type ReportDetail } from "@/lib/mock/report";
 
 /**
- * 카드(리포트) 상세 — 목업 report-detail.html 1:1. 풀블리드(홈과 동일 패턴).
- * 실동작: 뒤로(홈 이동)·보관/공유 토글(로컬 state mock)·＋ 관심 자료 모달.
- * MD 복사·원문 열기·메모 입력·다음 항목·관련 브리핑은 P1/API 연결 전 → 시각 전용.
+ * 카드(리포트) 상세 — 인증 상태별로 분기(§15). id 검증·404·경로 종류는 app/report/[id]/page.tsx.
+ *
+ * report 는 경로가 정한 보고서 1개다(인증 상태로 내용이 바뀌지 않는다). allowGuest 는 경로 종류:
+ * - public 경로(allowGuest=true): guest·member 모두 이 공개 보고서를 본다(내용 동일). 차이는 인증 액션 실행 여부.
+ * - personal 경로(allowGuest=false): 소유자 전용 — member 만 이 보고서를 보고, guest 는 접근 제한.
+ *
+ * - loading → 중립 스켈레톤(로그인 새로고침 시 guest 화면이 한 프레임도 안 뜨게)
+ * - error   → 인증 복원 오류 UI + 재시도
+ * - guest   → allowGuest 면 보고서, 아니면(개인 경로) 접근 제한(본문 미렌더)
+ * - member  → 보고서 (인증 액션 바로 실행)
+ * 내용은 report 로만 결정되고, 크롬(좌측 내비·Sticky CTA)만 로그인 여부로 달라진다.
  */
-export function ReportScreen() {
-  const [saved, setSaved] = useState(MOCK_REPORT.savedInitially);
+export function ReportScreen({
+  report,
+  allowGuest,
+}: {
+  report: ReportDetail;
+  allowGuest: boolean;
+}) {
+  const { status, refreshAuth } = useAuth();
+
+  if (status === "loading") return <ReportSkeleton />;
+  if (status === "error") return <ReportAuthError onRetry={refreshAuth} />;
+  // 개인(owner-only) 경로에 guest 접근 → 보고서를 렌더하지 않고 접근 제한 UI
+  if (status === "guest" && !allowGuest) return <ReportAccessRestricted />;
+
+  const isMember = status === "authenticated";
+  // key: 로그인 여부 전환 시 remount 해 보관/공유 등 로컬 state 를 초기화
+  return <ReportView key={isMember ? "member" : "guest"} report={report} isMember={isMember} />;
+}
+
+/** 실제 상세 렌더 — 내용은 report 로, 크롬(내비·Sticky CTA)은 isMember(로그인 여부)로 결정한다. */
+function ReportView({ report, isMember }: { report: ReportDetail; isMember: boolean }) {
+  const { requireAuth } = useRequireAuth();
+  const [saved, setSaved] = useState(report.savedInitially);
   const [shared, setShared] = useState(false);
   const [amOpen, setAmOpen] = useState(false);
+  const [mdCopied, setMdCopied] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  // 공유: member 실동작은 P1(미구현 no-op). guest 는 requireAuth 가 게이트.
+  function handleShare() {
+    requireAuth(() => setShared((v) => !v));
+  }
+
+  // MD 복사: guest → GuestGateModal(복사 미실행). member → raw markdown 을 Clipboard API 로 복사하고
+  // 버튼을 잠깐 "✓ 복사됨"으로 바꾼 뒤 토스트로 안내(목업 report-detail.html d-md 명세).
+  function handleMdCopy() {
+    requireAuth(() => {
+      void copyMarkdown();
+    });
+  }
+  async function copyMarkdown() {
+    try {
+      await navigator.clipboard.writeText(report.markdown);
+      setMdCopied(true);
+      setCopyFeedback("마크다운이 클립보드에 복사됐어요");
+      window.setTimeout(() => setMdCopied(false), 1800);
+      window.setTimeout(() => setCopyFeedback(null), 2500);
+    } catch {
+      setMdCopied(false);
+      setCopyFeedback("복사하지 못했어요. 다시 시도해 주세요");
+      window.setTimeout(() => setCopyFeedback(null), 2500);
+    }
+  }
 
   // readbar .btn.ghost.sm (+ .on 상태)
   const ghostBtn =
@@ -38,9 +94,9 @@ export function ReportScreen() {
       <HomeNav onAddOpen={() => setAmOpen(true)} />
 
       <div className="mx-auto max-w-[1440px]">
-        {/* .shell */}
-        <div className="flex items-start justify-center gap-[22px] px-5 pt-6 pb-14">
-          <SideLeft footLines={MOCK_DETAIL_SIDE_FOOT} />
+        {/* .shell — guest 는 Sticky CTA 높이만큼 하단 여백 확보 */}
+        <div className={`flex items-start justify-center gap-[22px] px-5 pt-6 ${isMember ? "pb-14" : "pb-[104px]"}`}>
+          <SideLeft footLines={report.sideFoot} guest={!isMember} />
 
           {/* .reader */}
           <main className="min-w-0 max-w-[760px] flex-1">
@@ -52,35 +108,35 @@ export function ReportScreen() {
                 className="flex items-center gap-2 text-[13.5px] font-semibold whitespace-nowrap text-ink-mid"
               >
                 <span className="text-muted-foreground">←</span>
-                {MOCK_REPORT.readbar.backLabel}
+                {report.readbar.backLabel}
               </Link>
               <span className="flex-1" />
-              {/* MD 복사 — DECISION-031 content_md 원문 복사, API 연결 전 시각 전용 */}
+              {/* MD 복사 — 인증 필요 (requireAuth). member: 복사 후 잠깐 "✓ 복사됨" */}
               <button
                 type="button"
-                aria-disabled="true"
+                onClick={handleMdCopy}
                 title="마크다운 원문 복사"
-                className={`${ghostBtn} ${ghostOff}`}
+                className={`${ghostBtn} ${mdCopied ? ghostOn : ghostOff}`}
               >
-                {MOCK_REPORT.readbar.mdCopyLabel}
+                {mdCopied ? "✓ 복사됨" : report.readbar.mdCopyLabel}
               </button>
-              {/* 보관 — mock 토글 */}
+              {/* 보관 — 인증 필요 (requireAuth: member 토글 / 그 외 GuestGateModal) */}
               <button
                 type="button"
-                onClick={() => setSaved((v) => !v)}
+                onClick={() => requireAuth(() => setSaved((v) => !v))}
                 aria-pressed={saved}
                 className={`${ghostBtn} ${saved ? ghostOn : ghostOff}`}
               >
                 ⚑ {saved ? "보관됨" : "보관"}
               </button>
-              {/* 공유 — mock 토글 (공유 모달 #sh-modal 공개 전환 플로우는 P1) */}
+              {/* 공유 — 인증 필요 (requireAuth). member 실 공유 플로우(#sh-modal)는 P1 */}
               <button
                 type="button"
-                onClick={() => setShared((v) => !v)}
+                onClick={handleShare}
                 aria-pressed={shared}
                 className={`${ghostBtn} ${shared ? ghostOn : ghostOff}`}
               >
-                {MOCK_REPORT.readbar.shareLabel}
+                {report.readbar.shareLabel}
               </button>
             </div>
 
@@ -89,44 +145,54 @@ export function ReportScreen() {
               {/* .dhead */}
               <div className="mb-4 flex items-center gap-2.5">
                 <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-wash-strong bg-wash text-[11px] font-bold text-signal-ink">
-                  {MOCK_REPORT.head.avatar}
+                  {report.head.avatar}
                 </span>
                 <div>
                   <div className="text-sm font-bold text-foreground">
-                    {MOCK_REPORT.head.name}{" "}
+                    {report.head.name}{" "}
                     <span className="text-[13px] font-normal text-muted-foreground">
-                      {MOCK_REPORT.head.nameSub}
+                      {report.head.nameSub}
                     </span>
                   </div>
-                  <div className="mt-px text-xs text-muted-foreground">{MOCK_REPORT.head.meta}</div>
+                  <div className="mt-px text-xs text-muted-foreground">{report.head.meta}</div>
                 </div>
                 {/* .dpill */}
                 <span className="ml-auto rounded-full border border-border bg-background px-2.5 py-[3px] text-[11px] text-muted-foreground">
-                  {MOCK_REPORT.head.pill}
+                  {report.dpill}
                 </span>
               </div>
 
               <h1 className="mb-3 text-[25px] leading-[1.38] font-bold tracking-[-0.015em] text-foreground">
-                {MOCK_REPORT.title}
+                {report.title}
               </h1>
-              <p className="mb-3.5 text-base leading-[1.66] text-ink-mid">{MOCK_REPORT.lead}</p>
-              {/* .dmeta */}
+              <p className="mb-3.5 text-base leading-[1.66] text-ink-mid">{report.lead}</p>
+              {/* .dmeta — public 은 "왜 나에게 왔나" reason 없음 */}
               <div className="flex flex-wrap items-center gap-2.5 border-b border-border pb-4 text-[12.5px] text-muted-foreground">
                 <span>
-                  출처 <b className="font-semibold text-ink-mid">{MOCK_REPORT.meta.sourceCount}</b>
+                  출처 <b className="font-semibold text-ink-mid">{report.meta.sourceCount}</b>
                 </span>
                 <span className="text-input">·</span>
-                <span className="font-semibold text-ok">{MOCK_REPORT.meta.trust}</span>
-                <span className="text-input">·</span>
-                <span>
-                  <Segments segments={MOCK_REPORT.meta.reason} />
-                </span>
+                <span className="font-semibold text-ok">{report.meta.trust}</span>
+                {report.meta.reason && (
+                  <>
+                    <span className="text-input">·</span>
+                    <span>
+                      <Segments segments={report.meta.reason} />
+                    </span>
+                  </>
+                )}
               </div>
 
-              <ReportBodyMock />
+              {report.bodyKind === "fx-private" ? (
+                <ReportBodyMock />
+              ) : report.bodyKind === "fx-public" ? (
+                <ReportBodyPublicMock />
+              ) : (
+                <ReportBodySections sections={report.bodySections ?? []} />
+              )}
             </article>
 
-            {/* 출처 (.block) */}
+            {/* 출처 (.block) — 공개 정보 공통 */}
             <section className="mb-4 rounded-2xl border border-border bg-card px-6 py-5">
               <div className="mb-3.5 flex items-center gap-[9px] text-[15px] font-bold text-foreground">
                 출처{" "}
@@ -166,73 +232,76 @@ export function ReportScreen() {
               ))}
             </section>
 
-            {/* 댓글 · 메모 (.block) */}
+            {/* 댓글 · 메모 (.block) — private=메모 / public=공개 댓글 (동일 기능, 공개 범위로 명칭만 다름) */}
             <section className="mb-4 rounded-2xl border border-border bg-card px-6 py-5">
               <div className="mb-3.5 flex items-center gap-[9px] text-[15px] font-bold text-foreground">
-                {MOCK_MEMO.blockTitle}{" "}
+                {report.comments.blockTitle}{" "}
                 <span className="text-xs font-medium text-muted-foreground">
-                  {MOCK_MEMO.blockSub}
+                  {report.comments.blockSub}
                 </span>
               </div>
-              {/* .cmt */}
-              <div className="flex items-start gap-2.5 border-b border-border py-3">
-                <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-input bg-background text-[9.5px] font-bold text-muted-foreground">
-                  {MOCK_MEMO.memo.avatar}
-                </span>
-                <div>
-                  <div className="text-[12.5px] font-bold text-foreground">
-                    {MOCK_MEMO.memo.name}
-                    <span className="ml-1.5 text-[11.5px] font-normal text-muted-foreground">
-                      {MOCK_MEMO.memo.time}
-                    </span>
+              {report.comments.items.map((c) => (
+                <div key={c.name + c.time} className="flex items-start gap-2.5 border-b border-border py-3">
+                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-input bg-background text-[9.5px] font-bold text-muted-foreground">
+                    {c.avatar}
+                  </span>
+                  <div>
+                    <div className="text-[12.5px] font-bold text-foreground">
+                      {c.name}
+                      <span className="ml-1.5 text-[11.5px] font-normal text-muted-foreground">
+                        {c.time}
+                      </span>
+                    </div>
+                    <p className="mt-[3px] text-[13px] leading-[1.6] text-ink-mid">{c.text}</p>
                   </div>
-                  <p className="mt-[3px] text-[13px] leading-[1.6] text-ink-mid">
-                    {MOCK_MEMO.memo.text}
-                  </p>
                 </div>
-              </div>
-              {/* .cinput — 메모 입력은 API 연결 전 시각 전용 (목업도 span) */}
+              ))}
+              {/* .cinput — 댓글·메모 입력은 인증 필요 액션 (requireAuth). span→button 으로 변경(접근성) */}
               <div className="mt-3.5 flex items-center gap-2.5">
                 <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-wash-strong bg-wash text-[11px] font-bold text-signal-ink">
-                  나
+                  {report.comments.inputAvatar}
                 </span>
-                <span
-                  aria-disabled="true"
-                  className="flex h-[42px] flex-1 items-center rounded-[21px] border border-border bg-background px-4 text-[13px] text-muted-foreground"
+                <button
+                  type="button"
+                  onClick={() => requireAuth(() => {})}
+                  className="flex h-[42px] flex-1 items-center rounded-[21px] border border-border bg-background px-4 text-left text-[13px] text-muted-foreground hover:border-wash-strong"
                 >
-                  {MOCK_MEMO.inputPlaceholder}
-                </span>
+                  {report.comments.inputPlaceholder}
+                </button>
               </div>
-              <p className="mt-2 pl-0.5 text-[11.5px] text-muted-foreground">{MOCK_MEMO.note}</p>
+              {report.comments.note && (
+                <p className="mt-2 pl-0.5 text-[11.5px] text-muted-foreground">{report.comments.note}</p>
+              )}
             </section>
           </main>
 
-          {/* RIGHT RAIL (detail) */}
+          {/* RIGHT RAIL (detail) — next(개인 시퀀스)·related(내 기록)는 public 에서 숨김, trust 는 공통 */}
           <aside className="sticky top-4 flex w-[300px] shrink-0 flex-col gap-3.5 max-[1240px]:hidden">
-            {/* 다음 항목 (.rnext) */}
-            <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
-              <h4 className="mb-[15px] flex items-center text-[13px] font-bold text-foreground">
-                {MOCK_DETAIL_RAIL.next.title}
-                <span className="ml-auto text-[11px] font-medium text-muted-foreground">
-                  {MOCK_DETAIL_RAIL.next.counter}
-                </span>
-              </h4>
-              <RelatedRow title={MOCK_DETAIL_RAIL.next.item.title} meta={MOCK_DETAIL_RAIL.next.item.meta} first />
-              <button
-                type="button"
-                aria-disabled="true"
-                className="mt-[11px] inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-transparent px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-ink-mid"
-              >
-                {MOCK_DETAIL_RAIL.next.cta}
-              </button>
-            </div>
+            {report.rail.next && (
+              <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
+                <h4 className="mb-[15px] flex items-center text-[13px] font-bold text-foreground">
+                  {report.rail.next.title}
+                  <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                    {report.rail.next.counter}
+                  </span>
+                </h4>
+                <RelatedRow title={report.rail.next.item.title} meta={report.rail.next.item.meta} first />
+                <button
+                  type="button"
+                  aria-disabled="true"
+                  className="mt-[11px] inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-transparent px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-ink-mid"
+                >
+                  {report.rail.next.cta}
+                </button>
+              </div>
+            )}
 
-            {/* 출처 신뢰도 요약 */}
+            {/* 출처 신뢰도 요약 — 공개 공통 */}
             <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
               <h4 className="mb-[15px] flex items-center text-[13px] font-bold text-foreground">
-                {MOCK_DETAIL_RAIL.trust.title}
+                {report.rail.trust.title}
               </h4>
-              {MOCK_DETAIL_RAIL.trust.rows.map((row, i) => (
+              {report.rail.trust.rows.map((row, i) => (
                 <div
                   key={row.label}
                   className={`flex items-center justify-between border-t border-border py-2 text-[12.5px] text-ink-mid ${i === 0 ? "border-t-0 pt-px" : ""}`}
@@ -243,23 +312,192 @@ export function ReportScreen() {
               ))}
             </div>
 
-            {/* 관련 브리핑 */}
-            <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
-              <h4 className="mb-[15px] flex items-center text-[13px] font-bold text-foreground">
-                {MOCK_DETAIL_RAIL.related.title}
-                <span className="ml-auto text-[11px] font-medium text-muted-foreground">
-                  {MOCK_DETAIL_RAIL.related.all}
-                </span>
-              </h4>
-              {MOCK_DETAIL_RAIL.related.items.map((item, i) => (
-                <RelatedRow key={item.title} title={item.title} meta={item.meta} first={i === 0} />
-              ))}
-            </div>
+            {report.rail.related && (
+              <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
+                <h4 className="mb-[15px] flex items-center text-[13px] font-bold text-foreground">
+                  {report.rail.related.title}
+                  <span className="ml-auto text-[11px] font-medium text-muted-foreground">
+                    {report.rail.related.all}
+                  </span>
+                </h4>
+                {report.rail.related.items.map((item, i) => (
+                  <RelatedRow key={item.title} title={item.title} meta={item.meta} first={i === 0} />
+                ))}
+              </div>
+            )}
           </aside>
         </div>
       </div>
 
       <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} />
+
+      {/* MD 복사 피드백 — aria-live 로 안내(항상 mount). member 만 도달(guest 는 게이트). */}
+      <div aria-live="polite" role="status" className="sr-only">
+        {copyFeedback ?? ""}
+      </div>
+      {copyFeedback && (
+        <div className="fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-[13px] font-semibold text-background shadow-[0_8px_28px_rgba(12,14,17,.2)]">
+          {copyFeedback}
+        </div>
+      )}
+
+      {/* guest 하단 Sticky 로그인·가입 CTA — 로그인 사용자에겐 없음. 모달 아님(상시 노출). */}
+      {!isMember && <GuestStickyCta />}
+    </div>
+  );
+}
+
+/** 인증 복원 중 — 중립 스켈레톤(공개/비공개 문구 없음). 잘못된 public 화면을 한 프레임도 내보내지 않는다. */
+function ReportSkeleton() {
+  const bar = "rounded-md bg-[var(--skel1)]";
+  return (
+    <div className="min-h-screen bg-background">
+      <HomeNav onAddOpen={() => {}} />
+      <div className="mx-auto max-w-[1440px]">
+        <div className="flex items-start justify-center gap-[22px] px-5 pt-6 pb-14">
+          <main className="min-w-0 max-w-[760px] flex-1" aria-hidden="true">
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-[9px]">
+              <div className={`h-4 w-24 ${bar}`} />
+              <span className="flex-1" />
+              <div className={`h-6 w-16 ${bar}`} />
+              <div className={`h-6 w-16 ${bar}`} />
+            </div>
+            <div className="animate-pulse rounded-2xl border border-border bg-card px-[30px] py-[26px]">
+              <div className="mb-4 flex items-center gap-2.5">
+                <div className={`h-[34px] w-[34px] rounded-full ${bar}`} />
+                <div className="flex-1">
+                  <div className={`mb-1.5 h-3.5 w-40 ${bar}`} />
+                  <div className={`h-3 w-56 ${bar}`} />
+                </div>
+              </div>
+              <div className={`mb-3 h-7 w-[80%] ${bar}`} />
+              <div className={`mb-2 h-4 w-full ${bar}`} />
+              <div className={`mb-5 h-4 w-[70%] ${bar}`} />
+              <div className={`mb-3 h-[220px] w-full ${bar}`} />
+              <div className={`mb-2 h-4 w-full ${bar}`} />
+              <div className={`mb-2 h-4 w-[92%] ${bar}`} />
+              <div className={`h-4 w-[60%] ${bar}`} />
+            </div>
+          </main>
+        </div>
+      </div>
+      <span className="sr-only" role="status">
+        불러오는 중…
+      </span>
+    </div>
+  );
+}
+
+/** 인증 복원 오류(500·네트워크) — public 으로 대체하지 않고 재시도를 제공한다. */
+function ReportAuthError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <HomeNav onAddOpen={() => {}} />
+      <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
+        <div
+          role="alert"
+          className="w-[420px] max-w-full rounded-2xl border border-border bg-card px-6 py-[30px] text-center"
+        >
+          <div className="mx-auto mb-3.5 h-11 w-11">
+            <Orb size={44} />
+          </div>
+          <div className="text-lg font-bold tracking-[-0.01em] text-foreground">
+            인증 상태를 확인하지 못했어요
+          </div>
+          <p className="mt-2 text-[13px] leading-[1.65] text-ink-mid">
+            네트워크나 서버 상태를 확인한 뒤 다시 시도해 주세요.
+          </p>
+          <div className="mt-5 flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={onRetry}
+              className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-primary bg-primary text-[14.5px] font-semibold text-primary-foreground hover:brightness-[.96]"
+            >
+              다시 시도
+            </button>
+            <Link
+              href="/"
+              className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-border bg-card text-[14.5px] font-semibold text-foreground hover:bg-background"
+            >
+              홈으로
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 개인(owner-only) 경로에 guest 접근 — private 본문을 렌더하지 않고 접근 제한만 안내한다(§15).
+ * 소유자는 로그인하면 볼 수 있으므로 로그인 경로를 제공한다. public 으로 대체하지 않는다.
+ */
+function ReportAccessRestricted() {
+  return (
+    <div className="min-h-screen bg-background">
+      <HomeNav onAddOpen={() => {}} />
+      <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
+        <div
+          role="alert"
+          className="w-[420px] max-w-full rounded-2xl border border-border bg-card px-6 py-[30px] text-center"
+        >
+          <div className="mx-auto mb-3.5 h-11 w-11">
+            <Orb size={44} />
+          </div>
+          <div className="text-lg font-bold tracking-[-0.01em] text-foreground">
+            로그인이 필요한 페이지예요
+          </div>
+          <p className="mt-2 text-[13px] leading-[1.65] text-ink-mid">
+            이 브리핑은 작성자 본인만 볼 수 있어요.
+            <br />
+            로그인하면 오늘 아침 브리핑을 확인할 수 있어요.
+          </p>
+          <div className="mt-5 flex flex-col gap-2.5">
+            <Link
+              href="/login"
+              className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-primary bg-primary text-[14.5px] font-semibold text-primary-foreground hover:brightness-[.96]"
+            >
+              로그인
+            </Link>
+            <Link
+              href="/"
+              className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-border bg-card text-[14.5px] font-semibold text-foreground hover:bg-background"
+            >
+              공개 홈으로
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 비로그인 상세 하단 고정 CTA — 가입하기 Primary · 로그인 보조. */
+function GuestStickyCta() {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-border bg-card shadow-[0_-8px_28px_rgba(12,14,17,.07)]">
+      <div className="mx-auto flex max-w-[1440px] items-center gap-3.5 px-6 py-[13px]">
+        <div className="min-w-0 flex-1">
+          <div className="text-[14.5px] font-bold tracking-[-0.01em] text-foreground">
+            관심 있는 신호를 놓치지 마세요.
+          </div>
+          <div className="mt-0.5 text-[12.5px] text-ink-mid">
+            로그인하면 저장하고 맞춤 피드를 받아볼 수 있어요.
+          </div>
+        </div>
+        <Link
+          href="/login"
+          className="inline-flex h-[42px] items-center justify-center rounded-[10px] border border-border bg-card px-4 text-[13.5px] font-semibold whitespace-nowrap text-foreground hover:bg-background"
+        >
+          로그인
+        </Link>
+        <Link
+          href="/signup"
+          className="inline-flex h-[42px] items-center justify-center rounded-[10px] border border-primary bg-primary px-4 text-[13.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
+        >
+          가입하기
+        </Link>
+      </div>
     </div>
   );
 }
