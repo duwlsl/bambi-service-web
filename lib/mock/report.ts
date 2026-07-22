@@ -436,7 +436,26 @@ export const REPORT_REGISTRY: Record<string, ReportRoute> = {
   today: { kind: "personal", report: MOCK_PRIVATE_REPORT },
 };
 
-/** id 로 리포트 경로를 조회. 없으면 null(→ 호출부에서 notFound). */
-export function getReportRoute(id: string): ReportRoute | null {
-  return REPORT_REGISTRY[id] ?? null;
+/**
+ * 리포트 로드 결과(mock) — 상세 화면의 데이터 상태 분기(ready / preparing / error / notFound)를
+ * mock 에 실제로 연결하는 단일 소스.
+ *
+ * ★ 실제 API 교체 지점: 이 함수 안에서 apiGet(`/api/reports/${id}`) 응답을 아래로 매핑한다.
+ *   - ready:     생성 완료된 보고서. 서버가 소유권·visibility 로 인가한 데이터만 반환(§ page.tsx 주석).
+ *   - preparing: 생성 상태(content_status)가 아직 완료 전(온디맨드 분석·첫 브리핑 생성 중, DECISION-023·024).
+ *   - error:     통신·서버 오류(INTERNAL_ERROR 등). 재시도 대상.
+ *   - notFound:  리소스 없음(404 / NOT_FOUND).
+ * 현재 mock 은 등록된 id 를 모두 ready 로 반환하고, 미등록 id 는 notFound 다.
+ */
+export type ReportLoad =
+  | { status: "ready"; report: ReportDetail; allowGuest: boolean }
+  | { status: "preparing"; allowGuest: boolean }
+  | { status: "error" }
+  | { status: "notFound" };
+
+/** id 로 리포트를 로드한다(mock). 상태 분기는 report-screen.tsx 한 곳에서 소비한다. */
+export function loadReport(id: string): ReportLoad {
+  const route = REPORT_REGISTRY[id];
+  if (!route) return { status: "notFound" };
+  return { status: "ready", report: route.report, allowGuest: route.kind === "public" };
 }

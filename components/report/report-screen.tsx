@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { useRequireAuth } from "@/components/auth/use-require-auth";
@@ -13,38 +14,40 @@ import { Segments } from "@/components/home/post-card";
 import { ReportBodyMock } from "@/components/report/report-body-mock";
 import { ReportBodyPublicMock } from "@/components/report/report-body-public-mock";
 import { ReportBodySections } from "@/components/report/report-body-sections";
-import { MOCK_SOURCES, type ReportDetail } from "@/lib/mock/report";
+import { IconAlert } from "@/components/ui/state-icons";
+import { StateView } from "@/components/ui/state-view";
+import { MOCK_SOURCES, type ReportDetail, type ReportLoad } from "@/lib/mock/report";
 
 /**
- * 카드(리포트) 상세 — 인증 상태별로 분기(§15). id 검증·404·경로 종류는 app/report/[id]/page.tsx.
+ * 카드(리포트) 상세 — 인증 상태 × 데이터 상태로 분기(§9·§15). id 검증·404·경로 종류는
+ * app/report/[id]/page.tsx(→ loadReport). load 는 ready / preparing / error(notFound 는 page 에서 처리).
  *
- * report 는 경로가 정한 보고서 1개다(인증 상태로 내용이 바뀌지 않는다). allowGuest 는 경로 종류:
- * - public 경로(allowGuest=true): guest·member 모두 이 공개 보고서를 본다(내용 동일). 차이는 인증 액션 실행 여부.
- * - personal 경로(allowGuest=false): 소유자 전용 — member 만 이 보고서를 보고, guest 는 접근 제한.
- *
- * - loading → 중립 스켈레톤(로그인 새로고침 시 guest 화면이 한 프레임도 안 뜨게)
- * - error   → 인증 복원 오류 UI + 재시도
- * - guest   → allowGuest 면 보고서, 아니면(개인 경로) 접근 제한(본문 미렌더)
- * - member  → 보고서 (인증 액션 바로 실행)
- * 내용은 report 로만 결정되고, 크롬(좌측 내비·Sticky CTA)만 로그인 여부로 달라진다.
+ * 인증(복구) 상태 우선 → 데이터 상태.
+ * - loading   → 중립 스켈레톤(로그인 새로고침 시 guest 화면이 한 프레임도 안 뜨게)
+ * - error(인증) → 인증 복원 오류 UI + 재시도
+ * - error(데이터) → 브리핑 로드 오류 UI + 재시도(서버 재요청)
+ * - guest & 개인 경로 → 접근 제한(본문 미렌더)
+ * - preparing → 생성 중(분석 중) 안내
+ * - ready     → 보고서. 내용은 report 로만 결정되고, 크롬(좌측 내비·Sticky CTA)만 로그인 여부로 달라진다.
+ *   allowGuest: public 경로(guest·member 동일 열람) / personal 경로(소유자 전용, guest 접근 제한).
  */
-export function ReportScreen({
-  report,
-  allowGuest,
-}: {
-  report: ReportDetail;
-  allowGuest: boolean;
-}) {
+export function ReportScreen({ load }: { load: Exclude<ReportLoad, { status: "notFound" }> }) {
   const { status, refreshAuth } = useAuth();
+  const router = useRouter();
 
+  // 1) 인증(복구) 상태 — 인증 확정 전엔 공개/비공개 화면을 내보내지 않는다(§15).
   if (status === "loading") return <ReportSkeleton />;
   if (status === "error") return <ReportAuthError onRetry={refreshAuth} />;
-  // 개인(owner-only) 경로에 guest 접근 → 보고서를 렌더하지 않고 접근 제한 UI
-  if (status === "guest" && !allowGuest) return <ReportAccessRestricted />;
+
+  // 2) 데이터(리포트) 상태.
+  if (load.status === "error") return <ReportDataError onRetry={() => router.refresh()} />;
+  // 개인(owner-only) 경로에 guest 접근 → 본문·생성상태 대신 접근 제한 UI (ready·preparing 공통)
+  if (status === "guest" && !load.allowGuest) return <ReportAccessRestricted />;
+  if (load.status === "preparing") return <ReportPreparing />;
 
   const isMember = status === "authenticated";
   // key: 로그인 여부 전환 시 remount 해 보관/공유 등 로컬 state 를 초기화
-  return <ReportView key={isMember ? "member" : "guest"} report={report} isMember={isMember} />;
+  return <ReportView key={isMember ? "member" : "guest"} report={load.report} isMember={isMember} />;
 }
 
 /** 실제 상세 렌더 — 내용은 report 로, 크롬(내비·Sticky CTA)은 isMember(로그인 여부)로 결정한다. */
@@ -467,6 +470,73 @@ function ReportAccessRestricted() {
             </Link>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 리포트 데이터 로드 실패(error) — 목업 report-detail-image-states.html "에러".
+ * public 으로 대체하지 않고 재시도(router.refresh 로 서버 재요청)를 제공한다(§9 Error · §4 INTERNAL_ERROR).
+ */
+function ReportDataError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <HomeNav onAddOpen={() => {}} />
+      <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
+        <StateView
+          role="alert"
+          className="w-[440px] max-w-full"
+          icon={<IconAlert />}
+          title="브리핑을 불러오지 못했어요"
+          description={
+            <>
+              네트워크 또는 서버 문제일 수 있어요.
+              <br />
+              잠시 후 다시 시도해 주세요.
+            </>
+          }
+          actions={[
+            { label: "다시 시도", onClick: onRetry, variant: "primary" },
+            { label: "홈 피드로", href: "/", variant: "ghost" },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 리포트 생성 중(preparing) — 목업 report-detail-image-states.html "분석 중". 본문이 아직 없어
+ * 생성 단계를 안내한다(온디맨드 분석·가입 직후 첫 브리핑, DECISION-023·024). 진행률 수치는 미표시 샘플.
+ */
+function ReportPreparing() {
+  return (
+    <div className="min-h-screen bg-background">
+      <HomeNav onAddOpen={() => {}} />
+      <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
+        <StateView
+          role="status"
+          className="w-[460px] max-w-full"
+          iconTone="brand"
+          icon={<Orb size={22} className="motion-safe:animate-spin [animation-duration:3s]" />}
+          title="아직 정리하고 있어요"
+          description={
+            <div className="flex flex-col items-center gap-3">
+              <p>
+                밤사이 수집한 소식을 선별하고
+                <br />
+                근거를 정리하는 중이에요.
+              </p>
+              <span className="block h-1.5 w-[180px] overflow-hidden rounded-full bg-secondary">
+                <span className="block h-full w-[58%] rounded-full bg-primary" />
+              </span>
+              <span className="text-[11.5px] text-muted-foreground">
+                수집 42건 → <b className="font-semibold text-signal-ink">선별 중</b> → 근거 정리
+              </span>
+            </div>
+          }
+        />
       </div>
     </div>
   );

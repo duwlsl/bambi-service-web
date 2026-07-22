@@ -1,12 +1,62 @@
+"use client";
+
+import { useState } from "react";
+
 import { Segments } from "@/components/home/post-card";
-import { MOCK_FEED_END, MOCK_REPORT_GROUPS, MOCK_REPORTS_META, type ReportBadge } from "@/lib/mock/feed";
+import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
+import { StateView } from "@/components/ui/state-view";
+import { loadMineReports, MOCK_FEED_END, MOCK_REPORTS_META, type ReportBadge } from "@/lib/mock/feed";
 
 /**
- * [내 보고서] 탭 — 목업 data-feed="mine" 1:1 (kb-meta + 날짜 그룹 + kb-card).
+ * [내 보고서] 탭 — 목업 data-feed="mine"(kb-meta + 날짜 그룹 + kb-card) + 상태 분기.
+ * 목업 variants/home-my-reports-states.html 기준: success / empty(받은 보고서 없음) / error.
+ * 로딩은 상위(home-screen HomeSkeleton)의 인증 복구 스켈레톤이 담당한다. member 에서만 렌더된다.
+ *
  * 내 보고서(rep-*)는 개인 보고서라 상세 mock 이 없다 → 제목은 링크가 아니라 텍스트(죽은 링크 방지).
- * MD 복사·지식창고 링크도 연결 전 → 시각 전용.
  */
 export function FeedMine() {
+  // ★ API 교체 지점: 아래 동기 mock 호출을 useEffect + fetch(GET /api/reports)로 교체한다.
+  const [, setReload] = useState(0);
+  const retry = () => setReload((n) => n + 1);
+  const result = loadMineReports();
+
+  if (result.status === "error") {
+    return (
+      <StateView
+        role="alert"
+        className="min-h-[320px]"
+        icon={<IconAlert />}
+        title="내 보고서 목록을 불러오지 못했어요"
+        description={
+          <>
+            일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요.
+            <br />
+            이미 생성된 보고서는 사라지지 않아요.
+          </>
+        }
+        actions={[{ label: "다시 시도", onClick: retry, variant: "primary" }]}
+      />
+    );
+  }
+
+  if (result.status === "empty") {
+    return (
+      <StateView
+        className="min-h-[320px]"
+        icon={<IconEmptyDoc />}
+        title="아직 받은 보고서가 없어요"
+        description={
+          <>
+            등록한 관심사와 관심 자료를 바탕으로 매일 아침 브리핑이 만들어져요.
+            <br />
+            관심 자료를 추가하면 다음 브리핑부터 반영돼요.
+          </>
+        }
+      />
+    );
+  }
+
+  const groups = result.data;
   return (
     <div>
       {/* .kb-meta */}
@@ -18,7 +68,7 @@ export function FeedMine() {
         {MOCK_REPORTS_META.tail}
       </p>
 
-      {MOCK_REPORT_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.label}>
           {/* .kb-group */}
           <div className="mx-0.5 mt-[18px] mb-[9px] flex items-baseline justify-between gap-2.5 text-[12.5px] font-bold text-muted-foreground">

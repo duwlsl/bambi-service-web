@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ReportScreen } from "@/components/report/report-screen";
-import { getReportRoute } from "@/lib/mock/report";
+import { loadReport } from "@/lib/mock/report";
 
 export const metadata: Metadata = {
   title: "AlphaCatcher — 콘텐츠 상세",
@@ -16,7 +16,10 @@ export const metadata: Metadata = {
  * - public("post-fx-trigger" 등): 고유 공개 URL. 이 공개 보고서를 guest·member 모두 동일하게 본다.
  *   차이는 인증 액션(보관·공유·댓글) 실행 여부뿐(guest 는 GuestGateModal). → allowGuest=true.
  * - personal("today"): 로그인 사용자 오늘 아침 브리핑(개인 경로). guest 차단. → allowGuest=false.
- * - 미등록 id("abc" 등): notFound().
+ * - 미등록 id("abc" 등): notFound() → app/not-found.tsx.
+ *
+ * 데이터 상태(ready / preparing / error / notFound)는 loadReport(lib/mock/report.ts)가 반환하고,
+ * notFound 만 여기서 처리(라우터 바운더리), 나머지 분기는 ReportScreen 이 소비한다.
  *
  * TODO(실 API 연동 — 이 지점 한 곳에서 교체):
  *   지금은 mock 레지스트리로 경로를 해석한다(토큰이 localStorage 라 서버가 인증을 모름).
@@ -28,9 +31,9 @@ export const metadata: Metadata = {
  */
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const route = getReportRoute(id);
-  if (!route) notFound();
+  const load = loadReport(id);
+  if (load.status === "notFound") notFound();
 
-  // public 경로는 guest 도 이 공개 보고서를 열람, personal 경로는 guest 차단.
-  return <ReportScreen report={route.report} allowGuest={route.kind === "public"} />;
+  // ready / preparing / error 는 ReportScreen 이 인증 상태와 함께 분기한다.
+  return <ReportScreen load={load} />;
 }

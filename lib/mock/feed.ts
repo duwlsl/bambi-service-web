@@ -247,3 +247,26 @@ export const MOCK_SIGNALS = [
 ];
 
 export const MOCK_TOPICS = ["#미국증시", "#환테크", "#로컬LLM"];
+
+/* ── mock 상태 로더 (★ 실제 API 교체 지점) ──
+ * 화면 상태 분기(success / empty / error)를 mock 에 실제로 연결하기 위한 로더.
+ * 지금은 mock 배열을 그대로 반환한다(항상 success — 빈 배열이면 empty). 통신·서버 오류(error)는
+ * 실 API 연동 시 발생한다. 계약 확정 시 이 함수 안에서 apiGet("/api/feed") 응답
+ * ({ success, data, error })을 아래 결과 형태로 매핑하고, 화면(feed-*.tsx)의 분기는 그대로 둔다.
+ */
+export type MockListResult<T> =
+  | { status: "success"; data: T }
+  | { status: "empty" }
+  | { status: "error" };
+
+/** [피드] 탭 — 공개 추천 피드. 빈 배열이면 empty. */
+export function loadRecFeed(): MockListResult<FeedPost[]> {
+  return MOCK_POSTS.length > 0 ? { status: "success", data: MOCK_POSTS } : { status: "empty" };
+}
+
+/** [내 보고서] 탭 — 로그인 사용자 보고서 그룹. 빈 배열이면 empty. */
+export function loadMineReports(): MockListResult<ReportGroup[]> {
+  return MOCK_REPORT_GROUPS.length > 0
+    ? { status: "success", data: MOCK_REPORT_GROUPS }
+    : { status: "empty" };
+}
