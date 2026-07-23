@@ -30,6 +30,7 @@ export function StateView({
   actions,
   role,
   className,
+  size = "compact",
 }: {
   icon?: ReactNode;
   iconTone?: "neutral" | "brand";
@@ -38,12 +39,16 @@ export function StateView({
   actions?: StateAction[];
   role?: "status" | "alert";
   className?: string;
+  /** compact: 피드 컬럼 내부 안내(기본). page: 화면 전체를 대체하는 페이지 수준 카드(404·접근 제한). */
+  size?: "compact" | "page";
 }) {
+  const isPage = size === "page";
   return (
     <div
       role={role}
       className={cn(
-        "flex flex-col items-center justify-center gap-2 rounded-[14px] border border-border bg-card px-6 py-14 text-center",
+        "flex flex-col items-center justify-center gap-2 rounded-[14px] border border-border bg-card text-center",
+        isPage ? "rounded-2xl px-8 py-10" : "px-6 py-14",
         className,
       )}
     >
@@ -59,14 +64,33 @@ export function StateView({
           {icon}
         </span>
       )}
-      <h2 className="text-[15px] font-bold text-foreground">{title}</h2>
+      <h2
+        className={cn(
+          "text-balance font-bold text-foreground",
+          isPage ? "text-[22px] tracking-[-0.01em]" : "text-[15px]",
+        )}
+      >
+        {title}
+      </h2>
       {description != null && (
-        <div className="max-w-[340px] text-[13px] leading-[1.7] text-ink-mid">{description}</div>
+        <div
+          className={cn(
+            "text-pretty leading-[1.7] text-ink-mid",
+            isPage ? "max-w-[360px] text-[14px]" : "max-w-[340px] text-[13px]",
+          )}
+        >
+          {description}
+        </div>
       )}
       {actions && actions.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        <div
+          className={cn(
+            "mt-2",
+            isPage ? "flex w-full flex-col gap-2.5" : "flex flex-wrap items-center justify-center gap-2",
+          )}
+        >
           {actions.map((action) => (
-            <StateActionButton key={action.label} action={action} />
+            <StateActionButton key={action.label} action={action} size={size} />
           ))}
         </div>
       )}
@@ -74,9 +98,16 @@ export function StateView({
   );
 }
 
-function StateActionButton({ action }: { action: StateAction }) {
+function StateActionButton({
+  action,
+  size = "compact",
+}: {
+  action: StateAction;
+  size?: "compact" | "page";
+}) {
   const cls = cn(
-    "inline-flex h-9 items-center justify-center rounded-[10px] border px-4 text-[13px] font-semibold",
+    "inline-flex items-center justify-center rounded-[10px] border font-semibold",
+    size === "page" ? "h-11 w-full px-4 text-[14px]" : "h-9 px-4 text-[13px]",
     action.variant === "primary"
       ? "border-primary bg-primary text-primary-foreground hover:brightness-[.96]"
       : "border-border bg-card text-ink-mid hover:bg-background",

@@ -17,6 +17,9 @@ export function PostCard({ post, guest = false }: { post: FeedPost; guest?: bool
   const { requireAuth } = useRequireAuth();
   const [saved, setSaved] = useState(post.saved);
   const [liked, setLiked] = useState(false);
+  // 보관 상태는 로그인 사용자에게만 노출한다(§15). guest 는 항상 "보관"으로 표시하고,
+  // 클릭해도 requireAuth 가 GuestGateModal 로 가로채 토글을 실행하지 않는다(보관됨으로 안 바뀜).
+  const showSaved = !guest && saved;
 
   // 공유: member 의 실제 공유(#sh-modal 공개 전환)는 P1 — 이번 범위 미구현(no-op).
   // guest 는 requireAuth 가 GuestGateModal 로 가로챈다.
@@ -98,14 +101,14 @@ export function PostCard({ post, guest = false }: { post: FeedPost; guest?: bool
         <button
           type="button"
           onClick={() => requireAuth(() => setSaved((v) => !v))}
-          aria-pressed={saved}
+          aria-pressed={showSaved}
           className={`inline-flex items-center gap-1.5 rounded-lg px-[11px] py-[9px] text-[12.5px] ${
-            saved
+            showSaved
               ? "text-signal-ink"
               : "text-muted-foreground hover:bg-background hover:text-ink-mid"
           }`}
         >
-          ⚑ {saved ? <b className="font-semibold">보관됨</b> : "보관"}
+          ⚑ {showSaved ? <b className="font-semibold">보관됨</b> : "보관"}
         </button>
 
         {/* 댓글 — P1 시각 전용 */}

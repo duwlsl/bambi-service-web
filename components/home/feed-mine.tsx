@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-
+import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { Segments } from "@/components/home/post-card";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
-import { loadMineReports, MOCK_FEED_END, MOCK_REPORTS_META, type ReportBadge } from "@/lib/mock/feed";
+import { useMyReports } from "@/hooks/use-my-reports";
+import { MOCK_FEED_END, MOCK_REPORTS_META, type ReportBadge } from "@/lib/mock/feed";
 
 /**
  * [내 보고서] 탭 — 목업 data-feed="mine"(kb-meta + 날짜 그룹 + kb-card) + 상태 분기.
@@ -15,10 +15,11 @@ import { loadMineReports, MOCK_FEED_END, MOCK_REPORTS_META, type ReportBadge } f
  * 내 보고서(rep-*)는 개인 보고서라 상세 mock 이 없다 → 제목은 링크가 아니라 텍스트(죽은 링크 방지).
  */
 export function FeedMine() {
-  // ★ API 교체 지점: 아래 동기 mock 호출을 useEffect + fetch(GET /api/reports)로 교체한다.
-  const [, setReload] = useState(0);
-  const retry = () => setReload((n) => n + 1);
-  const result = loadMineReports();
+  // 데이터 계층: 인증 확정 후 useMyReports 가 loading/success/empty/error 를 정규화한다(member 전용 마운트).
+  const result = useMyReports();
+  const retry = result.refetch;
+
+  if (result.status === "loading") return <FeedSkeleton />;
 
   if (result.status === "error") {
     return (

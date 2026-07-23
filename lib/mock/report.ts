@@ -7,8 +7,9 @@ import type { TextSegment } from "@/lib/mock/feed";
  * 카드 상세 API는 미확정(영현 도메인 착수 전, CLAUDE.md §2).
  * - 본문은 API가 content_md(마크다운 원문, DECISION-031 A안)로 내려줄 예정 → 마크다운 렌더러로
  *   .md-viewer(globals.css)에 렌더한다. 본문 mock은 "렌더된 결과"를 흉내내므로 JSX(components/report)에 있다.
- * - 계약 확정 시: 타입을 types/ 로 이관, 화면의 mock 직접 import 를 lib/api-client 경유로 교체,
- *   Loading/Empty/Error/NotFound 상태(§9)를 연결하고 이 파일과 body mock 을 삭제한다.
+ * - 계약 확정 시: lib/repositories/report.ts(단일 seam) 본문을 apiGet 호출로 교체, 타입을 types/ 로
+ *   이관하고 이 mock 파일과 body mock 을 삭제한다. 데이터 로드는 repository → 훅(useReportDetail)이
+ *   소비하며, 미등록 id 의 404 는 서버 app/report/[id]/page.tsx(reportRouteExists)가 처리한다.
  *
  * 공개 범위(private/public) 분리 — mock 단계 임시:
  * - MOCK_PRIVATE_REPORT: 작성자가 자기 "나만 보기" 브리핑을 보는 화면(개인 관점 문구·개인 시퀀스·내 기록 포함).
@@ -437,25 +438,13 @@ export const REPORT_REGISTRY: Record<string, ReportRoute> = {
 };
 
 /**
- * 리포트 로드 결과(mock) — 상세 화면의 데이터 상태 분기(ready / preparing / error / notFound)를
- * mock 에 실제로 연결하는 단일 소스.
- *
- * ★ 실제 API 교체 지점: 이 함수 안에서 apiGet(`/api/reports/${id}`) 응답을 아래로 매핑한다.
- *   - ready:     생성 완료된 보고서. 서버가 소유권·visibility 로 인가한 데이터만 반환(§ page.tsx 주석).
- *   - preparing: 생성 상태(content_status)가 아직 완료 전(온디맨드 분석·첫 브리핑 생성 중, DECISION-023·024).
- *   - error:     통신·서버 오류(INTERNAL_ERROR 등). 재시도 대상.
- *   - notFound:  리소스 없음(404 / NOT_FOUND).
- * 현재 mock 은 등록된 id 를 모두 ready 로 반환하고, 미등록 id 는 notFound 다.
+ * 서버 라우팅용 존재 확인 — 토큰·데이터 없이 등록 여부만 본다(app/report/[id]/page.tsx 서버 notFound()).
+ * 등록된 id 의 데이터 로드/상태는 클라이언트 훅(useReportDetail)이 담당한다.
+ * ★ mock 시대 전용: 실 API 연동 시 서버는 토큰 없이 존재를 알 수 없으므로 404 전략과 함께 재설계한다.
  */
-export type ReportLoad =
-  | { status: "ready"; report: ReportDetail; allowGuest: boolean }
-  | { status: "preparing"; allowGuest: boolean }
-  | { status: "error" }
-  | { status: "notFound" };
-
-/** id 로 리포트를 로드한다(mock). 상태 분기는 report-screen.tsx 한 곳에서 소비한다. */
-export function loadReport(id: string): ReportLoad {
-  const route = REPORT_REGISTRY[id];
-  if (!route) return { status: "notFound" };
-  return { status: "ready", report: route.report, allowGuest: route.kind === "public" };
+export function reportRouteExists(id: string): boolean {
+  return id in REPORT_REGISTRY;
 }
+
+// 데이터 상태(ready/preparing/error)는 lib/repositories/report.ts(ReportResult) + useReportDetail 이,
+// 미등록 id 의 notFound(HTTP 404)는 서버 app/report/[id]/page.tsx(reportRouteExists)가 담당한다.

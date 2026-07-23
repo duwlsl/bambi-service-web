@@ -188,9 +188,24 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* 한국어 단어 중간 줄바꿈 방지 — keep-all(공백 단위 줄바꿈) + 긴 영문/URL 오버플로 방지.
+       (목업 base.css 의 body{word-break:keep-all;overflow-wrap:break-word} 규칙을 앱 전역 CSS로 이관
+        — 앱은 base.css 미 import) */
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
   html {
     @apply font-sans;
+    /* 스크롤바 출현/소멸에 따른 레이아웃 가로 시프트 방지 — 루트 스크롤 요소(html)에 거터 상시 예약.
+       (목업 base.css 의 html{scrollbar-gutter:stable} 규칙을 앱 전역 CSS로 이관 — 앱은 base.css 미 import) */
+    scrollbar-gutter: stable;
+  }
+}
+
+/* scrollbar-gutter 미지원 환경(구형 브라우저) 폴백 — 루트 세로 스크롤바 상시 노출로 viewport 너비 고정 */
+@supports not (scrollbar-gutter: stable) {
+  html {
+    overflow-y: scroll;
   }
 }
 

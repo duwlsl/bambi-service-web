@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 
+import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { PostCard } from "@/components/home/post-card";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
-import { loadRecFeed, MOCK_FEED_END, MOCK_TODAY } from "@/lib/mock/feed";
+import { useRecFeed } from "@/hooks/use-rec-feed";
+import { MOCK_FEED_END, MOCK_TODAY } from "@/lib/mock/feed";
 
 /**
  * [피드] 탭 — 목업 data-feed="rec"(오늘 브리핑 + 포스트 + 피드 끝) + 상태 분기.
@@ -17,11 +18,12 @@ import { loadRecFeed, MOCK_FEED_END, MOCK_TODAY } from "@/lib/mock/feed";
  * 공개 포스트 카드는 유지한다.
  */
 export function FeedRec({ guest = false }: { guest?: boolean }) {
-  // ★ API 교체 지점: 아래 동기 mock 호출을 useEffect + fetch(GET /api/feed)로 교체한다.
-  //   retry 는 재요청 트리거(현재는 mock 재평가를 위한 리렌더).
-  const [, setReload] = useState(0);
-  const retry = () => setReload((n) => n + 1);
-  const result = loadRecFeed();
+  // 데이터 계층: 인증 확정 후 useRecFeed 가 loading/success/empty/error 를 정규화한다.
+  // 인증 로딩은 상위(home-screen HomeSkeleton)가, 데이터 로딩은 여기 FeedSkeleton 이 담당한다.
+  const result = useRecFeed();
+  const retry = result.refetch;
+
+  if (result.status === "loading") return <FeedSkeleton />;
 
   if (result.status === "error") {
     return (
