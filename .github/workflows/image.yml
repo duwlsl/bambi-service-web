@@ -50,9 +50,9 @@ jobs:
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
           # 배포 origin 은 레포/조직 변수로 주입(레포에 URL 하드코딩 금지, CLAUDE.md §6).
-          # 변수 미설정 시 빌드 통과용 http://localhost 사용 → 실제 배포 전 반드시 변수 설정.
+          # 변수 미설정·빈값이면 빈값으로 빌드 → 런타임에 same-origin `/api/*`(nginx 프록시)로 요청.
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'http://localhost' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

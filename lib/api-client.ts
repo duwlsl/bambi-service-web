@@ -11,20 +11,21 @@ import type { ApiResponse } from "@/types/api";
  * 공통 API client (CLAUDE.md §3·§6·§8).
  *
  * - 모든 Service API 요청은 이 계층을 통과한다. 컴포넌트에서 fetch 직접 호출 금지.
- * - base 는 NEXT_PUBLIC_API_URL(origin)만. `/api` 를 포함한 전체 경로는 호출부가 넘긴다
- *   → 코드상의 경로가 API 명세와 글자 그대로 1:1 (예: "/api/auth/login").
+ * - base 는 NEXT_PUBLIC_API_URL(origin). 없거나 비어 있으면 빈 base → `/api/...` 상대경로(same-origin, §6).
+ *   `/api` 를 포함한 전체 경로는 호출부가 넘긴다 → 코드상의 경로가 API 명세와 1:1 (예: "/api/auth/login").
  * - 응답은 공통 envelope({success,data,error})로 해석하고, 실패는 ApiError 로 throw 한다.
  */
 
-/** NEXT_PUBLIC_API_URL(origin, 끝 슬래시 없음)을 검증해 반환. 누락 시 원인 명시 throw(§6). */
+/**
+ * API base(origin) 결정 (§6 same-origin fallback).
+ * - 값이 있으면(trim 후 비어 있지 않으면) 그 origin 을 쓰고 끝 슬래시를 제거한다(절대 URL).
+ * - 미설정·빈 문자열·공백뿐이면 빈 문자열을 반환한다 → 요청이 `/api/...` 상대경로로 현재 origin(same-origin)에 간다.
+ *   운영은 nginx 가 같은 origin 의 `/api/*` 를 service-api 로 전달하는 것을 전제로 한다.
+ */
 export function getApiBaseUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL;
-  if (!raw) {
-    throw new Error(
-      "[api] NEXT_PUBLIC_API_URL 이 설정되지 않았습니다. .env.local 에 origin(예: http://localhost)을 지정하세요.",
-    );
-  }
-  return raw.replace(/\/+$/, ""); // 끝 슬래시가 있어도 안전하게 제거
+  const raw = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!raw) return ""; // 미설정·빈 문자열·공백 → same-origin 상대경로
+  return raw.replace(/\/+$/, ""); // 절대 origin, 끝 슬래시 제거(중복 슬래시 방지)
 }
 
 /**
