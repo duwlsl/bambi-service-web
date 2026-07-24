@@ -9,8 +9,10 @@ import { FeedMine } from "@/components/home/feed-mine";
 import { FeedRec } from "@/components/home/feed-rec";
 import { GuestSignupPanel } from "@/components/home/guest-signup-panel";
 import { HomeNav } from "@/components/home/home-nav";
+import { MemberFeed } from "@/components/home/member-feed";
 import { SideLeft } from "@/components/home/side-left";
 import { SideRight } from "@/components/home/side-right";
+import { useMemberFeed } from "@/hooks/use-member-feed";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 
 type HomeTab = "mine" | "rec";
@@ -36,6 +38,9 @@ export function HomeScreen() {
 function HomeView({ isMember }: { isMember: boolean }) {
   const [tab, setTab] = useState<HomeTab>("rec"); // 기본: 피드
   const [amOpen, setAmOpen] = useState(false);
+  // member [피드] 탭 데이터를 HomeView 가 소유한다 → 저장 성공 시 refetch 를 저장 모달과 공유(§4).
+  // guest 는 useMemberFeed 내부 enabled=false 라 /api/feed 를 호출하지 않는다.
+  const memberFeed = useMemberFeed();
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,7 +72,8 @@ function HomeView({ isMember }: { isMember: boolean }) {
             </div>
 
             <div role="tabpanel" id="panel-rec" aria-labelledby="tab-rec" hidden={isMember && tab !== "rec"}>
-              <FeedRec guest={!isMember} />
+              {/* guest → 공개 mock 피드 유지 / member → GET /api/feed 실 데이터. */}
+              {isMember ? <MemberFeed feed={memberFeed} /> : <FeedRec guest />}
             </div>
             {/* FeedMine — 개인 데이터라 member 에서만 렌더 */}
             {isMember && (
@@ -82,7 +88,8 @@ function HomeView({ isMember }: { isMember: boolean }) {
         </div>
       </div>
 
-      <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} />
+      {/* 저장 성공 시 member 피드를 재조회해 새 카드를 즉시 반영(§4 refetch). guest 는 모달이 열리지 않는다. */}
+      <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} onSaved={memberFeed.refetch} />
     </div>
   );
 }
