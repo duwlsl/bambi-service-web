@@ -15,11 +15,12 @@ export const metadata: Metadata = {
 
 /**
  * 로그인 화면 — 목업 product/auth-login.html 1:1.
- * Google·비밀번호 찾기·뒤로는 시각 요소만 목업대로 두고 기능 미연결(P1).
+ * Google·비밀번호 찾기는 시각 요소만 목업대로 두고 기능 미연결(P1).
+ * 뒤로는 공개 홈(`/`)으로 이동한다(history 유무와 무관하게 항상 `/`, §5 공개 홈).
  */
 export default function LoginPage() {
   return (
-    <AuthShell back={<AuthBack />}>
+    <AuthShell back={<AuthBack href="/" />}>
       {/* .auth-orb */}
       <div className="mx-auto mb-5 h-[46px] w-[46px]">
         <Orb size={46} />
