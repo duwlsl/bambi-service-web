@@ -203,13 +203,7 @@ function DetailDataError({ onRetry }: { onRetry: () => void }) {
           className="w-[440px] max-w-full"
           icon={<IconAlert />}
           title="카드를 불러오지 못했어요"
-          description={
-            <>
-              네트워크 또는 서버 문제일 수 있어요.
-              <br />
-              잠시 후 다시 시도해 주세요.
-            </>
-          }
+          description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
           actions={[
             { label: "다시 시도", onClick: onRetry, variant: "primary" },
             { label: "홈 피드로", href: "/", variant: "ghost" },

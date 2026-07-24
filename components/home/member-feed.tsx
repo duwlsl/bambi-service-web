@@ -22,13 +22,7 @@ export function MemberFeed({ feed }: { feed: MemberFeedState & { refetch: () => 
         className="min-h-[320px]"
         icon={<IconAlert />}
         title="피드를 불러오지 못했어요"
-        description={
-          <>
-            일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요.
-            <br />
-            보고 있던 화면과 입력한 내용은 그대로 유지돼요.
-          </>
-        }
+        description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
         actions={[{ label: "다시 시도", onClick: feed.refetch, variant: "primary" }]}
       />
     );
@@ -40,13 +34,7 @@ export function MemberFeed({ feed }: { feed: MemberFeedState & { refetch: () => 
         className="min-h-[320px]"
         icon={<IconEmptyDoc />}
         title="아직 카드가 없어요"
-        description={
-          <>
-            관심 자료를 저장하면 카드가 만들어져 이 피드에 바로 나타나요.
-            <br />
-            상단의 ＋ 관심 자료로 첫 카드를 만들어 보세요.
-          </>
-        }
+        description="＋ 관심 자료에서 URL이나 내용을 저장하면 새 카드가 생성돼요."
       />
     );
   }
