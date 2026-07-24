@@ -478,13 +478,7 @@ function ReportDataError({ onRetry }: { onRetry: () => void }) {
           className="w-[440px] max-w-full"
           icon={<IconAlert />}
           title="브리핑을 불러오지 못했어요"
-          description={
-            <>
-              네트워크 또는 서버 문제일 수 있어요.
-              <br />
-              잠시 후 다시 시도해 주세요.
-            </>
-          }
+          description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
           actions={[
             { label: "다시 시도", onClick: onRetry, variant: "primary" },
             { label: "홈 피드로", href: "/", variant: "ghost" },
@@ -509,14 +503,10 @@ function ReportPreparing() {
           className="w-[460px] max-w-full"
           iconTone="brand"
           icon={<Orb size={22} className="motion-safe:animate-spin [animation-duration:3s]" />}
-          title="아직 정리하고 있어요"
+          title="브리핑을 정리하고 있어요"
           description={
             <div className="flex flex-col items-center gap-3">
-              <p>
-                밤사이 수집한 소식을 선별하고
-                <br />
-                근거를 정리하는 중이에요.
-              </p>
+              <p>완료되면 이 화면에서 바로 확인할 수 있어요.</p>
               <span className="block h-1.5 w-[180px] overflow-hidden rounded-full bg-secondary">
                 <span className="block h-full w-[58%] rounded-full bg-primary" />
               </span>

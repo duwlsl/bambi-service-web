@@ -32,13 +32,7 @@ export function FeedRec({ guest = false }: { guest?: boolean }) {
         className="min-h-[320px]"
         icon={<IconAlert />}
         title="피드를 불러오지 못했어요"
-        description={
-          <>
-            일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요.
-            <br />
-            보고 있던 화면과 입력한 내용은 그대로 유지돼요.
-          </>
-        }
+        description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
         actions={[{ label: "다시 시도", onClick: retry, variant: "primary" }]}
       />
     );
@@ -50,18 +44,9 @@ export function FeedRec({ guest = false }: { guest?: boolean }) {
         className="min-h-[320px]"
         icon={<IconEmptyDoc />}
         title="지금 보여드릴 공개 브리핑이 없어요"
-        description={
-          <>
-            추천할 콘텐츠가 아직 없거나 일시적으로 불러오지 못한 상태예요.
-            <br />
-            관심사를 조정하면 추천 범위가 넓어지고, 잠시 후 다시 확인할 수도 있어요.
-          </>
-        }
-        // 관심사 관리 CTA 링크 연결은 보류(§15 — Wiki 라우트 P1, /wiki 하드코딩 금지) → 문구만 노출.
-        actions={[
-          { label: "관심사 관리", variant: "ghost", disabled: true },
-          { label: "잠시 후 다시 확인", onClick: retry, variant: "primary" },
-        ]}
+        description="새로운 공개 브리핑이 준비되면 이곳에 표시돼요."
+        // 동작하지 않던 disabled '관심사 관리' CTA 제거. 실제 동작하는 '잠시 후 다시 확인'(retry)만 유지.
+        actions={[{ label: "잠시 후 다시 확인", onClick: retry, variant: "primary" }]}
       />
     );
   }
