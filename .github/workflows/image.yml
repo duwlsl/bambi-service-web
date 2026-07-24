@@ -69,5 +69,6 @@ jobs:
             echo "::error::CD_TRIGGER_PAT 시크릿 미등록 — 서버 자동배포 트리거 실패(이미지는 GHCR에 푸시됨). 임시로는 bambi-build의 'Deploy to server'를 수동 실행하세요."
             exit 1
           fi
-          gh workflow run deploy.yml -R hk-toss-final-project/bambi-build \
-            -f reason="auto: ${{ github.repository }}@${GITHUB_SHA:0:9}"
+          # REST 디스패치: gh workflow run 은 GraphQL 로 기본 브랜치를 조회해 fine-grained PAT 에서
+          # 실패(Resource not accessible) → Actions:write 만 쓰는 REST dispatch 를 직접 호출한다.
+          gh api repos/hk-toss-final-project/bambi-build/actions/workflows/deploy.yml/dispatches -f ref=main -f "inputs[reason]=auto: ${{ github.repository }}@${GITHUB_SHA:0:9}"
