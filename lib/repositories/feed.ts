@@ -1,4 +1,6 @@
+import { apiGet } from "@/lib/api-client";
 import { MOCK_POSTS, MOCK_REPORT_GROUPS, type FeedPost, type ReportGroup } from "@/lib/mock/feed";
+import type { CardResponse } from "@/types/feed";
 
 /**
  * 피드 데이터 repository — 화면 훅과 데이터 소스 사이의 단일 seam.
@@ -19,9 +21,18 @@ function resolveAbortable<T>(value: T, signal?: AbortSignal): Promise<T> {
   return Promise.resolve(value);
 }
 
-/** [피드] 탭 — 공개 추천 피드. 빈 배열이면 훅이 empty 로 정규화한다. */
+/** [피드] 탭(guest) — 공개 추천 피드(mock). 비로그인 홈에서만 쓴다. 빈 배열이면 훅이 empty 로 정규화한다. */
 export function fetchRecFeed(signal?: AbortSignal): Promise<FeedPost[]> {
   return resolveAbortable(MOCK_POSTS, signal);
+}
+
+/**
+ * [피드] 탭(member) — 로그인 사용자의 카드 피드. GET /api/feed(인증, 최신순).
+ * guest 피드는 위 mock 을 유지하고, member 피드만 이 함수로 실 API 를 쓴다(useMemberFeed 가 소비).
+ * 빈 배열(신규 계정 등)이면 훅이 empty 로 정규화한다.
+ */
+export function fetchMemberFeed(signal?: AbortSignal): Promise<CardResponse[]> {
+  return apiGet<CardResponse[]>("/api/feed", { signal });
 }
 
 /** [내 보고서] 탭 — 로그인 사용자 보고서 그룹. 빈 배열이면 훅이 empty 로 정규화한다. */
