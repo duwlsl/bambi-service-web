@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import type { FeedCardVM } from "@/types/feed";
 
 /**
@@ -7,8 +9,8 @@ import type { FeedCardVM } from "@/types/feed";
  * 백엔드가 주는 값만 렌더한다: 생성시각 · 제목 · 요약 · 왜 나에게 왔나(whyForYou) · 출처.
  * 작성자·좋아요·댓글·태그·saved 는 백엔드가 주지 않으므로 만들지 않는다(공개 mock PostCard 와 별개).
  *
- * 제목은 비링크 텍스트다: 실 카드 publicId 는 UUID 라 카드 단건 API(GET /api/cards/{publicId})
- * 연동 전에는 /report/[id] 서버 존재검증(mock registry)을 통과하지 못해 404 가 된다 → 링크 걸지 않는다.
+ * 제목은 /report/{publicId} 내부 링크다(카드 단건 API GET /api/cards/{publicId} 연동 완료).
+ * 제목만 링크로 감싸고(카드 전체를 감싸지 않음), 아래 sources 외부 링크와 중첩되지 않게 둔다.
  * 공통 카드 스타일(border·radius·타이포·reason dot)은 PostCard 와 맞춘다.
  */
 export function FeedCard({ card }: { card: FeedCardVM }) {
@@ -18,9 +20,11 @@ export function FeedCard({ card }: { card: FeedCardVM }) {
         <div className="mb-2 text-xs text-muted-foreground">{card.createdAtLabel}</div>
       )}
 
-      {/* 제목 — 비링크(카드 단건 API 전까지 죽은 링크 방지). */}
+      {/* 제목 — /report/{publicId} 내부 링크(publicId). 제목만 감싸 sources 외부 링크와 중첩되지 않는다. */}
       <h3 className="mb-2 text-lg leading-[1.45] font-bold tracking-[-0.01em] text-foreground">
-        {card.title}
+        <Link href={`/report/${card.publicId}`} className="hover:text-signal-ink">
+          {card.title}
+        </Link>
       </h3>
 
       <p className="mb-3 text-sm leading-[1.7] text-ink-mid">{card.summary}</p>
