@@ -1,47 +1,128 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import { Input } from "@/components/ui/input";
+import { ERROR_CODES } from "@/constants/errors";
+import { ApiError } from "@/lib/api-client";
+import { createBookmark } from "@/lib/repositories/bookmark";
+import type { CardResponse, CreateBookmarkRequest } from "@/types/feed";
 
 /**
- * 관심 자료 추가 모달 — 목업 #am-modal 1:1 (A4 시안).
- * 저장 = mock 수준(입력 리셋 + 닫기). 실제 저장 API는 계약 확정 후
- * lib/api-client 경유로 교체한다 (lib/mock/feed.ts 교체 지점 참조).
- * "저장하고 지금 분석 받기"는 목업대로 locked(무료 플랜 미제공).
+ * 관심 자료 추가 모달 — 목업 #am-modal 기반. 저장 = POST /api/bookmarks(인증).
+ * url·content 중 최소 하나 필수(공백만 입력은 빈 값), title 선택. 성공(201) 시 card 를 즉시 받아
+ * onSaved(card)로 상위에 알리고(홈은 member 피드 refetch), 입력 초기화 후 닫는다. 실패는 §4 공통 문구.
+ *
+ * guest 는 nav ＋버튼에서 requireAuth 가 GuestGateModal 로 가로채므로 이 모달은 열리지 않는다
+ * (열리는 시점은 항상 authenticated). "저장하고 지금 분석 받기"는 목업대로 locked(무료 플랜 미제공).
  */
-export function AddMaterialModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [value, setValue] = useState("");
+const FIELD_CLASS =
+  "h-[46px] rounded-[10px] bg-card px-3.5 text-sm text-foreground placeholder:text-low focus-visible:ring-[3px] focus-visible:ring-wash dark:bg-card";
 
-  // ESC 로 닫기
+const URL_MAX = 2048;
+const TITLE_MAX = 500;
+
+/**
+ * 저장(POST /api/bookmarks) 문맥의 오류 문구 — 도메인 override.
+ * 전역 매핑(constants/errors.ts · resolveErrorMessage)은 회원가입 등 다른 도메인과 공유하므로
+ * 바꾸지 않고, 저장 문맥에서만 문구를 재정의한다. 전역 DUPLICATE_RESOURCE 는
+ * "이미 가입된 이메일이에요."라 URL 중복 저장(409)에 맞지 않는다 → 저장용 문구로 override.
+ */
+function resolveBookmarkSaveError(code: string): string {
+  if (code === ERROR_CODES.DUPLICATE_RESOURCE) return "이미 저장한 자료예요.";
+  return "자료를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.";
+}
+
+export function AddMaterialModal({
+  open,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSaved?: (card: CardResponse) => void;
+}) {
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // url·content 중 하나 이상 비공백일 때만 제출 가능(백엔드 검증과 동일 기준). 공백만 입력은 무효.
+  const canSubmit = (url.trim() !== "" || content.trim() !== "") && !submitting;
+  const hasError = errorMessage !== null;
+
+  // ESC 로 닫기 — 제출 중에는 닫지 않는다(중복 제출·유실 방지). setState 는 콜백 안에서만 호출.
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !submitting) {
+        setUrl("");
+        setTitle("");
+        setContent("");
+        setErrorMessage(null);
+        onClose();
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, submitting, onClose]);
 
   if (!open) return null;
 
+  function resetFields() {
+    setUrl("");
+    setTitle("");
+    setContent("");
+    setErrorMessage(null);
+  }
+
   function close() {
-    setValue("");
+    if (submitting) return; // 제출 중 닫기 차단
+    resetFields();
     onClose();
   }
 
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!canSubmit) return; // 무효 입력·제출 중 → 무시(중복 제출 방지)
+
+    setErrorMessage(null);
+    setSubmitting(true);
+
+    // optional 필드는 공백이면 전송에서 생략한다(계약: url?/title?/content?).
+    const req: CreateBookmarkRequest = {};
+    if (url.trim() !== "") req.url = url.trim();
+    if (title.trim() !== "") req.title = title.trim();
+    if (content.trim() !== "") req.content = content.trim();
+
+    try {
+      const data = await createBookmark(req);
+      onSaved?.(data.card); // 홈: member 피드 refetch → 새 카드 반영
+      resetFields();
+      setSubmitting(false);
+      onClose();
+    } catch (err) {
+      // 공통 client 가 ApiError(code)로 던진다. 서버 message 원문은 노출하지 않는다(§4).
+      const code = err instanceof ApiError ? err.code : ERROR_CODES.INTERNAL_ERROR;
+      setErrorMessage(resolveBookmarkSaveError(code));
+      setSubmitting(false); // 재시도 가능하도록 재활성화(입력 유지)
+    }
+  }
+
   return (
-    // .modal-bg — 배경 클릭 시 닫기
+    // .modal-bg — 배경 클릭 시 닫기(제출 중 제외)
     <div
       className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(12,14,17,.45)]"
       onClick={close}
     >
       {/* .modal */}
-      <div
+      <form
         role="dialog"
         aria-modal="true"
         aria-label="관심 자료 추가"
         onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
         className="w-[460px] max-w-[calc(100%-48px)] rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[0_24px_60px_rgba(10,12,15,.28)]"
       >
         {/* .mhead */}
@@ -50,8 +131,9 @@ export function AddMaterialModal({ open, onClose }: { open: boolean; onClose: ()
           <button
             type="button"
             onClick={close}
+            disabled={submitting}
             aria-label="닫기"
-            className="rounded-[7px] px-[7px] py-1 text-sm text-muted-foreground hover:bg-background hover:text-foreground"
+            className="rounded-[7px] px-[7px] py-1 text-sm text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-50"
           >
             ✕
           </button>
@@ -61,19 +143,73 @@ export function AddMaterialModal({ open, onClose }: { open: boolean; onClose: ()
           링크나 메모를 저장해 두면, AI가 나를 이해하고 브리핑을 고르는 데 활용해요.
         </p>
 
-        <Input
-          type="text"
-          placeholder="링크(URL) 붙여넣기 또는 메모 입력"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          autoFocus
-          className="h-[46px] rounded-[10px] bg-card px-3.5 text-sm text-foreground placeholder:text-low focus-visible:ring-[3px] focus-visible:ring-wash dark:bg-card"
-        />
-        <div className="h-4" />
+        {/* 링크(URL) */}
+        <div className="mb-3 text-left">
+          <label htmlFor="am-url" className="mb-[7px] block text-[13px] font-semibold text-foreground">
+            링크(URL)
+          </label>
+          <Input
+            id="am-url"
+            type="url"
+            inputMode="url"
+            placeholder="https://example.com/article"
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setErrorMessage(null); // 입력 변경 시 이전 오류 초기화
+            }}
+            maxLength={URL_MAX}
+            disabled={submitting}
+            autoFocus
+            className={FIELD_CLASS}
+          />
+        </div>
+
+        {/* 제목(선택) */}
+        <div className="mb-3 text-left">
+          <label htmlFor="am-title" className="mb-[7px] block text-[13px] font-semibold text-foreground">
+            제목 <span className="font-normal text-muted-foreground">(선택)</span>
+          </label>
+          <Input
+            id="am-title"
+            type="text"
+            placeholder="제목을 입력하면 카드에 함께 저장돼요"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setErrorMessage(null);
+            }}
+            maxLength={TITLE_MAX}
+            disabled={submitting}
+            className={FIELD_CLASS}
+          />
+        </div>
+
+        {/* 메모 · 본문 */}
+        <div className="mb-1.5 text-left">
+          <label htmlFor="am-content" className="mb-[7px] block text-[13px] font-semibold text-foreground">
+            메모 · 본문
+          </label>
+          <textarea
+            id="am-content"
+            placeholder="링크 없이 메모만 저장할 수도 있어요"
+            value={content}
+            onChange={(e) => {
+              setContent(e.target.value);
+              setErrorMessage(null);
+            }}
+            disabled={submitting}
+            rows={3}
+            className="min-h-[84px] w-full rounded-[10px] border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-low focus-visible:ring-[3px] focus-visible:ring-wash disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card"
+          />
+        </div>
+        {/* 검증 힌트 */}
+        <p className="mb-3 text-[11.5px] text-muted-foreground">
+          링크(URL)나 메모 중 하나는 입력해 주세요.
+        </p>
 
         {/* .amopt.on — 저장하기 (기본 선택, 유일한 선택지) */}
         <div className="mb-[9px] flex items-start gap-[11px] rounded-xl border border-primary bg-wash px-3.5 py-[13px]">
-          {/* .amr (선택됨) */}
           <span className="relative mt-px h-4 w-4 shrink-0 rounded-full border-[1.5px] border-primary after:absolute after:inset-[3px] after:rounded-full after:bg-primary after:content-['']" />
           <div>
             <div className="text-[13.5px] font-bold text-foreground">저장하기</div>
@@ -102,25 +238,37 @@ export function AddMaterialModal({ open, onClose }: { open: boolean; onClose: ()
           </div>
         </div>
 
+        {/* 에러 — §4 공통 문구(코드 기준, 서버 원문 비노출) */}
+        {hasError && (
+          <p
+            role="alert"
+            aria-live="assertive"
+            className="mb-2.5 rounded-[10px] border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {errorMessage}
+          </p>
+        )}
+
         {/* .mfoot */}
         <div className="mt-[18px] flex justify-end gap-[9px]">
           <button
             type="button"
             onClick={close}
-            className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-border bg-card px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-foreground hover:bg-background"
+            disabled={submitting}
+            className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-border bg-card px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-foreground hover:bg-background disabled:opacity-50"
           >
             취소
           </button>
-          {/* 저장 — mock: 닫기만 (실 API 연결 지점) */}
+          {/* 저장 — POST /api/bookmarks. 제출 중·무효 입력 시 비활성(중복 제출 방지). */}
           <button
-            type="button"
-            onClick={close}
-            className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-primary bg-primary px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
+            type="submit"
+            disabled={!canSubmit}
+            className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-primary bg-primary px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96] disabled:opacity-50"
           >
-            저장
+            {submitting ? "저장 중…" : "저장"}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
