@@ -55,3 +55,19 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'http://localhost' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # main 머지 → GHCR 푸시 성공 시 서버 자동 배포 (bambi-build Deploy 디스패치).
+      #  - CD_TRIGGER_PAT: fine-grained PAT(bambi-build 한정, Actions Read+Write). 우석이 발급·등록.
+      #  - 미등록이면 여기서 크게 실패시킨다(이미지 푸시는 이미 성공한 뒤) — "머지=배포" 침묵 실패 방지.
+      #  - watchtower 폴링의 침묵 정지(07-24 사건)를 대체하는 푸시 기반 CD.
+      - name: Trigger server deploy
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.CD_TRIGGER_PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::CD_TRIGGER_PAT 시크릿 미등록 — 서버 자동배포 트리거 실패(이미지는 GHCR에 푸시됨). 임시로는 bambi-build의 'Deploy to server'를 수동 실행하세요."
+            exit 1
+          fi
+          gh workflow run deploy.yml -R hk-toss-final-project/bambi-build \
+            -f reason="auto: ${{ github.repository }}@${GITHUB_SHA:0:9}"
