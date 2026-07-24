@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { CardDetailScreen } from "@/components/report/card-detail-screen";
 import { ReportScreen } from "@/components/report/report-screen";
 import { reportRouteExists } from "@/lib/mock/report";
+import { isUuid } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "AlphaCatcher — 콘텐츠 상세",
@@ -10,24 +12,20 @@ export const metadata: Metadata = {
 };
 
 /**
- * 카드(리포트) 상세 (P0-4) — /report/[id].
+ * 카드(리포트) 상세 — /report/[id]. 서버는 **id 종류만** 판정한다(인증 API 호출 없음 — 토큰은 localStorage).
  *
- * 경로 종류(lib/mock/report.ts 레지스트리):
- * - public("post-fx-trigger" 등): 고유 공개 URL. guest·member 가 동일하게 본다(차이는 인증 액션 실행뿐).
- * - personal("today"): 로그인 사용자 개인 경로. guest 는 접근 제한(본문 미노출). → allowGuest=false.
- * - 미등록 id("abc" 등): 서버에서 notFound() → app/not-found.tsx (HTTP 404 유지).
+ * 1) 등록된 mock id(REPORT_REGISTRY, post-* · today) → 기존 mock 상세 ReportScreen (회귀 유지)
+ * 2) 정상 UUID 형식 → 실 카드 상세 CardDetailScreen (클라이언트에서 인증 후 GET /api/cards/{publicId})
+ * 3) 비-UUID 미등록 id(/report/unknown 등) → notFound() (기존 HTTP 404 유지)
  *
- * 서버는 등록 여부만 확인해 404 를 유지하고, 등록된 id 의 데이터 상태
- * (loading / ready / preparing / error / refetch)는 클라이언트 훅(useReportDetail)이 담당한다.
- *
- * TODO(실 API 연동): 지금은 mock 레지스트리로 존재만 확인한다(토큰이 localStorage 라 서버가 인증을 모름).
- *   실 API 에서는 서버가 요청자와 대상 보고서를 조회해 소유권·visibility 로 인가하고 404 전략을
- *   재설계한다 — private 본문이 비소유자에게 전송(직렬화)되지 않도록 서버에서 차단한다.
+ * 404 한계: 정상 형식이지만 존재하지 않는 UUID 는 서버가 (localStorage 토큰·소유자 스코프라) 존재를
+ * 확인할 수 없어 여기서 걸러내지 못한다 → CardDetailScreen 이 렌더된 뒤 클라이언트 API 404 로
+ * 화면 내부 Not Found 를 표시한다(HTTP 응답 자체는 200). 잘못된 UUID 형식은 아래 3)으로 실제 404.
  */
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!reportRouteExists(id)) notFound();
 
-  // 등록된 id — 데이터 상태는 ReportScreen 이 인증 상태와 함께 클라이언트에서 분기한다.
-  return <ReportScreen id={id} />;
+  if (reportRouteExists(id)) return <ReportScreen id={id} />;
+  if (isUuid(id)) return <CardDetailScreen publicId={id} />;
+  notFound();
 }
