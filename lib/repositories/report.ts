@@ -1,4 +1,7 @@
+import { ERROR_CODES } from "@/constants/errors";
+import { ApiError, apiGet } from "@/lib/api-client";
 import { REPORT_REGISTRY, type ReportDetail } from "@/lib/mock/report";
+import type { CardResponse } from "@/types/feed";
 
 /**
  * 리포트 상세 데이터 repository — 단일 seam.
@@ -38,4 +41,34 @@ export function fetchReport(id: string, signal?: AbortSignal): Promise<ReportRes
     allowGuest: route.kind === "public",
   };
   return resolveAbortable(result, signal);
+}
+
+/**
+ * 실 카드 단건 조회 결과 — 화면 상태로 정규화한다.
+ * 404(NOT_FOUND: 존재하지 않음/비소유/잘못된 UUID)는 notFound 결과로,
+ * 그 외(401·500·네트워크)는 throw 하여 훅이 error 로 처리한다.
+ */
+export type CardDetailResult =
+  | { status: "ready"; card: CardResponse }
+  | { status: "notFound" };
+
+/**
+ * 실 UUID 카드 단건 상세 — GET /api/cards/{publicId}(인증·소유자 전용).
+ * mock 상세(fetchReport)와 공존한다: mock id 는 위 함수, 실 UUID 는 이 함수를 쓴다.
+ * 대외 식별자는 publicId(UUID)만 사용한다(내부 순번 id 금지).
+ */
+export async function fetchCardDetail(
+  publicId: string,
+  signal?: AbortSignal,
+): Promise<CardDetailResult> {
+  try {
+    const card = await apiGet<CardResponse>(`/api/cards/${publicId}`, { signal });
+    return { status: "ready", card };
+  } catch (err) {
+    // API 404(NOT_FOUND)는 오류가 아니라 화면 상태(notFound)로 정규화. 나머지는 훅 error 로 전달.
+    if (err instanceof ApiError && err.code === ERROR_CODES.NOT_FOUND) {
+      return { status: "notFound" };
+    }
+    throw err;
+  }
 }
