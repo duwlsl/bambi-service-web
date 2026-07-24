@@ -212,18 +212,19 @@ process.env.NEXT_PUBLIC_API_URL
 
 ### 원칙
 
-- **MUST NOT**: 컴포넌트·유틸 어디에도 `localhost`, IP, 배포 도메인을 **직접 작성하지 않는다.**
-- **MUST**: 모든 API 요청 URL은 `NEXT_PUBLIC_API_URL` 기준으로 생성한다.
-- **MUST**: 환경변수 누락 시 **원인을 알 수 있는 오류**를 던진다. (조용히 `undefined`로 요청 보내지 않기)
+- **MUST NOT**: 컴포넌트·유틸·repository 어디에도 `localhost`, IP, 배포 도메인을 **직접 작성하지 않는다.**
+- **MUST**: 모든 API 요청은 공통 api-client를 통하고, base URL 결정은 **`getApiBaseUrl()` 1곳에서만** 한다.
+- **same-origin fallback (MUST)**: `NEXT_PUBLIC_API_URL`이 있으면(trim 후 비어 있지 않으면) 그 origin을 **우선** 사용한다. **없거나 빈 문자열·공백뿐이면 빈 base → `/api/...` 상대경로로 현재 서비스 origin(same-origin)에 요청**한다. 운영의 `/api` 전달은 **nginx 프록시**를 전제로 한다. (throw 하지 않는다)
+- **로컬 개발**: 필요 시 `.env.local`의 `NEXT_PUBLIC_API_URL`(예: `http://localhost`)을 사용할 수 있다.
 - **MUST NOT**: `.env.local` 커밋 금지. `.env.example`에는 **키만** 기록.
-- **MUST NOT**: `NEXT_PUBLIC_*`에 **비밀값을 넣지 않는다.** (브라우저에 그대로 노출됨)
+- **MUST NOT**: `NEXT_PUBLIC_*`에 **비밀값을 넣지 않는다.** (브라우저에 그대로 노출됨) 실제 운영 URL·quick tunnel 주소를 문서·소스에 넣지 않는다.
 
 ### 환경 값
 
 | 환경 | 값 | 상태 |
 |---|---|---|
 | 로컬 | **`NEXT_PUBLIC_API_URL=http://localhost`** (nginx 80 → backend 8080). `/api`는 base가 아니라 경로에 → `http://localhost/api/health` = `{"status":"UP"}` | **실측 확인됨** |
-| 배포 | **`https://our-faster-psychiatry-officer.trycloudflare.com`** (Cloudflare Tunnel 경유, `/api/health` 응답 확인됨). **Vercel 환경변수에만 설정** — 레포 하드코딩·커밋 금지 | **임시** — 팀장이 "주소 바뀔 수 있음" 명시, 변경 가능성 전제 유지. GCP 정식 배포 시 교체 예정 |
+| 배포(운영) | **`NEXT_PUBLIC_API_URL` 비움** → same-origin 상대경로 `/api/*`. 운영 nginx가 같은 origin의 `/api/*`를 service-api로 전달. 정식 배포는 `.github/workflows/image.yml`(GCP 이미지) 방식 | **확정** (2026-07-24, 우석 정책·배포 승인) |
 
 > **`/api` prefix — 확정 (2026-07-15 프론트 결정): `NEXT_PUBLIC_API_URL`은 origin(scheme+host)까지만 담고 `/api`는 요청 경로에 둔다.**
 >
@@ -235,9 +236,9 @@ process.env.NEXT_PUBLIC_API_URL
 
 ### 배포
 
-- **Vercel.** 레포 연결 시 push마다 자동 배포.
-- 배포 환경변수는 Vercel 프로젝트 설정에 등록. **레포에 커밋 금지.**
-- 현재 배포 API origin: **`https://our-faster-psychiatry-officer.trycloudflare.com`** (Cloudflare Tunnel, `/api/health` 응답 확인됨). **임시 주소** — 팀장이 변경 가능성을 명시했고 GCP 정식 배포 시 교체한다. Vercel 환경변수 `NEXT_PUBLIC_API_URL`(origin-only)에만 넣고 **레포에 하드코딩·커밋하지 않는다.**
+- **정식 배포:** `.github/workflows/image.yml` → GHCR 이미지 빌드 → bambi-build 서버 배포(GCP). 이미지 빌드는 `NEXT_PUBLIC_API_URL`을 **비운 채** 수행 → 런타임 same-origin `/api/*`.
+- 운영은 **nginx가 같은 origin의 `/api/*`를 service-api로 전달**하는 것을 전제로 한다.
+- 다른 origin의 절대 API를 써야 하는 환경에서만 배포 변수 `NEXT_PUBLIC_API_URL`(origin-only)을 설정한다. **레포에 실제 운영 URL·tunnel 주소를 하드코딩·커밋하지 않는다.** (GitHub 변수 관리는 우석 담당)
 
 ---
 
@@ -458,10 +459,15 @@ main(또는 develop) 최신화 (git pull)
 ### 팀 확인 대기
 - [ ] **Google 로그인 버튼** 노출 여부 (§7-2)
 - [ ] **홈 피드 / 카드 상세 / 관심 자료 저장 API** 경로·스키마 (영현 도메인 착수 전)
-- [ ] **배포용 `NEXT_PUBLIC_API_URL`** 확정 주소 (우석 제공 예정)
 
 ### 프론트 내부 결정 후 문서화
 - (없음 — 아래 「해소 완료 · 프론트 내부 결정」 참조)
+
+### ✅ 해소 완료 (2026-07-24) — 배포 API base (same-origin fallback)
+
+**팀 결정 (우석 정책·배포 승인)** — 배포용 `NEXT_PUBLIC_API_URL` 절대 주소를 받는 대신 **same-origin fallback**으로 확정했다 (§6).
+
+- ~~배포용 `NEXT_PUBLIC_API_URL` 확정 주소 (우석 제공 예정)~~ → **운영 빌드에서는 `NEXT_PUBLIC_API_URL`을 비운다.** 프론트는 same-origin `/api/*` 상대경로를 쓰고, 운영 nginx가 `/api/*`를 `service-api`로 프록시한다. base 결정은 `getApiBaseUrl()` 1곳(값 있으면 그 origin, 없으면 빈 base). 정식 배포는 `.github/workflows/image.yml`(GCP 이미지, 기본값 제거로 빈값 빌드). **GitHub 변수 `NEXT_PUBLIC_API_URL` 제거는 우석이 PR 머지 시점에 처리.**
 
 ### ✅ 해소 완료 (2026-07-21) — 비로그인 guest 정책
 
