@@ -229,7 +229,11 @@ function TabButton({
       aria-selected={active}
       aria-controls={`panel-${id}`}
       onClick={onSelect}
-      className={`focus-ring flex-1 rounded-[6px] text-center text-[14.5px] font-semibold ${
+      // 포커스 링: 공통 .focus-ring(outline 2px + offset 2px)은 tablist 의 overflow-hidden 에 바깥이 잘려
+      // 두 탭 사이 세로선처럼 보인다. 공통 클래스는 그대로 쓰고(색·굵기·forced-colors 대응 유지) 이 홈 탭에서만
+      // outline-offset 을 -2px 로 덮어써 링을 버튼 내부에 그린다 → 부모에 안 잘리고 포커스된 탭 전체를 감싼다.
+      // (utilities 레이어가 components 의 .focus-ring 보다 뒤라 offset 만 override. 선택 탭 하단 밑줄은 span after 로 유지.)
+      className={`focus-ring flex-1 rounded-[6px] text-center text-[14.5px] font-semibold focus-visible:[outline-offset:-2px] ${
         active ? "text-foreground" : "text-muted-foreground hover:text-ink-mid"
       }`}
     >
