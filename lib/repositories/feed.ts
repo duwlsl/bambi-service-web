@@ -1,5 +1,5 @@
 import { apiGet } from "@/lib/api-client";
-import { MOCK_POSTS, MOCK_REPORT_GROUPS, type FeedPost, type ReportGroup } from "@/lib/mock/feed";
+import { MOCK_POSTS, type FeedPost } from "@/lib/mock/feed";
 import type { CardResponse } from "@/types/feed";
 
 /**
@@ -33,9 +33,4 @@ export function fetchRecFeed(signal?: AbortSignal): Promise<FeedPost[]> {
  */
 export function fetchMemberFeed(signal?: AbortSignal): Promise<CardResponse[]> {
   return apiGet<CardResponse[]>("/api/feed", { signal });
-}
-
-/** [내 보고서] 탭 — 로그인 사용자 보고서 그룹. 빈 배열이면 훅이 empty 로 정규화한다. */
-export function fetchMyReports(signal?: AbortSignal): Promise<ReportGroup[]> {
-  return resolveAbortable(MOCK_REPORT_GROUPS, signal);
 }
