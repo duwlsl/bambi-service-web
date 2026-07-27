@@ -47,9 +47,17 @@
 - **인증 API는 실측 확정** → 로그인/회원가입은 즉시 구현 가능.
 - **피드/카드 상세 API는 미확정** (영현 도메인 API 착수 전). **경로·스키마를 추측해서 만들지 말 것.** 확정 전까지 화면 구조·상태 처리까지만 진행하고 데이터 연결부는 확인 요청.
 
+### ⚡ 2026-07-27 범위 변경 (루트 CLAUDE.md §정보구조 확정)
+
+- **P0 승격**: `home-my-reports.html`(홈 [내 보고서] — PR #16으로 기본 탭이 됨) · `wiki.html`(관심사 · LLM Wiki — 상단 AI 관심사 + 하단 내 저장 자료 결합 화면으로 Week2 구현)
+- **화면 폐기**: `library.html`(지식창고) — 홈 [내 보고서]와 데이터가 동일. 필터는 홈 탭 상단, 검색은 글로벌 검색바, 관심사별 모아보기는 관심사 화면으로 흡수. 목업 파일은 레이아웃 참고용으로만 남긴다.
+- **Week3 대기**: `saved.html`(보관함 → **"북마크"** 개명 = 남의 공개 보고서 스크랩) · `profile-*.html` — 공개 전환 API 이후. 그 전까지 내비에서 숨김.
+- **UI 노출 금지 용어**: "트리거" · "조회수" — 백엔드에 없는 개념(관심사·score만 존재).
+- **제품 모델**: 저장 ≠ 보고서 생성. 저장은 AI 요약·분류까지, 보고서는 정기 브리핑/온디맨드 생성으로만.
+
 ### P1 — 목업만 두고 **구현하지 않는다 (MUST NOT)**
 
-`search.html` · `wiki.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · `library.html` · `home-my-reports.html` · `settings.html` · `onboarding.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
+`search.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · `settings.html` · `onboarding.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
 
 > 목업에 있다는 이유로 구현하지 않는다. 범위 확장이 필요하면 먼저 보고한다.
 > 단, **비로그인 guest 최소 UI(guest 헤더 · 피드 단일 탭 · 가입 유도 모달 · 상세 Sticky CTA)는 P1이 아니라 P0**다 (§15 2026-07-21 결정).

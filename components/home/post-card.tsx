@@ -134,9 +134,7 @@ export function PostCard({ post, guest = false }: { post: FeedPost; guest?: bool
                 {post.likes}
               </b>
             </button>
-            <span className="inline-flex items-center gap-1.5 rounded-lg px-[11px] py-[9px] text-[12.5px] text-muted-foreground">
-              조회 <b className="font-semibold text-ink-mid">{post.views}</b>
-            </span>
+            {/* 조회수 미노출 — 집계 백엔드가 범위 밖(07-27 확정). FeedPost.views 는 mock 데이터에만 남김. */}
             {/* ↗ 공유 — 인증 필요 (requireAuth). span→button 으로 변경(접근성) */}
             <button
               type="button"

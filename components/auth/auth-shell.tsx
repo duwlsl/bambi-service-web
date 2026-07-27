@@ -56,7 +56,7 @@ export function AuthShell({
               환율·오픈소스 LLM·보유 종목이 오늘의 핵심. 각 항목은 왜 골랐는지 근거와 함께
               정리했어요.
             </div>
-            <PreviewRow n="01" title="원/달러 환율 0.8% 하락 — 트리거 충족" meta="#환율 · 신뢰도 높음" />
+            <PreviewRow n="01" title="원/달러 환율 0.8% 하락 — 급변동 감지" meta="#환율 · 신뢰도 높음" />
             <PreviewRow n="02" title="오픈소스 LLM 릴리즈 2건" meta="#AI · 신뢰도 높음" />
             <PreviewRow n="03" title="관심 노트북 12% 할인" meta="#쇼핑 · 3개월 최저가" />
           </div>
