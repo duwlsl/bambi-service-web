@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
 import { AddMaterialModal } from "@/components/home/add-material-modal";
-import { FeedMine } from "@/components/home/feed-mine";
 import { FeedRec } from "@/components/home/feed-rec";
 import { GuestSignupPanel } from "@/components/home/guest-signup-panel";
 import { HomeNav } from "@/components/home/home-nav";
@@ -36,11 +35,15 @@ export function HomeScreen() {
 
 /** 실제 홈 렌더 — member/guest 만 도달(loading·error 는 상위에서 처리). */
 function HomeView({ isMember }: { isMember: boolean }) {
-  const [tab, setTab] = useState<HomeTab>("rec"); // 기본: 피드
+  // 원시 tab 은 member 의 선택만 담는다(기본 = 내 보고서). guest 는 [내 보고서] 탭이 없으므로
+  // 유효 탭을 항상 "rec"(공개 피드)로 강제한다 → effectiveTab 하나를 aria-selected·hidden·렌더 분기에
+  // 공통 사용해 "선택된 탭 = 표시되는 패널"이 항상 일치한다. member↔guest 전환 동기화 effect 불필요.
+  const [tab, setTab] = useState<HomeTab>("mine");
   const [amOpen, setAmOpen] = useState(false);
-  // member [피드] 탭 데이터를 HomeView 가 소유한다 → 저장 성공 시 refetch 를 저장 모달과 공유(§4).
+  // member [내 보고서] 탭 데이터를 HomeView 가 소유한다 → 저장 성공 시 refetch 를 저장 모달과 공유(§4).
   // guest 는 useMemberFeed 내부 enabled=false 라 /api/feed 를 호출하지 않는다.
   const memberFeed = useMemberFeed();
+  const effectiveTab: HomeTab = isMember ? tab : "rec";
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,25 +65,26 @@ function HomeView({ isMember }: { isMember: boolean }) {
               className="sticky top-4 z-20 mb-4 flex overflow-hidden rounded-[14px] border border-border bg-card"
             >
               {isMember && (
-                <TabButton id="mine" active={tab === "mine"} onSelect={() => setTab("mine")}>
+                <TabButton id="mine" active={effectiveTab === "mine"} onSelect={() => setTab("mine")}>
                   내 보고서
                 </TabButton>
               )}
-              <TabButton id="rec" active={!isMember || tab === "rec"} onSelect={() => setTab("rec")}>
+              <TabButton id="rec" active={effectiveTab === "rec"} onSelect={() => setTab("rec")}>
                 피드
               </TabButton>
             </div>
 
-            <div role="tabpanel" id="panel-rec" aria-labelledby="tab-rec" hidden={isMember && tab !== "rec"}>
-              {/* guest → 공개 mock 피드 유지 / member → GET /api/feed 실 데이터. */}
-              {isMember ? <MemberFeed feed={memberFeed} /> : <FeedRec guest />}
-            </div>
-            {/* FeedMine — 개인 데이터라 member 에서만 렌더 */}
+            {/* [내 보고서] — 개인 데이터(GET /api/feed)라 member 에서만 렌더. tab 순서(내 보고서→피드)와 DOM 순서 일치. */}
             {isMember && (
-              <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine" hidden={tab !== "mine"}>
-                <FeedMine />
+              <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine" hidden={effectiveTab !== "mine"}>
+                <MemberFeed feed={memberFeed} />
               </div>
             )}
+            {/* [피드] — READY+PUBLIC 공개 보고서 mock. member·guest 공통(개인 '나만 보기' 블록은 FeedRec 에서 제거).
+                guest 는 PostCard 개인화 신호(추천 사유·보관 상태·본인 강조)만 숨긴다 — 액션 로그인 게이트는 requireAuth 담당. */}
+            <div role="tabpanel" id="panel-rec" aria-labelledby="tab-rec" hidden={effectiveTab !== "rec"}>
+              <FeedRec guest={!isMember} />
+            </div>
           </main>
 
           {/* 우측 레일 — member 는 핵심 신호·추천 토픽, guest 는 가입 유도 패널 */}
@@ -88,7 +92,7 @@ function HomeView({ isMember }: { isMember: boolean }) {
         </div>
       </div>
 
-      {/* 저장 성공 시 member 피드를 재조회해 새 카드를 즉시 반영(§4 refetch). guest 는 모달이 열리지 않는다. */}
+      {/* 저장 성공 시 member 내 보고서 목록을 재조회해 새 카드를 즉시 반영(§4 refetch). guest 는 모달이 열리지 않는다. */}
       <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} onSaved={memberFeed.refetch} />
     </div>
   );
