@@ -55,9 +55,22 @@
 - **UI 노출 금지 용어**: "트리거" · "조회수" — 백엔드에 없는 개념(관심사·score만 존재).
 - **제품 모델**: 저장 ≠ 보고서 생성. 저장은 AI 요약·분류까지, 보고서는 정기 브리핑/온디맨드 생성으로만.
 
+### ⚡ 2026-07-28 범위 변경 — 설정 화면 P1 → 구현 승인 (우석)
+
+- **`settings.html` = P1 「구현하지 않는다」 목록에서 제외.** `/settings` 로 구현한다(PR #21).
+  범위는 **실제로 지원 가능한 것만** — 화면 테마(라이트·다크·시스템) · 계정 이메일 표시(읽기 전용) · 로그아웃.
+  목업의 이메일·비밀번호 변경 · 회원 탈퇴 · 브리핑 시간 · 알림 · 공개 범위 · 요금제는 **API·정책 미확정이라 제외**한다
+  (동작하지 않는 토글·버튼을 만들지 않는다).
+- **테마 저장 키 = `bambi.theme`** (`lib/theme.ts` 의 `THEME_STORAGE_KEY` 1곳에만 정의). 토큰 키와 같은 `bambi.` 네임스페이스.
+  기본값 `system`. `documentElement` 에 `.dark` 를 토글하고, `app/layout.tsx` 의 인라인 스크립트가 paint 전에 선적용해 FOUC 를 막는다.
+- ⚠️ **다크 모드가 이때 처음 실제로 켜졌다.** 그전까지 `.dark` 를 토글하는 코드가 없어 앱은 사실상 라이트 전용이었다.
+  기본값이 `system` 이므로 **OS 가 다크인 사용자는 전 화면이 다크로 바뀐다.** 새 화면을 만들 때 다크 대비를 함께 확인할 것.
+
 ### P1 — 목업만 두고 **구현하지 않는다 (MUST NOT)**
 
-`search.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · `settings.html` · `onboarding.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
+`search.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · `onboarding.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
+
+> `settings.html` 은 2026-07-28 우석 승인으로 이 목록에서 빠졌다 (아래 범위 변경 참조).
 
 > 목업에 있다는 이유로 구현하지 않는다. 범위 확장이 필요하면 먼저 보고한다.
 > 단, **비로그인 guest 최소 UI(guest 헤더 · 피드 단일 탭 · 가입 유도 모달 · 상세 Sticky CTA)는 P1이 아니라 P0**다 (§15 2026-07-21 결정).
