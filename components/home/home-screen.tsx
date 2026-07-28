@@ -51,9 +51,20 @@ function HomeView({ isMember }: { isMember: boolean }) {
   const reportJobs = useMyReportJobs();
   const preparing = reportJobs.status === "ready" ? reportJobs.preparing : [];
   const failed = reportJobs.status === "ready" ? reportJobs.failed : [];
-  // 완전 Empty 온보딩 조건: 작업 조회가 끝났고(loading 아님) PREPARING·ERROR 0건일 때만 READY 목록의 Empty 를 온보딩으로 대체한다.
-  // (READY 가 0건인지는 MemberFeed 가 자신의 status==="empty" 로 판단 — loading 중엔 skeleton 이라 Empty 가 먼저 깜빡이지 않는다.)
-  const noJobs = reportJobs.status !== "loading" && preparing.length === 0 && failed.length === 0;
+  // READY 목록이 비었을 때 그 자리에 무엇을 넣을지(READY 가 0건인지는 MemberFeed 가 자신의 status==="empty" 로 판단):
+  //  - 작업 조회 성공 + PREPARING·ERROR 0건 → 완전 Empty 온보딩
+  //  - PREPARING·ERROR 가 있음            → null (위 슬롯/카드로 충분하니 아무것도 안 그린다)
+  //  - 작업 조회 중                        → null (Empty 문구가 먼저 깜빡이지 않게 비워 둔다)
+  //  - 작업 조회 실패                      → undefined → MemberFeed 기본 Empty.
+  //    PREPARING·ERROR 유무를 알 수 없는 상태라 "받은 보고서가 없어요" 온보딩을 단정하지 않는다.
+  const myReportsEmptyState =
+    reportJobs.status === "ready"
+      ? preparing.length === 0 && failed.length === 0
+        ? <EmptyMyReports onAddMaterial={() => setAmOpen(true)} />
+        : null
+      : reportJobs.status === "loading"
+        ? null
+        : undefined;
   const effectiveTab: HomeTab = isMember ? tab : "rec";
 
   return (
@@ -91,10 +102,7 @@ function HomeView({ isMember }: { isMember: boolean }) {
                 {/* 내 보고서 = PREPARING(처리중) → ERROR(생성 실패) → READY(완료 카드) 순. 각 섹션은 해당 상태가 있을 때만 렌더. */}
                 <PreparingReports reports={preparing} />
                 <FailedReports reports={failed} />
-                <MemberFeed
-                  feed={memberFeed}
-                  emptyState={noJobs ? <EmptyMyReports onAddMaterial={() => setAmOpen(true)} /> : null}
-                />
+                <MemberFeed feed={memberFeed} emptyState={myReportsEmptyState} />
               </div>
             )}
             {/* [피드] — READY+PUBLIC 공개 보고서 mock. member·guest 공통(개인 '나만 보기' 블록은 FeedRec 에서 제거).
