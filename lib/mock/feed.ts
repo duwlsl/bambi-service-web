@@ -47,9 +47,10 @@ export const MOCK_NAV = {
  * 정보구조 확정(07-27, 루트 CLAUDE.md §정보구조): 지식창고 삭제(홈 [내 보고서]와 동일 데이터),
  * 북마크(구 보관함=스크랩)·프로필은 SNS 공개 전환 API가 생기는 Week3에 다시 노출한다.
  */
-export const MOCK_MENU: { icon: string; label: string; count?: string }[] = [
-  { icon: "⌂", label: "홈" },
-  { icon: "▤", label: "관심사 · LLM Wiki", count: "6" },
+export const MOCK_MENU: { icon: string; label: string; count?: string; href?: string }[] = [
+  { icon: "⌂", label: "홈", href: "/" },
+  // count 는 붙이지 않는다 — 실데이터가 없어 목업 숫자가 화면 실제 개수와 어긋난다(/wiki 우측 레일은 실제 개수를 센다).
+  { icon: "▤", label: "관심사 · LLM Wiki", href: "/wiki" },
 ];
 
 export const MOCK_MENU_BOTTOM: { icon: string; label: string; count?: string }[] = [
@@ -57,7 +58,8 @@ export const MOCK_MENU_BOTTOM: { icon: string; label: string; count?: string }[]
 ];
 
 // "트리거"는 백엔드에 없는 개념(관심사·score만 존재) — UI 노출 금지(07-27 확정).
-export const MOCK_SIDE_FOOT = ["다음 브리핑 · 내일 오전 7:00", "관심사 6개 분석 중"];
+// 관심사 개수도 숫자를 박지 않는다 — /wiki 가 실제 개수를 보여주므로 목업 숫자와 충돌한다.
+export const MOCK_SIDE_FOOT = ["다음 브리핑 · 내일 오전 7:00", "관심사 분석 중"];
 
 /* ── [피드] 탭 ── */
 
