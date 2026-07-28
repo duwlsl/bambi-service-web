@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { FeedCard } from "@/components/home/feed-card";
 import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
@@ -7,12 +9,23 @@ import { StateView } from "@/components/ui/state-view";
 import type { MemberFeedState } from "@/hooks/use-member-feed";
 
 /**
- * member [내 보고서] 탭 — GET /api/feed 개인 데이터 렌더(추후 GET /reports/mine 으로 교체 예정).
+ * member [내 보고서] 탭 — GET /api/feed 개인 데이터(READY 완료 보고서) 렌더(추후 GET /reports/mine 으로 교체 예정).
  * 상태(useMemberFeed)는 상위 HomeView 가 소유하고(저장 모달과 refetch 공유), 이 컴포넌트는
  * loading / empty / error / success 렌더만 담당한다. 상태 UI 는 기존 컴포넌트를 재사용한다
  * (FeedSkeleton · StateView). 인증 loading/error 는 상위 HomeSkeleton 담당(여기 도달하지 않음).
+ *
+ * emptyState: READY 목록이 비었을 때 기본 안내 대신 상위가 넣어줄 노드.
+ *  - <EmptyMyReports/> → PREPARING·ERROR 도 0건인 "완전 Empty" 온보딩(홈이 세 소스 합쳐 판단).
+ *  - null → PREPARING·ERROR 는 있는데 READY 만 없는 경우(위 슬롯/카드로 충분하므로 여기선 아무것도 안 그림).
+ *  - 미전달(undefined) → 기존 기본 Empty 문구(하위 호환).
  */
-export function MemberFeed({ feed }: { feed: MemberFeedState & { refetch: () => void } }) {
+export function MemberFeed({
+  feed,
+  emptyState,
+}: {
+  feed: MemberFeedState & { refetch: () => void };
+  emptyState?: ReactNode;
+}) {
   if (feed.status === "loading") return <FeedSkeleton />;
 
   if (feed.status === "error") {
@@ -29,6 +42,7 @@ export function MemberFeed({ feed }: { feed: MemberFeedState & { refetch: () => 
   }
 
   if (feed.status === "empty") {
+    if (emptyState !== undefined) return <>{emptyState}</>;
     return (
       <StateView
         className="min-h-[320px]"

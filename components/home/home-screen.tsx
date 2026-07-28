@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
 import { AddMaterialModal } from "@/components/home/add-material-modal";
+import { EmptyMyReports } from "@/components/home/empty-my-reports";
+import { FailedReports } from "@/components/home/failed-reports";
 import { FeedRec } from "@/components/home/feed-rec";
 import { GuestSignupPanel } from "@/components/home/guest-signup-panel";
 import { HomeNav } from "@/components/home/home-nav";
@@ -13,6 +15,7 @@ import { PreparingReports } from "@/components/home/preparing-reports";
 import { SideLeft } from "@/components/home/side-left";
 import { SideRight } from "@/components/home/side-right";
 import { useMemberFeed } from "@/hooks/use-member-feed";
+import { useMyReportJobs } from "@/hooks/use-my-report-jobs";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 
 type HomeTab = "mine" | "rec";
@@ -42,8 +45,15 @@ function HomeView({ isMember }: { isMember: boolean }) {
   const [tab, setTab] = useState<HomeTab>("mine");
   const [amOpen, setAmOpen] = useState(false);
   // member [내 보고서] 탭 데이터를 HomeView 가 소유한다 → 저장 성공 시 refetch 를 저장 모달과 공유(§4).
-  // guest 는 useMemberFeed 내부 enabled=false 라 /api/feed 를 호출하지 않는다.
+  // guest 는 useMemberFeed / useMyReportJobs 내부 enabled=false 라 API 를 호출하지 않는다.
   const memberFeed = useMemberFeed();
+  // 생성 작업(PREPARING·ERROR)은 READY 목록과 별개 소스지만 한 번만 조회해 status 로 나눈다(중복 fetch 없음).
+  const reportJobs = useMyReportJobs();
+  const preparing = reportJobs.status === "ready" ? reportJobs.preparing : [];
+  const failed = reportJobs.status === "ready" ? reportJobs.failed : [];
+  // 완전 Empty 온보딩 조건: 작업 조회가 끝났고(loading 아님) PREPARING·ERROR 0건일 때만 READY 목록의 Empty 를 온보딩으로 대체한다.
+  // (READY 가 0건인지는 MemberFeed 가 자신의 status==="empty" 로 판단 — loading 중엔 skeleton 이라 Empty 가 먼저 깜빡이지 않는다.)
+  const noJobs = reportJobs.status !== "loading" && preparing.length === 0 && failed.length === 0;
   const effectiveTab: HomeTab = isMember ? tab : "rec";
 
   return (
@@ -78,9 +88,13 @@ function HomeView({ isMember }: { isMember: boolean }) {
             {/* [내 보고서] — 개인 데이터(GET /api/feed)라 member 에서만 렌더. tab 순서(내 보고서→피드)와 DOM 순서 일치. */}
             {isMember && (
               <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine" hidden={effectiveTab !== "mine"}>
-                {/* 생성 중(PREPARING) 보고서가 있으면 카드 리스트 최상단에 처리중 슬롯 노출(없으면 미노출). 일반 저장·즉시 카드와 무관. */}
-                <PreparingReports />
-                <MemberFeed feed={memberFeed} />
+                {/* 내 보고서 = PREPARING(처리중) → ERROR(생성 실패) → READY(완료 카드) 순. 각 섹션은 해당 상태가 있을 때만 렌더. */}
+                <PreparingReports reports={preparing} />
+                <FailedReports reports={failed} />
+                <MemberFeed
+                  feed={memberFeed}
+                  emptyState={noJobs ? <EmptyMyReports onAddMaterial={() => setAmOpen(true)} /> : null}
+                />
               </div>
             )}
             {/* [피드] — READY+PUBLIC 공개 보고서 mock. member·guest 공통(개인 '나만 보기' 블록은 FeedRec 에서 제거).

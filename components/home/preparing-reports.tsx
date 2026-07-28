@@ -1,25 +1,23 @@
 "use client";
 
 import { Orb } from "@/components/brand/orb";
-import { usePreparingReports } from "@/hooks/use-preparing-reports";
-import type { ReportKind } from "@/types/report";
+import type { MyReport, ReportKind } from "@/types/report";
 
 /**
  * 홈 [내 보고서] 최상단 "처리중(PREPARING)" 슬롯 — 보고서 생성이 실제로 시작된 경우에만 노출한다.
  *
- * - 일반 자료 저장·기존 즉시 카드 흐름과 무관한 별도 데이터 경로(usePreparingReports)를 쓴다.
- * - READY 카드(MemberFeed)보다 항상 위에 온다.
- * - PREPARING 이 없으면(loading·empty·error 포함) 아무것도 렌더하지 않는다 → 기존 카드 목록·Empty 그대로.
+ * - 데이터는 상위(HomeView)가 useMyReportJobs 로 한 번 조회해 status 별로 나눈 preparing 배열을 prop 으로 받는다
+ *   (ERROR·READY 와 같은 조회를 중복하지 않기 위해 여기서 직접 fetch 하지 않는다).
+ * - READY 카드(MemberFeed)·ERROR 카드(FailedReports)보다 항상 위에 온다.
+ * - preparing 이 비어 있으면 아무것도 렌더하지 않는다 → 기존 카드 목록·Empty 그대로.
  * - 본문·상세 미연결(클릭·이동 없음), 가짜 진행률·카운트다운 없음. 처리중 여부는 status 로만 파생한다.
  */
-export function PreparingReports() {
-  const state = usePreparingReports();
-  // 슬롯은 PREPARING 이 1건 이상(success)일 때만 노출. loading/empty/error 는 미노출(슬롯 스켈레톤 없음).
-  if (state.status !== "success") return null;
+export function PreparingReports({ reports }: { reports: MyReport[] }) {
+  if (reports.length === 0) return null;
 
   return (
     <section aria-label="생성 중인 보고서" aria-live="polite" className="mb-4 flex flex-col gap-2.5">
-      {state.data.map((report) => (
+      {reports.map((report) => (
         <PreparingSlot key={report.id} title={report.title} kind={report.kind} />
       ))}
     </section>
