@@ -47,9 +47,9 @@ export const MOCK_NAV = {
  * 정보구조 확정(07-27, 루트 CLAUDE.md §정보구조): 지식창고 삭제(홈 [내 보고서]와 동일 데이터),
  * 북마크(구 보관함=스크랩)·프로필은 SNS 공개 전환 API가 생기는 Week3에 다시 노출한다.
  */
-export const MOCK_MENU: { icon: string; label: string; count?: string }[] = [
-  { icon: "⌂", label: "홈" },
-  { icon: "▤", label: "관심사 · LLM Wiki", count: "6" },
+export const MOCK_MENU: { icon: string; label: string; count?: string; href?: string }[] = [
+  { icon: "⌂", label: "홈", href: "/" },
+  { icon: "▤", label: "관심사 · LLM Wiki", count: "6", href: "/wiki" },
 ];
 
 export const MOCK_MENU_BOTTOM: { icon: string; label: string; count?: string }[] = [
