@@ -9,6 +9,7 @@ import { FeedRec } from "@/components/home/feed-rec";
 import { GuestSignupPanel } from "@/components/home/guest-signup-panel";
 import { HomeNav } from "@/components/home/home-nav";
 import { MemberFeed } from "@/components/home/member-feed";
+import { PreparingReports } from "@/components/home/preparing-reports";
 import { SideLeft } from "@/components/home/side-left";
 import { SideRight } from "@/components/home/side-right";
 import { useMemberFeed } from "@/hooks/use-member-feed";
@@ -77,6 +78,8 @@ function HomeView({ isMember }: { isMember: boolean }) {
             {/* [내 보고서] — 개인 데이터(GET /api/feed)라 member 에서만 렌더. tab 순서(내 보고서→피드)와 DOM 순서 일치. */}
             {isMember && (
               <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine" hidden={effectiveTab !== "mine"}>
+                {/* 생성 중(PREPARING) 보고서가 있으면 카드 리스트 최상단에 처리중 슬롯 노출(없으면 미노출). 일반 저장·즉시 카드와 무관. */}
+                <PreparingReports />
                 <MemberFeed feed={memberFeed} />
               </div>
             )}
