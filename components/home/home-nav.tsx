@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/use-auth";
 import { useRequireAuth } from "@/components/auth/use-require-auth";
 import { Orb } from "@/components/brand/orb";
+import { MobileNavDrawer } from "@/components/home/mobile-navigation";
 import { MOCK_NAV } from "@/lib/mock/feed";
 
 /**
@@ -21,25 +22,55 @@ import { MOCK_NAV } from "@/lib/mock/feed";
 export function HomeNav({ onAddOpen }: { onAddOpen: () => void }) {
   const { status } = useAuth();
   const { requireAuth } = useRequireAuth();
+  const [navOpen, setNavOpen] = useState(false);
+  const isMember = status === "authenticated";
+  const isGuest = status === "guest";
+  // loading·error 에는 내비 트리거를 노출하지 않는다(로고만) — SideLeft 도 그 상태에선 렌더되지 않는 맥락.
+  const showNav = isMember || isGuest;
 
   return (
     <nav className="border-b border-border bg-card">
-      <div className="relative mx-auto flex h-[58px] max-w-[1440px] items-center gap-[18px] px-6">
-        {/* .logo */}
-        <div className="flex items-center gap-[9px]">
+      {/* 데스크톱(≥1101px) gap-[18px]·px-6 그대로, SideLeft 가 숨는 ≤1100px 구간에서만 gap·padding 축소로 겹침 완화 */}
+      <div className="relative mx-auto flex h-[58px] max-w-[1440px] items-center gap-2 px-4 min-[1101px]:gap-[18px] min-[1101px]:px-6">
+        {/* 모바일·태블릿 메뉴 버튼 — SideLeft 가 숨는 ≤1100px 에서만 노출(데스크톱 숨김). drawer 트리거 */}
+        {showNav && (
+          <button
+            type="button"
+            onClick={() => setNavOpen(true)}
+            aria-label="메뉴 열기"
+            aria-haspopup="dialog"
+            aria-expanded={navOpen}
+            aria-controls="mobile-nav-drawer"
+            className="focus-ring -ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[18px] text-ink-mid hover:bg-background min-[1101px]:hidden"
+          >
+            ☰
+          </button>
+        )}
+
+        {/* .logo — 홈 링크(헤더에서 홈 도달 경로 확보). 워드마크는 아주 좁은 폭에서만 숨겨 겹침 방지(Orb 유지) */}
+        <Link
+          href="/"
+          aria-label="홈"
+          className="focus-ring flex shrink-0 items-center gap-[9px] rounded-lg"
+        >
           <Orb size={26} />
-          <span className="text-[17px] font-normal tracking-[.02em] text-foreground [font-family:Quicksand,sans-serif]">
+          <span className="text-[17px] font-normal tracking-[.02em] text-foreground [font-family:Quicksand,sans-serif] max-[520px]:hidden">
             alphacatcher
           </span>
-        </div>
+        </Link>
         <div className="flex-1" />
 
-        {status === "authenticated" ? (
+        {isMember ? (
           <MemberNavRight onAddOpen={onAddOpen} />
-        ) : status === "guest" ? (
+        ) : isGuest ? (
           <GuestNavRight onAdd={() => requireAuth(onAddOpen)} />
         ) : null /* loading·error → 중립(로고만) */}
       </div>
+
+      {/* SideLeft 가 사라지는 ≤1100px 대체 내비. 데스크톱에서는 트리거가 숨겨져 열리지 않는다. */}
+      {showNav && (
+        <MobileNavDrawer open={navOpen} onClose={() => setNavOpen(false)} guest={isGuest} />
+      )}
     </nav>
   );
 }
@@ -48,25 +79,26 @@ export function HomeNav({ onAddOpen }: { onAddOpen: () => void }) {
 function GuestNavRight({ onAdd }: { onAdd: () => void }) {
   return (
     <>
-      {/* ＋ 관심 자료 — 중립 기본, hover 시 테두리·문자만 주황. 클릭 시 GuestGateModal */}
+      {/* ＋ 관심 자료 — 중립 기본, hover 시 테두리·문자만 주황. 클릭 시 GuestGateModal. 좁은 폭에서는 ＋ 아이콘만 */}
       <button
         type="button"
         onClick={onAdd}
-        className="focus-ring inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-ink-mid hover:border-primary hover:text-signal-ink"
+        aria-label="관심 자료 추가"
+        className="focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-ink-mid hover:border-primary hover:text-signal-ink"
       >
-        ＋ 관심 자료
+        ＋<span className="max-[520px]:hidden"> 관심 자료</span>
       </button>
-      {/* 로그인 — 보조 */}
+      {/* 로그인 — 보조 (핵심 guest CTA 라 좁은 폭에서도 텍스트 유지·축소 금지) */}
       <Link
         href="/login"
-        className="focus-ring inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-foreground hover:bg-background"
+        className="focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-foreground hover:bg-background"
       >
         로그인
       </Link>
-      {/* 가입하기 — Primary */}
+      {/* 가입하기 — Primary (좁은 폭에서도 텍스트 유지·축소 금지) */}
       <Link
         href="/signup"
-        className="focus-ring inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary bg-primary px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
+        className="focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary bg-primary px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
       >
         가입하기
       </Link>
@@ -78,23 +110,25 @@ function GuestNavRight({ onAdd }: { onAdd: () => void }) {
 function MemberNavRight({ onAddOpen }: { onAddOpen: () => void }) {
   return (
     <>
-      {/* .nav-search — P1(검색), 시각 전용 */}
+      {/* .nav-search — P1(검색), 시각 전용. 기능 미구현 placeholder 라 ≤1100px 에서는 숨겨 헤더 겹침을 없앤다
+          (absolute 중앙 배치가 좁은 폭에서 우측 CTA·알림·아바타와 겹치던 원인). 데스크톱에서만 노출. */}
       <div
         aria-disabled="true"
-        className="absolute top-1/2 left-1/2 flex h-[38px] w-[596px] max-w-[calc(100%-380px)] -translate-x-1/2 -translate-y-1/2 items-center gap-[9px] rounded-[19px] border border-border bg-background px-[15px] text-[13px] text-muted-foreground"
+        className="absolute top-1/2 left-1/2 flex h-[38px] w-[596px] max-w-[calc(100%-380px)] -translate-x-1/2 -translate-y-1/2 items-center gap-[9px] rounded-[19px] border border-border bg-background px-[15px] text-[13px] text-muted-foreground max-[1100px]:hidden"
       >
         {/* .sico */}
         <span className="relative h-[13px] w-[13px] shrink-0 rounded-full border-[1.5px] border-low after:absolute after:-right-1 after:-bottom-0.5 after:h-[1.5px] after:w-[5px] after:rotate-45 after:bg-low after:content-['']" />
         {MOCK_NAV.searchPlaceholder}
       </div>
 
-      {/* .btn.signal.sm — 관심 자료 추가 모달 (실동작) */}
+      {/* .btn.signal.sm — 관심 자료 추가 모달 (실동작). 좁은 폭에서는 텍스트를 접고 ＋ 아이콘만(접근 이름은 aria-label 로 유지) */}
       <button
         type="button"
         onClick={onAddOpen}
-        className="focus-ring inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary bg-primary px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
+        aria-label="관심 자료 추가"
+        className="focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary bg-primary px-3 py-[7px] text-[12.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
       >
-        ＋ 관심 자료
+        ＋<span className="max-[520px]:hidden"> 관심 자료</span>
       </button>
 
       {/* .nav-ico — 알림, P1 시각 전용 */}
