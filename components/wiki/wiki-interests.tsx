@@ -91,7 +91,8 @@ function InterestCard({
         active ? "border-wash-strong ring-1 ring-wash-strong" : "border-border hover:border-wash-strong"
       }`}
     >
-      <div className="flex items-start gap-2">
+      {/* button 안은 phrasing content 만 허용된다(div·ul·li 금지) — 레이아웃은 span + Tailwind display 로 만든다. */}
+      <span className="flex items-start gap-2">
         <span className="flex-1 text-[15px] leading-[1.4] font-bold tracking-[-0.01em] text-foreground">
           {interest.topic}
         </span>
@@ -106,33 +107,33 @@ function InterestCard({
         <span className="shrink-0 rounded-full border border-wash-strong bg-wash px-2 py-0.5 text-[10.5px] font-semibold whitespace-nowrap text-signal-ink">
           LLM 추론
         </span>
-      </div>
+      </span>
 
       {/* 상대 관심 강도 — 절대 관심도로 오해되지 않도록 문구를 명시한다 */}
-      <div className="mt-3">
-        <div className="mb-1 flex items-baseline justify-between gap-2 text-[12px]">
+      <span className="mt-3 block">
+        <span className="mb-1 flex items-baseline justify-between gap-2 text-[12px]">
           <span className="text-ink-mid">
             상대 관심 강도 <b className="font-bold text-signal-ink">{strengthPct}%</b>
           </span>
           <span className="text-muted-foreground">최상위 관심사 대비</span>
-        </div>
-        <div
-          className="h-1.5 w-full overflow-hidden rounded-full bg-secondary"
+        </span>
+        <span
+          className="block h-1.5 w-full overflow-hidden rounded-full bg-secondary"
           aria-hidden="true"
         >
           <span className={`block h-full rounded-full ${TIER_BAR_CLASS[tier]}`} style={{ width: `${strengthPct}%` }} />
-        </div>
-      </div>
+        </span>
+      </span>
 
       {interest.evidence.reasons.length > 0 && (
-        <ul className="mt-2.5 flex flex-col gap-1">
+        <span className="mt-2.5 flex flex-col gap-1">
           {interest.evidence.reasons.map((reason, i) => (
-            <li key={`${interest.interestId}-r${i}`} className="flex gap-1.5 text-[12.5px] leading-[1.5] text-ink-mid">
+            <span key={`${interest.interestId}-r${i}`} className="flex gap-1.5 text-[12.5px] leading-[1.5] text-ink-mid">
               <span className="mt-[7px] h-[3px] w-[3px] shrink-0 rounded-full bg-primary" aria-hidden="true" />
               <span>{resolveEvidenceReason(reason)}</span>
-            </li>
+            </span>
           ))}
-        </ul>
+        </span>
       )}
     </button>
   );
