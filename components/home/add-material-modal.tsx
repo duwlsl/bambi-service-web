@@ -118,21 +118,24 @@ export function AddMaterialModal({
   }
 
   return createPortal(
-    // .modal-bg — 배경 클릭 시 닫기(제출 중 제외). createPortal 로 #app-shell 바깥(document.body)에 렌더.
+    // .modal-bg — 세로로 넘치면 backdrop 이 스크롤되어 모달 전체(footer 포함)에 도달. 배경·여백 클릭 시 닫기(제출 중 제외).
+    // createPortal 로 #app-shell 바깥(document.body)에 렌더.
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(12,14,17,.45)]"
+      className="fixed inset-0 z-[120] overflow-y-auto overscroll-contain bg-[rgba(12,14,17,.45)]"
       onClick={close}
     >
-      {/* .modal */}
-      <form
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="관심 자료 추가"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={handleSubmit}
-        className="w-[460px] max-w-[calc(100%-48px)] rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[0_24px_60px_rgba(10,12,15,.28)]"
-      >
+      {/* 세로 중앙 정렬 + 상하 여백. 콘텐츠가 viewport 보다 크면(320px·200% 줌) min-h-full + 바깥 스크롤로 상단 클리핑 없이 저장·취소까지 도달 */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        {/* .modal */}
+        <form
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="관심 자료 추가"
+          onClick={(e) => e.stopPropagation()}
+          onSubmit={handleSubmit}
+          className="w-[460px] max-w-full rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[0_24px_60px_rgba(10,12,15,.28)]"
+        >
         {/* .mhead */}
         <div className="mb-2 flex items-center justify-between">
           <span className="text-[16.5px] font-bold text-foreground">관심 자료 추가</span>
@@ -276,7 +279,8 @@ export function AddMaterialModal({
             {submitting ? "저장 중…" : "저장"}
           </button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>,
     document.body,
   );
