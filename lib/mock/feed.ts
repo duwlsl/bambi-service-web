@@ -53,8 +53,8 @@ export const MOCK_MENU: { icon: string; label: string; count?: string; href?: st
   { icon: "▤", label: "관심사 · LLM Wiki", href: "/wiki" },
 ];
 
-export const MOCK_MENU_BOTTOM: { icon: string; label: string; count?: string }[] = [
-  { icon: "⚙", label: "설정" },
+export const MOCK_MENU_BOTTOM: { icon: string; label: string; count?: string; href?: string }[] = [
+  { icon: "⚙", label: "설정", href: "/settings" },
 ];
 
 // "트리거"는 백엔드에 없는 개념(관심사·score만 존재) — UI 노출 금지(07-27 확정).
