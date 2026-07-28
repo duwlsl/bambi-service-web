@@ -133,48 +133,47 @@ function MenuItem({
   label,
   count,
   active,
+  href,
 }: {
   icon: string;
   label: string;
   count?: string;
   active: boolean;
+  /** 있으면 실제 이동 링크로 렌더. 없으면 미구현(P1) 항목이라 aria-disabled 시각 전용. */
+  href?: string;
 }) {
   const base =
     "focus-ring mb-px flex w-full items-center gap-3 rounded-[10px] px-3 py-[11px] text-left text-[14.5px]";
+  const iconCls = "inline-flex w-5 shrink-0 items-center justify-center text-[15px]";
+  const countEl = count ? (
+    <span className="ml-auto text-[11.5px] text-muted-foreground">{count}</span>
+  ) : null;
+
   if (active) {
     // .mi.on — 현재 화면
     return (
       <div aria-current="page" className={`${base} bg-background font-bold text-foreground`}>
-        <span className="inline-flex w-5 shrink-0 items-center justify-center text-[15px] text-primary">
-          {icon}
-        </span>
+        <span className={`${iconCls} text-primary`}>{icon}</span>
         {label}
-        {count && <span className="ml-auto text-[11.5px] text-muted-foreground">{count}</span>}
+        {countEl}
       </div>
     );
   }
-  if (label === "홈") {
-    // 다른 화면(카드 상세 등)에서는 홈으로 실제 이동
+  if (href) {
+    // 실제 라우트가 있는 항목(홈·관심사 등) → 이동 링크
     return (
-      <Link href="/" className={`${base} text-ink-mid hover:bg-background`}>
-        <span className="inline-flex w-5 shrink-0 items-center justify-center text-[15px] text-muted-foreground">
-          {icon}
-        </span>
+      <Link href={href} className={`${base} text-ink-mid hover:bg-background`}>
+        <span className={`${iconCls} text-muted-foreground`}>{icon}</span>
         {label}
+        {countEl}
       </Link>
     );
   }
   return (
-    <button
-      type="button"
-      aria-disabled="true"
-      className={`${base} text-ink-mid hover:bg-background`}
-    >
-      <span className="inline-flex w-5 shrink-0 items-center justify-center text-[15px] text-muted-foreground">
-        {icon}
-      </span>
+    <button type="button" aria-disabled="true" className={`${base} text-ink-mid hover:bg-background`}>
+      <span className={`${iconCls} text-muted-foreground`}>{icon}</span>
       {label}
-      {count && <span className="ml-auto text-[11.5px] text-muted-foreground">{count}</span>}
+      {countEl}
     </button>
   );
 }
