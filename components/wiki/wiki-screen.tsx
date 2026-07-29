@@ -16,7 +16,7 @@ import { useWikiDocuments, type WikiDocumentsState } from "@/hooks/use-wiki-docu
 import { useWikiInterests, type WikiInterestsState } from "@/hooks/use-wiki-interests";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 import { filterWikiDocuments } from "@/lib/wiki";
-import type { WikiInterest } from "@/types/wiki";
+import type { WikiTag } from "@/types/wiki";
 
 const WIKI_MENU_LABEL = "관심사 · LLM Wiki";
 
@@ -36,17 +36,17 @@ export function WikiScreen() {
   return <WikiView />;
 }
 
-/** 실제 본문 — authenticated 에서만 도달. 관심사 선택으로 하단 자료를 필터한다. */
+/** 실제 본문 — authenticated 에서만 도달. 관심 태그 선택으로 하단 자료를 필터한다. */
 function WikiView() {
   const interests = useWikiInterests();
   const documents = useWikiDocuments();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [amOpen, setAmOpen] = useState(false);
 
-  // 선택된 관심사(파생) — 목록에서 사라졌으면 필터 없음으로 자연 복귀한다.
-  const selectedInterest: WikiInterest | null =
+  // 선택된 관심 태그(파생) — 목록에서 사라졌으면 필터 없음으로 자연 복귀한다.
+  const selectedTag: WikiTag | null =
     interests.status === "success"
-      ? (interests.data.find((i) => i.interestId === selectedId) ?? null)
+      ? (interests.data.find((t) => t.tagId === selectedId) ?? null)
       : null;
 
   return (
@@ -74,12 +74,12 @@ function WikiView() {
             />
             <WikiDocuments
               state={documents}
-              selectedInterest={selectedInterest}
+              selectedTag={selectedTag}
               onClearFilter={() => setSelectedId(null)}
             />
           </main>
 
-          <WikiRail interests={interests} documents={documents} selectedInterest={selectedInterest} />
+          <WikiRail interests={interests} documents={documents} selectedTag={selectedTag} />
         </div>
       </div>
 
@@ -100,16 +100,16 @@ function WikiView() {
 function WikiRail({
   interests,
   documents,
-  selectedInterest,
+  selectedTag,
 }: {
   interests: WikiInterestsState;
   documents: WikiDocumentsState;
-  selectedInterest: WikiInterest | null;
+  selectedTag: WikiTag | null;
 }) {
   const interestCount = interests.status === "success" ? interests.data.length : null;
   const visibleDocCount =
     documents.status === "success"
-      ? filterWikiDocuments(documents.data, selectedInterest).length
+      ? filterWikiDocuments(documents.data, selectedTag).length
       : null;
 
   return (
@@ -117,7 +117,7 @@ function WikiRail({
       <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
         <h4 className="mb-[15px] text-[13px] font-bold text-foreground">Wiki 요약</h4>
         <RailStat label="파악한 관심사" value={interestCount} />
-        <RailStat label={selectedInterest ? "이 관심사 자료" : "표시 중 자료"} value={visibleDocCount} />
+        <RailStat label={selectedTag ? "이 관심사 자료" : "표시 중 자료"} value={visibleDocCount} />
       </div>
     </aside>
   );

@@ -1,29 +1,40 @@
 /**
- * 관심사 · LLM Wiki 화면 문구/분류 매핑 (단일 소스).
+ * 관심사 · LLM Wiki 화면 문구 매핑 (단일 소스).
  *
- * ⚠ evidence.reasons 코드 값은 Agent/서비스 계약 확정 전(제안)이다.
- *   미상 코드는 fallback 으로 처리한다(constants/errors.ts resolveErrorMessage 패턴).
- *   화면에 원시 코드값을 그대로 노출하지 않는다.
+ * 근거 코드는 agent 가 evidence.reasons 에 담아 보내고 service 가 그대로 중계한다.
+ * 화면에는 원시 코드값을 노출하지 않으며, 아래 노출 허용 목록(allowlist)에 있는 코드만 문구로 바꾼다.
  *
- * documentKind 는 필터·제외 판정에만 쓰고 사용자 UI 로는 노출하지 않기로 했으므로
- * (concept·entity·document 동일 카드 렌더) 한글 라벨 매핑은 두지 않는다.
+ * documentKind 는 내부 필드라 화면 모델로 옮기지 않으므로 라벨 매핑도 두지 않는다.
  */
 
-/** 근거 코드 → 한글 문구. 실제 코드 enum 확정 전 제안값 — 미상 코드는 fallback. */
+/**
+ * 사용자에게 보여줄 근거 코드 → 한글 문구 (노출 허용 목록).
+ *
+ * 코드값은 bambi-agent-api 실측 기준이다 (2026-07-29 확인):
+ *   - `wiki_node`         — domain/interests/features/extraction.py 가 Wiki 노드 기반 후보에 붙인다.
+ *   - `behavior:<signal>` — domain/interests/features/scoring.py 가 행동 신호마다 붙인다.
+ *     signal 은 like · unlike · hide · report 4종(_SIGNAL_WEIGHTS).
+ *
+ * ⚠ 이 목록에는 **긍정 신호만** 담는다. `behavior:unlike` · `behavior:hide` · `behavior:report` 는
+ *   agent 점수 계산용 부정 신호이므로 "AI가 이해한 관심사"의 근거로 보여주지 않는다.
+ *   목록에 없는 코드(부정 신호 + 아직 모르는 신규 코드)는 대체 문구로 바꾸지 않고 그대로 제외한다
+ *   — 새 신호가 추가돼도 검토 전까지 화면에 새지 않는다.
+ */
 export const EVIDENCE_REASON_MESSAGES: Record<string, string> = {
-  SAVED_FREQUENTLY: "관련 자료를 자주 저장했어요",
-  VIEWED_REPEATEDLY: "관련 콘텐츠를 반복해서 열람했어요",
-  RECENT_ACTIVITY_UP: "최근 관련 활동이 늘었어요",
-  CO_OCCURRENCE: "다른 관심사와 함께 자주 나타나요",
-  ONBOARDING_ADDED: "온보딩에서 직접 추가한 주제예요",
+  wiki_node: "저장한 자료에서 반복해 나타난 주제예요",
+  "behavior:like": "관련 카드에 좋아요를 눌렀어요",
 };
 
-const FALLBACK_EVIDENCE_MESSAGE = "관련 활동이 감지됐어요";
-
-/** 근거 코드 → 한글 문구. 미상 코드는 fallback 문구로 대체한다. */
-export function resolveEvidenceReason(code: string): string {
-  return EVIDENCE_REASON_MESSAGES[code] ?? FALLBACK_EVIDENCE_MESSAGE;
+/**
+ * 근거 코드 목록 → 화면에 보여줄 문구 목록.
+ * 노출 허용 목록에 없는 코드는 조용히 제외한다. 전부 제외되면 빈 배열이 되고,
+ * 호출부(관심사 카드)는 근거 줄 자체를 렌더하지 않는다.
+ */
+export function toEvidenceReasonMessages(codes: string[]): string[] {
+  const messages: string[] = [];
+  for (const code of codes) {
+    const message = EVIDENCE_REASON_MESSAGES[code];
+    if (message !== undefined) messages.push(message);
+  }
+  return messages;
 }
-
-/** 화면에서 방어적으로 제외하는 문서 종류(service 기본 제외 + 프론트 이중 방어, 07-27 확정). */
-export const EXCLUDED_DOCUMENT_KIND = "schema";

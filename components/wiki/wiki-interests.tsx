@@ -3,14 +3,14 @@
 import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
-import { resolveEvidenceReason } from "@/constants/wiki";
 import type { WikiInterestsState } from "@/hooks/use-wiki-interests";
-import type { WikiInterest } from "@/types/wiki";
+import type { WikiTag } from "@/types/wiki";
 
 /**
- * [AI가 이해한 관심사] 섹션. 각 관심사는 선택 가능(하단 [내가 저장한 자료]를 documentIds 로 필터).
+ * [AI가 이해한 관심사] 섹션 — 데이터는 자동추출 관심 태그(GET /api/wiki/tags)다.
+ * 각 태그는 선택 가능(하단 [내가 저장한 자료]를 documentIds 로 필터).
  * score 는 "상대 관심 강도"(최상위 대비)로만 표기하고 절대 관심도로 오해되지 않게 한다.
- * confidence(가중치 기반 휴리스틱 신뢰도)는 일반 사용자 화면에 수치로 노출하지 않는다(데이터는 유지).
+ * confidence 는 화면에 노출하지 않으므로 화면 모델에도 담지 않는다.
  * 이 화면의 관심사는 모두 LLM(Agent) 추론이라 출처 배지는 'LLM 추론'만 표시한다('직접 설정'은 향후 병합 예정).
  */
 export function WikiInterests({
@@ -20,7 +20,7 @@ export function WikiInterests({
 }: {
   state: WikiInterestsState & { refetch: () => void };
   selectedId: string | null;
-  onSelect: (interestId: string) => void;
+  onSelect: (tagId: string) => void;
 }) {
   return (
     <section aria-label="AI가 이해한 관심사" className="mb-8">
@@ -55,12 +55,12 @@ export function WikiInterests({
 
       {state.status === "success" && (
         <div className="flex flex-col gap-3">
-          {state.data.map((interest) => (
+          {state.data.map((wikiTag) => (
             <InterestCard
-              key={interest.interestId}
-              interest={interest}
-              active={interest.interestId === selectedId}
-              onSelect={() => onSelect(interest.interestId)}
+              key={wikiTag.tagId}
+              wikiTag={wikiTag}
+              active={wikiTag.tagId === selectedId}
+              onSelect={() => onSelect(wikiTag.tagId)}
             />
           ))}
         </div>
@@ -70,16 +70,16 @@ export function WikiInterests({
 }
 
 function InterestCard({
-  interest,
+  wikiTag,
   active,
   onSelect,
 }: {
-  interest: WikiInterest;
+  wikiTag: WikiTag;
   active: boolean;
   onSelect: () => void;
 }) {
-  // score 스키마 하한은 -1이나 실제 0~1 — 화면 단계에서만 음수를 0으로 방어하고 0~100%로 변환한다(mock 원본 미변형).
-  const strengthPct = Math.max(0, Math.min(100, Math.round(interest.score * 100)));
+  // 계약상 score 는 0~1 — 화면 단계에서만 범위를 방어하고 0~100%로 변환한다(응답 원본 미변형).
+  const strengthPct = Math.max(0, Math.min(100, Math.round(wikiTag.score * 100)));
   const tier = scoreTier(strengthPct);
 
   return (
@@ -94,12 +94,12 @@ function InterestCard({
       {/* button 안은 phrasing content 만 허용된다(div·ul·li 금지) — 레이아웃은 span + Tailwind display 로 만든다. */}
       <span className="flex items-start gap-2">
         <span className="flex-1 text-[15px] leading-[1.4] font-bold tracking-[-0.01em] text-foreground">
-          {interest.topic}
+          {wikiTag.tag}
         </span>
-        {/* category(문서 domain 유래)는 값이 있을 때만 보조 칩으로 — null·빈 문자열은 칩 자체를 숨긴다 */}
-        {interest.category !== null && interest.category.trim() !== "" && (
+        {/* category 는 값이 있을 때만 보조 칩으로 — null·빈 문자열(어댑터에서 null 정규화)은 칩 자체를 숨긴다 */}
+        {wikiTag.category !== null && (
           <span className="shrink-0 rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] whitespace-nowrap text-muted-foreground">
-            {interest.category}
+            {wikiTag.category}
           </span>
         )}
         {/* 출처 배지 — 전부 LLM 추론(직접 설정 배지 없음). 브랜드 accent(wash+signal-ink)로 중립 category 칩과 구분,
@@ -125,12 +125,13 @@ function InterestCard({
         </span>
       </span>
 
-      {interest.evidence.reasons.length > 0 && (
+      {/* 근거 — 노출 허용 코드만 문구로 변환돼 넘어온다. 부정 신호·미상 코드가 걸러져 비면 줄 자체를 숨긴다. */}
+      {wikiTag.reasonMessages.length > 0 && (
         <span className="mt-2.5 flex flex-col gap-1">
-          {interest.evidence.reasons.map((reason, i) => (
-            <span key={`${interest.interestId}-r${i}`} className="flex gap-1.5 text-[12.5px] leading-[1.5] text-ink-mid">
+          {wikiTag.reasonMessages.map((message, i) => (
+            <span key={`${wikiTag.tagId}-r${i}`} className="flex gap-1.5 text-[12.5px] leading-[1.5] text-ink-mid">
               <span className="mt-[7px] h-[3px] w-[3px] shrink-0 rounded-full bg-primary" aria-hidden="true" />
-              <span>{resolveEvidenceReason(reason)}</span>
+              <span>{message}</span>
             </span>
           ))}
         </span>

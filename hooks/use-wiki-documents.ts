@@ -9,8 +9,9 @@ import type { WikiDocument } from "@/types/wiki";
 
 /**
  * [내가 저장한 자료](LLM Wiki 문서) 데이터 훅 — member 전용.
- * repository seam(fetchWikiDocuments)만 소비한다. 전체 문서를 받고, schema 제외/관심사 필터는
- * 화면 계층(lib/wiki.ts filterWikiDocuments)에서 처리한다. empty 는 원본이 0건일 때다.
+ * repository seam(fetchWikiDocuments)만 소비한다. 전체 문서를 받고, 선택된 태그로 좁히는 필터는
+ * 화면 계층(lib/wiki.ts filterWikiDocuments)에서 처리한다.
+ * items 가 0건인 정상 응답은 오류가 아니라 empty 다.
  */
 export type WikiDocumentsState =
   | { status: "loading" }
