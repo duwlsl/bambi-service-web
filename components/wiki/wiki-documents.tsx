@@ -5,26 +5,26 @@ import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
 import type { WikiDocumentsState } from "@/hooks/use-wiki-documents";
 import { filterWikiDocuments } from "@/lib/wiki";
-import type { WikiDocument, WikiInterest } from "@/types/wiki";
+import type { WikiDocument, WikiTag } from "@/types/wiki";
 
 /**
  * [내가 저장한 자료](LLM Wiki 문서) 섹션.
- * 전체 문서에서 schema 를 방어적으로 제외하고, 관심사가 선택되면 그 documentIds 로 필터한다.
- * documentKind 는 필터·schema 제외에만 쓰고 사용자 UI(종류 칩)로는 노출하지 않는다(concept·entity·document 동일 렌더).
+ * 관심 태그가 선택되면 그 documentIds 에 포함된 문서만 근거 자료로 보여주고, 없으면 전체를 보여준다.
+ * documentKind 는 내부 필드라 화면 모델에 없다(종류 칩 없이 동일 카드 구조로 렌더).
  */
 export function WikiDocuments({
   state,
-  selectedInterest,
+  selectedTag,
   onClearFilter,
 }: {
   state: WikiDocumentsState & { refetch: () => void };
-  selectedInterest: WikiInterest | null;
+  selectedTag: WikiTag | null;
   onClearFilter: () => void;
 }) {
   if (state.status === "loading") {
     return (
       <section aria-label="내가 저장한 자료">
-        <SectionHeader selectedInterest={selectedInterest} count={null} onClearFilter={onClearFilter} />
+        <SectionHeader selectedTag={selectedTag} count={null} onClearFilter={onClearFilter} />
         <FeedSkeleton />
       </section>
     );
@@ -33,7 +33,7 @@ export function WikiDocuments({
   if (state.status === "error") {
     return (
       <section aria-label="내가 저장한 자료">
-        <SectionHeader selectedInterest={selectedInterest} count={null} onClearFilter={onClearFilter} />
+        <SectionHeader selectedTag={selectedTag} count={null} onClearFilter={onClearFilter} />
         <StateView
           role="alert"
           className="min-h-[240px]"
@@ -47,12 +47,12 @@ export function WikiDocuments({
   }
 
   const rawDocuments = state.status === "success" ? state.data : [];
-  const documents = filterWikiDocuments(rawDocuments, selectedInterest);
+  const documents = filterWikiDocuments(rawDocuments, selectedTag);
 
   return (
     <section aria-label="내가 저장한 자료">
       <SectionHeader
-        selectedInterest={selectedInterest}
+        selectedTag={selectedTag}
         count={documents.length}
         onClearFilter={onClearFilter}
       />
@@ -60,14 +60,14 @@ export function WikiDocuments({
         <StateView
           className="min-h-[240px]"
           icon={<IconEmptyDoc />}
-          title={selectedInterest ? "이 관심사에 연결된 자료가 없어요" : "아직 저장한 자료가 없어요"}
+          title={selectedTag ? "이 관심사에 연결된 자료가 없어요" : "아직 저장한 자료가 없어요"}
           description={
-            selectedInterest
+            selectedTag
               ? "다른 관심사를 선택하거나 전체 자료를 확인해 보세요."
               : "관심 자료를 저장하면 AI가 정리한 문서가 여기에 쌓여요."
           }
           actions={
-            selectedInterest
+            selectedTag
               ? [{ label: "전체 자료 보기", onClick: onClearFilter, variant: "primary" }]
               : undefined
           }
@@ -84,11 +84,11 @@ export function WikiDocuments({
 }
 
 function SectionHeader({
-  selectedInterest,
+  selectedTag,
   count,
   onClearFilter,
 }: {
-  selectedInterest: WikiInterest | null;
+  selectedTag: WikiTag | null;
   count: number | null;
   onClearFilter: () => void;
 }) {
@@ -97,16 +97,16 @@ function SectionHeader({
       <h2 className="text-[17px] font-bold tracking-[-0.01em] text-foreground">내가 저장한 자료</h2>
       <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-ink-mid">
         <span>
-          {selectedInterest ? (
+          {selectedTag ? (
             <>
-              <b className="font-semibold text-signal-ink">‘{selectedInterest.topic}’</b> 관련 자료
+              <b className="font-semibold text-signal-ink">‘{selectedTag.tag}’</b> 관련 자료
             </>
           ) : (
             "전체 자료"
           )}
           {count !== null && <span className="text-muted-foreground"> · {count}개</span>}
         </span>
-        {selectedInterest && (
+        {selectedTag && (
           <button
             type="button"
             onClick={onClearFilter}
@@ -121,9 +121,11 @@ function SectionHeader({
 }
 
 function DocumentCard({ doc }: { doc: WikiDocument }) {
+  // 파싱 불가한 updatedAt 은 임의 값을 만들지 않고 표시 자체를 생략한다(빈 "업데이트" 줄 방지)
+  const updatedLabel = formatUpdatedAt(doc.updatedAt);
+
   return (
     <article className="rounded-[14px] border border-border bg-card px-[18px] py-[15px]">
-      {/* documentKind 종류 칩은 노출하지 않는다(concept·entity·document 동일 카드 구조) */}
       <div className="text-[14.5px] leading-[1.45] font-bold tracking-[-0.01em] text-foreground">
         {doc.title}
       </div>
@@ -145,8 +147,12 @@ function DocumentCard({ doc }: { doc: WikiDocument }) {
           </span>
         )}
         <span>출처 {doc.sourceCount}</span>
-        <span aria-hidden="true">·</span>
-        <span>업데이트 {formatUpdatedAt(doc.updatedAt)}</span>
+        {updatedLabel !== "" && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>업데이트 {updatedLabel}</span>
+          </>
+        )}
       </div>
     </article>
   );

@@ -1,30 +1,42 @@
-import { MOCK_WIKI_DOCUMENTS, MOCK_WIKI_INTERESTS } from "@/lib/mock/wiki";
-import type { WikiDocument, WikiInterest } from "@/types/wiki";
+import { FALLBACK_ERROR_CODE } from "@/constants/errors";
+import { ApiError, apiGet } from "@/lib/api-client";
+import { toWikiDocuments, toWikiTags } from "@/lib/adapters/wiki";
+import type { WikiDocument, WikiDocumentsData, WikiTag, WikiTagsData } from "@/types/wiki";
 
 /**
- * 관심사 · LLM Wiki 데이터 repository — 화면 훅과 데이터 소스 사이의 단일 seam.
+ * 관심사 · LLM Wiki 데이터 repository — 화면 훅과 Service API 사이의 단일 seam.
  *
- * ★★ 실제 API 교체 지점 ★★
- * 지금은 mock 을 Promise 로 감싸 반환한다. 실 경로는 소라/영현 확정 전이므로 하드코딩하지 않는다.
- * (현재 제안: GET /api/wiki/interests · GET /api/wiki/documents — 확정 전까지 경로 미기입).
- * 계약 확정 시 이 파일 본문만 apiGet 호출 + 어댑터로 교체한다(훅·컴포넌트 무변경):
- *   - interests: 응답 최상위 메타(profileId/version/calculatedAt/status)는 무시하고 interests[] → WikiInterest[].
- *   - documents: 전체 조회를 쓴다. documentKind=schema 는 service 가 기본 제외 예정이나 화면도 이중 방어한다
- *     (lib/wiki.ts filterWikiDocuments).
+ * - 두 엔드포인트 모두 인증이 필요하다. Bearer 헤더 부착·envelope 해석·401 처리는 공통 api-client 가 한다(§3·§5·§8).
+ * - 훅이 authenticated 에서만 호출하므로 여기서 인증 상태를 다시 판단하지 않는다.
+ * - 정상 빈 목록(tags·items 0건)은 오류가 아니다 → 그대로 빈 배열을 반환하고 훅이 empty 로 정규화한다.
+ *   필수 컨테이너 자체가 빠진 응답만 오류로 승격한다.
+ * - 그래프(GET /api/wiki/graph/top-nodes)는 이번 범위에서 연결하지 않는다.
  */
 
-/** mock 값을 Promise 로 감싸되 AbortSignal 을 존중한다(실 API 취소 계약 선반영). */
-function resolveAbortable<T>(value: T, signal?: AbortSignal): Promise<T> {
-  if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
-  return Promise.resolve(value);
+/** 필수 컨테이너 누락(success:true 인데 data 가 없음 등) — 정상 빈 목록과 구분해 오류로 올린다. */
+function requireContainer<T>(data: T | null | undefined, path: string): T {
+  if (data === null || data === undefined) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `missing data container for ${path}`, 200);
+  }
+  return data;
 }
 
-/** AI가 이해한 관심사 목록. 빈 배열이면 훅이 empty 로 정규화한다. */
-export function fetchWikiInterests(signal?: AbortSignal): Promise<WikiInterest[]> {
-  return resolveAbortable(MOCK_WIKI_INTERESTS, signal);
+/** 자동추출 관심 태그 목록. 빈 배열이면 훅이 empty 로 정규화한다. */
+export async function fetchWikiTags(signal?: AbortSignal): Promise<WikiTag[]> {
+  const path = "/api/wiki/tags";
+  const data = requireContainer(await apiGet<WikiTagsData | null>(path, { signal }), path);
+  if (!Array.isArray(data.tags)) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid tags payload for ${path}`, 200);
+  }
+  return toWikiTags(data.tags);
 }
 
-/** LLM Wiki 문서 전체 목록(kind 제한 없이 전체). schema 제외/관심사 필터는 화면 계층에서 처리한다. */
-export function fetchWikiDocuments(signal?: AbortSignal): Promise<WikiDocument[]> {
-  return resolveAbortable(MOCK_WIKI_DOCUMENTS, signal);
+/** 저장 자료 Wiki 문서 전체 목록. 태그 선택에 따른 필터는 화면 계층(lib/wiki.ts)에서 처리한다. */
+export async function fetchWikiDocuments(signal?: AbortSignal): Promise<WikiDocument[]> {
+  const path = "/api/wiki/documents";
+  const data = requireContainer(await apiGet<WikiDocumentsData | null>(path, { signal }), path);
+  if (!Array.isArray(data.items)) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid documents payload for ${path}`, 200);
+  }
+  return toWikiDocuments(data.items);
 }
