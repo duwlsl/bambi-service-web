@@ -10,8 +10,8 @@ import { ERROR_CODES, resolveErrorMessage } from "@/constants/errors";
 import { ApiError } from "@/lib/api-client";
 import { login, signup } from "@/lib/auth";
 
-/** 자동 로그인 성공 후 이동 경로 (홈 피드). */
-const REDIRECT_AFTER_SIGNUP = "/";
+/** 자동 로그인 성공 후 이동 경로 — 관심사 온보딩(신규 가입 흐름 전용, 기존 회원 로그인은 무관). */
+const REDIRECT_AFTER_SIGNUP = "/onboarding";
 /** 자동 로그인 실패 시 이동 경로 — 가입은 성공했음을 로그인 화면에서 안내. */
 const LOGIN_WITH_NOTICE = "/login?signedUp=1";
 

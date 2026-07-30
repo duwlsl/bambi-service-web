@@ -66,11 +66,29 @@
 - ⚠️ **다크 모드가 이때 처음 실제로 켜졌다.** 그전까지 `.dark` 를 토글하는 코드가 없어 앱은 사실상 라이트 전용이었다.
   기본값이 `system` 이므로 **OS 가 다크인 사용자는 전 화면이 다크로 바뀐다.** 새 화면을 만들 때 다크 대비를 함께 확인할 것.
 
+### ⚡ 2026-07-30 범위 변경 — 관심사 온보딩 구현 승인
+
+- **`onboarding.html` = P1 「구현하지 않는다」 목록에서 제외.** `/onboarding` 으로 구현한다.
+- **신규 가입 흐름 변경**: 이메일 가입 성공 → 자동 로그인 성공 → **`/onboarding`** → 관심사 저장 성공 → 완료 화면 → 홈 `/`.
+  자동 로그인 실패 시 기존 `/login?signedUp=1` 유지. **신규 가입 흐름만 온보딩으로 보낸다** — 기존 회원
+  로그인·전역 강제 리다이렉트·middleware 가드는 만들지 않는다(서버에 온보딩 완료 여부 필드 없음).
+- **관심사 최소 1개 필수** (목업의 "최소 3개" 대체). "나중에 할게요" 건너뛰기 없음. 0개면 완료 CTA 비활성.
+- 온보딩에서 고른 관심사는 사용자가 직접 설정한 값 = **source=USER**(서버 강제).
+  agent 자동 추론 태그(INFERRED · `/api/wiki/tags`)는 조회·저장 어느 쪽에도 섞지 않는다.
+- **관심사 저장 ≠ 보고서 생성.** 완료 화면은 첫 브리핑 생성·도착 시점(7:00 등)을 약속하지 않는다.
+- category 는 화면 표시용 그룹일 뿐이다(서버에 category 저장 필드 없음). 서버로는 topic(name) 문자열만 저장한다.
+- **실측 계약 (bambi-service-api `interest/` 소스 확인, 2026-07-30)**:
+  `GET /api/interests`(내 목록) · `POST /api/interests {name}`(201 · name 1~100자 · 중복 409 `DUPLICATE_RESOURCE` · source 항상 USER) ·
+  `PUT /api/interests/{id}`(rename) · `DELETE /api/interests/{id}`(soft delete). 전부 인증 필수.
+  일괄 저장 endpoint 는 없다 → 선택 교체는 topic 단위 DELETE/POST 로 수행(`lib/repositories/interests.ts`).
+  직접 입력 topic 도 동일 계약(자유 문자열)으로 저장 지원 → "관심사 직접 추가" 구현 확정.
+
 ### P1 — 목업만 두고 **구현하지 않는다 (MUST NOT)**
 
-`search.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · `onboarding.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
+`search.html` · `notifications.html` · `profile-self.html` · `profile-user.html` · `saved.html` · 랜딩(`landing/landing-desktop.html`) · **소셜 로그인(Google)**
 
 > `settings.html` 은 2026-07-28 우석 승인으로 이 목록에서 빠졌다 (아래 범위 변경 참조).
+> `onboarding.html` 은 2026-07-30 구현 승인으로 이 목록에서 빠졌다 (위 범위 변경 참조).
 
 > 목업에 있다는 이유로 구현하지 않는다. 범위 확장이 필요하면 먼저 보고한다.
 > 단, **비로그인 guest 최소 UI(guest 헤더 · 피드 단일 탭 · 가입 유도 모달 · 상세 Sticky CTA)는 P1이 아니라 P0**다 (§15 2026-07-21 결정).
