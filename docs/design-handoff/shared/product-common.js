@@ -67,7 +67,7 @@
     if(v==='done')renderRecap();
     document.querySelectorAll('[data-ob-view]').forEach(function(x){x.hidden=(x.getAttribute('data-ob-view')!==v);});
     var st=document.getElementById('ob-step');
-    if(st)st.innerHTML=(v==='pick')?'관심사 선택 · <b>1</b> / 2':'첫 브리핑 안내 · <b>2</b> / 2';
+    if(st)st.innerHTML=(v==='pick')?'관심사 선택 · <b>1</b> / 2':'완료 · <b>2</b> / 2';
   }
   document.querySelectorAll('[data-ob]').forEach(function(b){
     b.addEventListener('click',function(){showOb(b.getAttribute('data-ob'));});
@@ -77,7 +77,7 @@
   function obCount(){
     var n=document.querySelectorAll('#screen-onboard .ob-view[data-ob-view="pick"] .chip.on').length;
     var el=document.getElementById('ob-count-n'); if(el)el.textContent=n;
-    if(obNext)obNext.classList.toggle('dis',n<3);
+    if(obNext)obNext.classList.toggle('dis',n<1);
   }
   function bindChip(ch){
     ch.addEventListener('click',function(){ch.classList.toggle('on');obCount();});

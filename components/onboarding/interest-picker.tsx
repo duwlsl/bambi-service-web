@@ -1,0 +1,130 @@
+"use client";
+
+import { ONBOARDING_INTEREST_CATALOG } from "@/constants/interests";
+
+/**
+ * 관심사 선택 그리드 — 목업 onboarding.html 의 .ob-cat / .ob-chips / .chip / .ob-addrow 1:1.
+ *
+ * - category 는 표시 전용 그룹(fieldset+legend)이고, 서버로는 topic(name)만 간다(constants/interests.ts).
+ * - chip 은 실제 <button type="button"> + aria-pressed 토글. 목업 .pl 과 동일하게
+ *   미선택 = ＋ / 선택 = ✓ 아이콘을 함께 그려 색상 외 수단으로도 상태를 전달한다.
+ * - 직접 추가(.ob-addrow)는 점선 구분선 아래 중앙 정렬 — 버튼·안내·추가된 chip 순(목업 DOM 순서).
+ */
+export function InterestPicker({
+  customTopics,
+  selected,
+  disabled,
+  onToggle,
+  onOpenAdd,
+}: {
+  /** 사용자가 직접 추가했거나 서버에 있던 카탈로그 밖 topic 목록. */
+  customTopics: string[];
+  selected: ReadonlySet<string>;
+  /** 저장(제출) 중 상호작용 차단. */
+  disabled: boolean;
+  onToggle: (name: string) => void;
+  onOpenAdd: () => void;
+}) {
+  return (
+    <>
+      {ONBOARDING_INTEREST_CATALOG.map((category) => (
+        <fieldset key={category.label} className="mt-6">
+          {/* .ob-cat — 13px/700, ink-mid */}
+          <legend className="mb-2.5 text-[13px] font-bold text-ink-mid">{category.label}</legend>
+          {/* .ob-chips — gap 9px */}
+          <div className="flex flex-wrap gap-[9px]">
+            {category.topics.map((topic) => (
+              <InterestChip
+                key={topic}
+                name={topic}
+                selected={selected.has(topic)}
+                disabled={disabled}
+                onToggle={() => onToggle(topic)}
+              />
+            ))}
+          </div>
+        </fieldset>
+      ))}
+
+      {/* .ob-addrow — 점선 구분선 아래 중앙 정렬 세로 배치 (서버 계약: 자유 문자열 name 저장 지원 확인됨) */}
+      <fieldset className="mt-[30px] flex flex-col items-center gap-2 border-t border-dashed border-input pt-[22px]">
+        <legend className="sr-only">관심사 직접 추가</legend>
+        {/* .chip.add — 주황 점선 테두리 */}
+        <button
+          type="button"
+          onClick={onOpenAdd}
+          disabled={disabled}
+          className="focus-ring inline-flex items-center gap-[7px] rounded-full border-[1.5px] border-dashed border-primary bg-card px-4 py-[9px] text-[13.5px] font-bold whitespace-nowrap text-signal-ink hover:bg-wash disabled:opacity-45"
+        >
+          + 관심사 직접 추가
+        </button>
+        {/* .ob-addhint */}
+        <span className="text-xs text-muted-foreground">
+          찾는 주제가 없나요? 자유롭게 입력해 주세요
+        </span>
+        {/* .ob-added — 추가된 topic 은 카탈로그 chip 과 동일 형태, 중앙 정렬 */}
+        {customTopics.length > 0 && (
+          <div className="mt-0.5 flex flex-wrap justify-center gap-[9px]">
+            {customTopics.map((topic) => (
+              <InterestChip
+                key={topic}
+                name={topic}
+                selected={selected.has(topic)}
+                disabled={disabled}
+                onToggle={() => onToggle(topic)}
+              />
+            ))}
+          </div>
+        )}
+      </fieldset>
+    </>
+  );
+}
+
+/** .chip — 미선택: ＋ 아이콘 + line-strong 테두리 / 선택(.on): ✓ 아이콘 + 주황 테두리·wash 배경. */
+function InterestChip({
+  name,
+  selected,
+  disabled,
+  onToggle,
+}: {
+  name: string;
+  selected: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={onToggle}
+      className={`focus-ring inline-flex items-center gap-[7px] rounded-full border px-4 py-[9px] text-[13.5px] font-semibold whitespace-nowrap transition-colors disabled:opacity-45 ${
+        selected
+          ? "border-primary bg-wash text-signal-ink"
+          : "border-input bg-card text-ink-mid hover:border-primary hover:text-foreground"
+      }`}
+    >
+      {selected ? <ChipCheckIcon /> : <ChipPlusIcon />}
+      {name}
+    </button>
+  );
+}
+
+/** .chip .pl — 미선택 ＋ (ink-dim). */
+function ChipPlusIcon() {
+  return (
+    <svg width={11} height={11} viewBox="0 0 11 11" aria-hidden="true" className="shrink-0 text-muted-foreground">
+      <path d="M5.5 0.8v9.4M0.8 5.5h9.4" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** .chip.on .pl — 선택 ✓ (signal-ink). 완료 화면 요약 chip 도 재사용한다. */
+export function ChipCheckIcon() {
+  return (
+    <svg width={11} height={11} viewBox="0 0 11 11" aria-hidden="true" className="shrink-0 text-signal-ink">
+      <path d="M1.4 5.8 4.1 8.4 9.6 2.6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
