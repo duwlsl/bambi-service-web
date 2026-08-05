@@ -11,6 +11,7 @@ import { SideLeft } from "@/components/home/side-left";
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert, IconSearch } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
+import { CardComments } from "@/components/report/card-comments";
 import { CardLikeButton } from "@/components/report/card-like-button";
 import { useCardDetail } from "@/hooks/use-card-detail";
 import { useReportBody, type ReportBodyState } from "@/hooks/use-report-body";
@@ -179,6 +180,15 @@ function CardDetailView({ card, guest }: { card: CardResponse; guest: boolean })
                 </ul>
               </section>
             )}
+
+            {/*
+              댓글 — 카드 본문 → 출처 → 댓글 순서. **PUBLIC 카드에서만** 렌더한다:
+              서버가 PRIVATE·부재·형식오류를 전부 404 로 막으므로(CommentService.resolvePublicCard)
+              비공개 카드에 섹션을 두면 확실한 404 를 부르게 된다.
+              이 컴포넌트는 카드 상세가 ready 인 뒤에만 mount 되므로 loading/error/notFound 중에는
+              댓글 요청이 나가지 않는다. 경로에는 카드 publicId 만 쓴다(내부 id·reportId 사용 금지).
+            */}
+            {isPublicCard(card) && <CardComments cardPublicId={card.publicId} guest={guest} />}
           </main>
 
           {/* 우측 rail — 실 UUID 상세 전용. 값이 실제로 있는 리포트(ready)에서만 렌더된다. */}
