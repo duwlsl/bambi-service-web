@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/use-auth";
@@ -13,12 +13,14 @@ import { IconAlert, IconSearch } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
 import { CardComments } from "@/components/report/card-comments";
 import { CardLikeButton } from "@/components/report/card-like-button";
+import { CardShareModal } from "@/components/report/card-share-modal";
 import { useCardDetail } from "@/hooks/use-card-detail";
+import { useCopyCardLink } from "@/hooks/use-copy-card-link";
 import { useReportBody, type ReportBodyState } from "@/hooks/use-report-body";
-import { isPublicCard, toCardSocial, toFeedCardVM } from "@/lib/adapters/card";
+import { isCardOwner, isPublicCard, toCardSocial, toFeedCardVM } from "@/lib/adapters/card";
 import { toReportRailVM } from "@/lib/adapters/report";
 import { ReportMarkdown } from "@/components/report/report-markdown";
-import type { CardResponse } from "@/types/feed";
+import type { CardResponse, CardVisibility } from "@/types/feed";
 
 /**
  * 실 카드 상세 (GET /api/cards/{publicId}) — /report/{UUID}.
@@ -40,7 +42,7 @@ import type { CardResponse } from "@/types/feed";
  * id 존재검증·라우팅은 서버(app/report/[id]/page.tsx)가 하고, 여기선 등록된 UUID 의 데이터만 다룬다.
  */
 export function CardDetailScreen({ publicId }: { publicId: string }) {
-  const { status, refreshAuth } = useAuth();
+  const { status, user, refreshAuth } = useAuth();
   const detail = useCardDetail(publicId);
 
   // 1) 인증(복구) 상태 — 확정 전엔 데이터 화면을 내보내지 않는다.
@@ -52,22 +54,68 @@ export function CardDetailScreen({ publicId }: { publicId: string }) {
   if (detail.status === "loading") return <DetailSkeleton />;
   if (detail.status === "error") return <DetailDataError onRetry={detail.refetch} />;
   if (detail.status === "notFound") return <DetailNotFound />;
-  return <CardDetailView card={detail.card} guest={status === "guest"} />;
+  return (
+    <CardDetailView
+      card={detail.card}
+      guest={status === "guest"}
+      // 소유자 판정의 좌변. guest·error·loading 에서는 user 가 null 이라 자연히 비소유자가 된다.
+      // publicId 는 백엔드 UserSummary 확장(#24) 이후 값이라 optional — 없으면 판정이 false 다.
+      viewerPublicId={user?.publicId ?? null}
+    />
+  );
 }
 
 /**
- * 실제 상세 렌더 — 실 필드만. 크롬은 mock 상세와 공유하되 보관/공유/MD·우측 rail 은 두지 않는다.
+ * 실제 상세 렌더 — 실 필드만. 크롬은 mock 상세와 공유하되 보관·MD 는 두지 않는다(실 카드 미지원).
  * guest 는 좌측 내비를 아이콘 전용으로 렌더한다(§15) — 홈 외 항목은 GuestGateModal 로 게이트된다.
  * 상단 HomeNav 는 자체적으로 useAuth 로 분기하므로 별도 prop 이 필요 없다.
+ *
+ * **공개 범위·공유는 이 화면이 담당한다**(목록 카드에는 읽기 전용 배지만 둔다):
+ * - 소유자: readbar `공유` → CardShareModal 에서 공개/비공개 전환과 링크 복사
+ * - 비소유자·게스트: PUBLIC 상세에서 링크 복사만 (여기 도달하는 남의 카드는 PUBLIC 뿐 —
+ *   남의 PRIVATE 는 서버가 404 로 감춰 DetailNotFound 로 간다)
+ * 전환이 성공하면 같은 화면에서 좋아요·댓글 노출 조건이 곧바로 다시 평가된다(재요청·이동 없음).
  */
-function CardDetailView({ card, guest }: { card: CardResponse; guest: boolean }) {
-  const vm = toFeedCardVM(card);
+function CardDetailView({
+  card,
+  guest,
+  viewerPublicId,
+}: {
+  card: CardResponse;
+  guest: boolean;
+  viewerPublicId: string | null;
+}) {
+  const [amOpen, setAmOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  /*
+    공개 범위 변경 결과 — PATCH 성공 응답의 `visibility` **한 필드만** 서버 카드 위에 얹는다.
+    응답 전체로 교체하지 않는 이유: PATCH 응답은 목록용 변환 경로라 author·likeCount·liked 가
+    모두 null 이다(2026-08-05 실측). 통째로 갈아끼우면 방금 켜진 좋아요 UI 와 소유자 판정이 사라진다.
+
+    `source` 로 원본 카드 참조를 함께 들고 render 시점에 비교한다 — 카드가 바뀌거나(다른 publicId)
+    서버 응답이 새로 오면 참조가 달라져 이전 override 가 새 카드에 얹히지 않는다. effect 초기화가
+    없으므로 set-state-in-effect 도, useAsyncData cleanup·StrictMode 동작 변경도 없다.
+  */
+  const [override, setOverride] = useState<{ source: CardResponse; visibility: CardVisibility } | null>(
+    null,
+  );
+  const visibility = override !== null && override.source === card ? override.visibility : card.visibility;
+  const shown: CardResponse = visibility === card.visibility ? card : { ...card, visibility };
+
+  const applyVisibility = useCallback(
+    (next: CardVisibility) => setOverride({ source: card, visibility: next }),
+    [card],
+  );
+
+  const vm = toFeedCardVM(shown);
   // 좋아요 초기값 — 단건 상세 응답의 author·likeCount·liked 를 런타임 검증해 좁힌다.
   // 소셜 필드가 없는 응답(미배포·비정상 null)이면 null 이고, 그때는 좋아요 UI 를 렌더하지 않는다.
-  const social = toCardSocial(card);
+  const social = toCardSocial(shown);
   // 본문(리포트) — 카드 ready 후에만 이 컴포넌트가 mount 되므로 여기서 2단계 요청을 시작한다.
   const body = useReportBody(card.reportId);
-  const [amOpen, setAmOpen] = useState(false);
+  // 공개 범위 변경은 **카드 소유자에게만** 노출한다(비소유자·게스트는 링크 복사만).
+  const owner = isCardOwner(shown, viewerPublicId);
+  const isPublic = isPublicCard(shown);
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,27 +127,45 @@ function CardDetailView({ card, guest }: { card: CardResponse; guest: boolean })
 
           <main className="min-w-0 max-w-[760px] flex-1">
             {/*
-              .readbar — 뒤로가기만(보관/공유/MD 는 실 카드 미지원 → 두지 않음).
+              .readbar — 좌측 뒤로가기 + 우측 공유 액션(보관·MD 는 실 카드 미지원 → 두지 않음).
 
               목업(report-detail.html)의 readbar 는 padding 9px 12px 이고, **두께는 내부
-              `.btn`(height:32px)이 만든다**. 이 화면에는 그 버튼들이 없어 같은 padding 이어도
-              한 줄 높이(약 40px)로 주저앉아 입력창처럼 보였다 → 링크 콘텐츠에 목업 버튼과 같은
-              32px 높이를 줘 목업과 동일한 두께(32 + 9·2 + 보더 2 = 52px)로 맞춘다.
+              `.btn`(height:32px)이 만든다** → 좌측 링크와 우측 버튼 모두 32px 높이를 줘 목업과
+              같은 두께(32 + 9·2 + 보더 2 = 52px)를 유지한다. sticky·border·bg-card·rounded·
+              shadow·focus-ring 은 기존 그대로이고 새 강조색을 만들지 않는다.
 
-              카드 전체가 Link 라 어디를 눌러도 홈으로 간다(기존 border·bg-card·rounded·shadow·
-              hover·focus-ring 유지, 새 강조색 없음).
+              공유 버튼이 들어오면서 바 전체를 Link 로 감쌀 수 없게 됐다(링크 안에 button 중첩
+              금지) → 링크가 남은 가로 공간(flex-1)을 차지해 빈 영역을 눌러도 홈으로 가는 동작은
+              유지한다.
             */}
-            <Link
-              href="/"
-              className="focus-ring sticky top-4 z-20 mb-4 flex items-center rounded-xl border border-border bg-card px-3 py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-ink-mid shadow-[var(--shadow)] hover:text-signal-ink"
-            >
-              <span className="flex min-h-8 items-center gap-2">
+            <div className="sticky top-4 z-20 mb-4 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-[9px] shadow-[var(--shadow)]">
+              <Link
+                href="/"
+                className="focus-ring flex min-h-8 flex-1 items-center gap-2 rounded-lg text-[13.5px] font-semibold whitespace-nowrap text-ink-mid hover:text-signal-ink"
+              >
                 <span aria-hidden="true" className="text-muted-foreground">
                   ←
                 </span>
                 홈 피드로
-              </span>
-            </Link>
+              </Link>
+              {/*
+                공유 — 권한과 상태에 따라 할 수 있는 일이 다르다.
+                - 소유자: 공개 범위 설명·변경과 링크 복사를 담은 모달을 연다.
+                - 비소유자·게스트(PUBLIC 만 여기 도달): 링크 복사만. 공개 범위 변경 UI 도,
+                  공개/비공개 문구도 노출하지 않는다(권한 없는 기능을 보여주지 않는다).
+              */}
+              {owner ? (
+                <button
+                  type="button"
+                  onClick={() => setShareOpen(true)}
+                  className="focus-ring inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-transparent px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink-mid hover:bg-background"
+                >
+                  ↗ 공유
+                </button>
+              ) : (
+                isPublic && <CopyLinkButton publicId={shown.publicId} />
+              )}
+            </div>
 
             {/* .dcard */}
             <article className="mb-4 rounded-2xl border border-border bg-card px-[30px] py-[26px]">
@@ -127,8 +193,8 @@ function CardDetailView({ card, guest }: { card: CardResponse; guest: boolean })
                 PRIVATE 카드는 서버가 좋아요를 404 로 막으므로 버튼 자체를 두지 않는다.
                 작성자 본인 여부는 검사하지 않는다(정책: 본인도 좋아요 가능).
               */}
-              {isPublicCard(card) && social !== null && (
-                <CardLikeButton publicId={card.publicId} social={social} />
+              {isPublic && social !== null && (
+                <CardLikeButton publicId={shown.publicId} social={social} />
               )}
             </article>
 
@@ -188,7 +254,7 @@ function CardDetailView({ card, guest }: { card: CardResponse; guest: boolean })
               이 컴포넌트는 카드 상세가 ready 인 뒤에만 mount 되므로 loading/error/notFound 중에는
               댓글 요청이 나가지 않는다. 경로에는 카드 publicId 만 쓴다(내부 id·reportId 사용 금지).
             */}
-            {isPublicCard(card) && <CardComments cardPublicId={card.publicId} guest={guest} />}
+            {isPublic && <CardComments cardPublicId={shown.publicId} guest={guest} />}
           </main>
 
           {/* 우측 rail — 실 UUID 상세 전용. 값이 실제로 있는 리포트(ready)에서만 렌더된다. */}
@@ -197,7 +263,44 @@ function CardDetailView({ card, guest }: { card: CardResponse; guest: boolean })
       </div>
 
       <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} />
+      {/* 열릴 때만 mount 해 이전 pending·오류 상태가 다시 열 때 남지 않게 한다. */}
+      {shareOpen && (
+        <CardShareModal
+          onClose={() => setShareOpen(false)}
+          publicId={shown.publicId}
+          title={vm.title}
+          visibility={visibility}
+          onVisibilityChanged={applyVisibility}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * 링크 복사 버튼 — 비소유자·게스트가 보는 PUBLIC 상세의 유일한 공유 액션.
+ * PATCH 요청은 나가지 않고(복사는 읽기 동작), 공개/비공개 문구나 변경 버튼도 노출하지 않는다.
+ * 결과는 버튼 옆 live region 으로 알려 스크린리더에도 전달된다.
+ */
+function CopyLinkButton({ publicId }: { publicId: string }) {
+  const { copy, feedback } = useCopyCardLink(publicId);
+  return (
+    <>
+      <span
+        role="status"
+        aria-live="polite"
+        className={`text-[11.5px] ${feedback === null ? "sr-only" : "text-muted-foreground"}`}
+      >
+        {feedback?.message ?? ""}
+      </span>
+      <button
+        type="button"
+        onClick={copy}
+        className="focus-ring inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-transparent px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink-mid hover:bg-background"
+      >
+        링크 복사
+      </button>
+    </>
   );
 }
 

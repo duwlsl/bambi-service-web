@@ -73,6 +73,29 @@ export function isPublicCard(card: CardResponse): boolean {
 }
 
 /**
+ * 조회자가 이 카드의 **소유자**인지 — 공개 범위 변경 UI 노출의 유일한 조건.
+ *
+ * 판정은 `publicId` 두 개의 정확한 문자열 일치로만 한다. email·displayName·username·내부 순번 id
+ * 로 추정하지 않는다(표시 이름은 중복·변경될 수 있고, 내부 id 는 응답에 없다).
+ *
+ * 두 값 중 하나라도 **UUID 형식이 아니거나 없으면 false** 다:
+ * - `viewerPublicId` 없음/형식오류 → 게스트이거나 `publicId` 미배포 응답(User.publicId 는 optional)
+ * - `card.author` 없음/형식오류 → 목록·저장·PATCH 응답 경로(author 가 계약상 null)이거나
+ *   탈퇴·부재 작성자(AuthorResponse.from(null) — 세 필드 전부 null)
+ * 확신할 수 없을 때 소유자로 보지 않는 쪽이 안전하다(변경 버튼을 잘못 띄우면 확실한 404 를 부른다).
+ *
+ * 대소문자를 접지 않는 이유: 두 값 모두 같은 서버가 같은 형식(소문자 UUID)으로 내려준다.
+ * 임의 정규화로 "다른 값을 같다고 보는" 여지를 만들지 않는다.
+ */
+export function isCardOwner(card: CardResponse, viewerPublicId: string | null): boolean {
+  const viewer = normalizeText(viewerPublicId);
+  if (viewer === null || !isUuid(viewer)) return false;
+  const author = normalizeText(card.author?.publicId);
+  if (author === null || !isUuid(author)) return false;
+  return viewer === author;
+}
+
+/**
  * 단건 상세의 소셜 필드 런타임 검증 — 좋아요 UI 가 쓸 수 있는 값일 때만 좁혀 돌려준다.
  *
  * 다음 경우는 전부 null(= "소셜 값 없음")이다:

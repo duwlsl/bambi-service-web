@@ -71,7 +71,7 @@ export function MemberFeed({
             {group.label}
           </h3>
           {group.cards.map((card) => (
-            <FeedCard key={card.publicId} card={card} onVisibilityChanged={feed.applyVisibility} />
+            <FeedCard key={card.publicId} card={card} />
           ))}
         </section>
       ))}
