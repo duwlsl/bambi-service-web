@@ -63,6 +63,83 @@ export type WikiDocumentsData = {
   total: number;
 };
 
+/** GET /api/wiki/graph의 Node. Graph 본문 Markdown은 상세 API에서 별도로 조회한다. */
+export type WikiGraphNodeDto = {
+  id: string;
+  documentKind: string;
+  documentKey: string;
+  title: string;
+  subtype: string;
+  summary: string | null;
+  aliases: string[];
+  filePath: string;
+  version: number;
+  updatedAt: string;
+  degree: number;
+};
+
+/** GET /api/wiki/graph의 방향성 Edge. */
+export type WikiGraphEdgeDto = {
+  id: string;
+  source: string;
+  target: string;
+  relationType: string;
+};
+
+/** GET /api/wiki/graph의 집계. */
+export type WikiGraphStatsDto = {
+  nodeCount: number;
+  edgeCount: number;
+  entityCount: number;
+  conceptCount: number;
+  orphanCount: number;
+};
+
+/** 인증 사용자의 전체 LLM Wiki Graph 응답. */
+export type WikiGraphData = {
+  wikiVersion: number | null;
+  generatedAt: string | null;
+  stats: WikiGraphStatsDto;
+  nodes: WikiGraphNodeDto[];
+  edges: WikiGraphEdgeDto[];
+};
+
+/** Wiki Node가 참고한 사용자 원본 자료. */
+export type WikiDocumentSourceDto = {
+  sourceDocumentId: string;
+  sourceType: string;
+  title: string;
+  canonicalUrl: string | null;
+  relationType: string;
+};
+
+/** Wiki Node와 연결된 다른 Entity·Concept. */
+export type WikiDocumentRelationDto = {
+  direction: string;
+  relatedDocumentId: string;
+  relatedDocumentKind: string;
+  relatedTitle: string;
+  relationType: string;
+};
+
+/** GET /api/wiki/documents/{documentId} 상세 응답. */
+export type WikiDocumentDetailData = {
+  documentId: string;
+  documentVersionId: string;
+  documentKind: string;
+  documentKey: string;
+  filePath: string;
+  domain: string | null;
+  title: string;
+  summary: string | null;
+  version: number;
+  sourceCount: number;
+  updatedAt: string;
+  markdown: string;
+  sources: WikiDocumentSourceDto[];
+  relations: WikiDocumentRelationDto[];
+};
+
 /* ────────────────────────── 화면 모델 (View Model) ────────────────────────── */
 
 /**
@@ -91,4 +168,70 @@ export type WikiDocument = {
   domain: string | null;
   sourceCount: number;
   updatedAt: string; // ISO-8601 (파싱 실패 시 화면에서 표시를 생략한다)
+};
+
+export type WikiNodeKind = "entity" | "concept";
+
+/** 사용자용 LLM Wiki Graph Node. */
+export type WikiGraphNode = {
+  id: string;
+  documentKind: WikiNodeKind;
+  documentKey: string;
+  title: string;
+  subtype: string | null;
+  summary: string | null;
+  aliases: string[];
+  filePath: string;
+  version: number;
+  updatedAt: string;
+  degree: number;
+};
+
+export type WikiGraphEdge = {
+  id: string;
+  source: string;
+  target: string;
+  relationType: string;
+};
+
+export type WikiGraph = {
+  wikiVersion: number | null;
+  generatedAt: string | null;
+  stats: WikiGraphStatsDto;
+  nodes: WikiGraphNode[];
+  edges: WikiGraphEdge[];
+};
+
+export type WikiDocumentSource = {
+  sourceDocumentId: string;
+  sourceType: string;
+  title: string;
+  canonicalUrl: string | null;
+  relationType: string;
+};
+
+export type WikiDocumentRelation = {
+  direction: "incoming" | "outgoing";
+  relatedDocumentId: string;
+  relatedDocumentKind: WikiNodeKind;
+  relatedTitle: string;
+  relationType: string;
+};
+
+/** 상세 패널에서 사용하는 LLM Wiki 문서. */
+export type WikiDocumentDetail = {
+  documentId: string;
+  documentVersionId: string;
+  documentKind: WikiNodeKind;
+  documentKey: string;
+  filePath: string;
+  domain: string | null;
+  title: string;
+  summary: string | null;
+  version: number;
+  sourceCount: number;
+  updatedAt: string;
+  markdown: string;
+  sources: WikiDocumentSource[];
+  relations: WikiDocumentRelation[];
 };

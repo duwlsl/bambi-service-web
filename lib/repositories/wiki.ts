@@ -1,7 +1,21 @@
 import { FALLBACK_ERROR_CODE } from "@/constants/errors";
 import { ApiError, apiGet } from "@/lib/api-client";
-import { toWikiDocuments, toWikiTags } from "@/lib/adapters/wiki";
-import type { WikiDocument, WikiDocumentsData, WikiTag, WikiTagsData } from "@/types/wiki";
+import {
+  toWikiDocumentDetail,
+  toWikiDocuments,
+  toWikiGraph,
+  toWikiTags,
+} from "@/lib/adapters/wiki";
+import type {
+  WikiDocument,
+  WikiDocumentDetail,
+  WikiDocumentDetailData,
+  WikiDocumentsData,
+  WikiGraph,
+  WikiGraphData,
+  WikiTag,
+  WikiTagsData,
+} from "@/types/wiki";
 
 /**
  * 관심사 · LLM Wiki 데이터 repository — 화면 훅과 Service API 사이의 단일 seam.
@@ -10,7 +24,7 @@ import type { WikiDocument, WikiDocumentsData, WikiTag, WikiTagsData } from "@/t
  * - 훅이 authenticated 에서만 호출하므로 여기서 인증 상태를 다시 판단하지 않는다.
  * - 정상 빈 목록(tags·items 0건)은 오류가 아니다 → 그대로 빈 배열을 반환하고 훅이 empty 로 정규화한다.
  *   필수 컨테이너 자체가 빠진 응답만 오류로 승격한다.
- * - 그래프(GET /api/wiki/graph/top-nodes)는 이번 범위에서 연결하지 않는다.
+ * - 전체 Graph와 문서 상세도 Service API만 호출한다. 브라우저에서 Agent API를 직접 호출하지 않는다.
  */
 
 /** 필수 컨테이너 누락(success:true 인데 data 가 없음 등) — 정상 빈 목록과 구분해 오류로 올린다. */
@@ -39,4 +53,37 @@ export async function fetchWikiDocuments(signal?: AbortSignal): Promise<WikiDocu
     throw new ApiError(FALLBACK_ERROR_CODE, `invalid documents payload for ${path}`, 200);
   }
   return toWikiDocuments(data.items);
+}
+
+/** 인증 사용자의 전체 Entity·Concept Graph를 조회한다. */
+export async function fetchWikiGraph(signal?: AbortSignal): Promise<WikiGraph> {
+  const path = "/api/wiki/graph";
+  const data = requireContainer(await apiGet<WikiGraphData | null>(path, { signal }), path);
+  return toWikiGraph(data);
+}
+
+export type WikiDocumentDetailResult =
+  | { status: "ready"; document: WikiDocumentDetail }
+  | { status: "notFound" };
+
+/** Wiki Node 상세를 조회하며 삭제·미소유 문서는 notFound로 정규화한다. */
+export async function fetchWikiDocumentDetail(
+  documentId: string,
+  signal?: AbortSignal,
+): Promise<WikiDocumentDetailResult> {
+  const path = `/api/wiki/documents/${encodeURIComponent(documentId)}`;
+  try {
+    const data = requireContainer(
+      await apiGet<WikiDocumentDetailData | null>(path, { signal }),
+      path,
+    );
+    const document = toWikiDocumentDetail(data);
+    if (document === null) {
+      throw new ApiError(FALLBACK_ERROR_CODE, `invalid document payload for ${path}`, 200);
+    }
+    return { status: "ready", document };
+  } catch (error) {
+    if (error instanceof ApiError && error.code === "NOT_FOUND") return { status: "notFound" };
+    throw error;
+  }
 }
