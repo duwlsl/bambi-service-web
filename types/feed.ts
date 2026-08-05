@@ -65,6 +65,13 @@ export type CardResponse = {
   title: string;
   summary: string;
   whyForYou: string;
+  /**
+   * 관심사 태그 — service-api #37(`28932d8`)에서 `CardResponse` 에도 추가됐다(2026-08-05 실측).
+   * 서버는 `List.copyOf(card.interestTags)` 로 내려주므로 null 이 아니라 빈 배열이다.
+   * 이 필드가 없는 배포본에서도 화면이 깨지지 않게 optional 로 두고, 값 판별은 어댑터
+   * (`toCardTags`)가 한다 — 가짜 태그를 만들지 않는다.
+   */
+  tags?: string[] | null;
   /** 카드 공개 범위. 모든 응답 경로에서 채워진다(서버 컬럼 NOT NULL). */
   visibility: CardVisibility;
   /** 단건 상세에서만 채워진다. 목록·저장·visibility 변경 응답에서는 null. */
@@ -132,9 +139,16 @@ export type FeedCardVM = {
    * 집계하는 쪽(lib/adapters/home-rail.ts)이 "둘 중 어느 것도 아님"을 별도로 다룬다.
    */
   visibility: CardVisibility;
+  /**
+   * 정규화된 관심사 태그 — 공백 제거, 대소문자 기준 중복 제거(표기는 첫 유효 값 유지).
+   * 카드가 그대로 렌더할 수 있는 형태다. 카테고리·해시태그를 임의로 만들지 않는다.
+   */
+  tags: string[];
   /** 정규화된 출처만 담는다 — 빈 출처는 제외되므로 length 가 곧 표시 가능한 출처 건수다. */
   sources: CardSourceVM[];
   createdAtLabel: string;
+  /** 목록 카드 메타에 쓰는 시각만("오전 7:00"). 유효한 createdAt 일 때만 채우고 실패 시 빈 문자열. */
+  createdAtTimeLabel: string;
   /**
    * createdAt(ISO) 파싱 결과(ms). **파싱 실패 시 null** — 대체 날짜를 만들지 않는다.
    * 서버가 최신순으로 주지만 목록 순서에만 의존하지 않고 최신 판정을 실제 값으로 하려고 담는다

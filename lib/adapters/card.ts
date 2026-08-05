@@ -98,6 +98,19 @@ function parseCreatedAtMs(iso: string): number | null {
   return Number.isNaN(ts) ? null : ts;
 }
 
+/** 목록 카드 메타용 시각만("오전 7:00") — 날짜는 상위 날짜 그룹이 이미 보여준다. */
+const CREATED_TIME_FORMAT = new Intl.DateTimeFormat("ko-KR", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+function formatCreatedTime(iso: unknown): string {
+  if (typeof iso !== "string") return "";
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return ""; // 파싱 실패 시 표시 생략(Invalid Date·현재 시각 fallback 금지)
+  return CREATED_TIME_FORMAT.format(new Date(ts));
+}
+
 export function toFeedCardVM(card: CardResponse): FeedCardVM {
   return {
     publicId: card.publicId,
@@ -106,8 +119,10 @@ export function toFeedCardVM(card: CardResponse): FeedCardVM {
     whyForYou: card.whyForYou,
     // 서버 값 그대로 — 없거나 예상 밖이어도 여기서 PUBLIC/PRIVATE 로 보정하지 않는다.
     visibility: card.visibility,
+    tags: toCardTags(card.tags),
     sources: toCardSources(card.sources),
     createdAtLabel: formatCreatedAt(card.createdAt),
+    createdAtTimeLabel: formatCreatedTime(card.createdAt),
     createdAtMs: typeof card.createdAt === "string" ? parseCreatedAtMs(card.createdAt) : null,
   };
 }
@@ -193,9 +208,16 @@ export function toPublicFeedCardVM(
 export function toCardTags(tags: unknown): string[] {
   if (!Array.isArray(tags)) return [];
   const out: string[] = [];
+  // 중복 판정은 lib/feed-mix.ts 의 태그 비교와 같은 기준(trim + 소문자)이고,
+  // **화면 표기는 첫 유효 값을 그대로** 유지한다(대소문자를 임의로 바꾸지 않는다).
+  const seen = new Set<string>();
   for (const tag of tags) {
     const text = normalizeText(tag);
-    if (text !== null) out.push(text);
+    if (text === null) continue;
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
   }
   return out;
 }
