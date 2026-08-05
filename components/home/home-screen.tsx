@@ -120,8 +120,9 @@ function HomeView({ isMember }: { isMember: boolean }) {
                 <MemberFeed feed={memberFeed} emptyState={myReportsEmptyState} />
               </div>
             )}
-            {/* [피드] — 공개 피드 실데이터(GET /api/feed/public). member·guest 가 같은 엔드포인트를 쓰고
-                렌더하는 값이 전부 공개 데이터라 guest 분기가 없다(개인 '나만 보기' 블록은 [내 보고서] 몫). */}
+            {/* [피드] — 공개 피드 실데이터. 하나의 목록에 팔로잉·추천 카드가 섞여 있고(로그인),
+                게스트는 전체 공개 카드만 본다. 내부 탭·chip 은 없다 — 혼합은 훅·순수 함수가 한다.
+                카드가 렌더하는 값은 전부 공개 데이터다. */}
             <div role="tabpanel" id="panel-rec" aria-labelledby="tab-rec" hidden={effectiveTab !== "rec"}>
               <FeedRec />
             </div>

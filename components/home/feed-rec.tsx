@@ -4,24 +4,29 @@ import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { PublicFeedCard } from "@/components/home/public-feed-card";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
-import { useRecFeed } from "@/hooks/use-rec-feed";
+import { usePublicFeed } from "@/hooks/use-public-feed";
 import { MOCK_FEED_END } from "@/lib/mock/feed";
 
 /**
- * [피드] 탭 — 공개 피드 실데이터(GET /api/feed/public). member·guest 가 같은 엔드포인트를 쓴다.
+ * [피드] 탭 — 공개 피드 실데이터. **하나의 목록**이고 사용자가 고르는 내부 탭·chip 은 없다.
+ *
+ * 로그인 사용자의 목록에는 두 종류가 섞여 있다(팔로잉 2 : 추천 1, 최대 20개):
+ * - 내가 팔로우한 작성자의 PUBLIC 카드
+ * - 내 관심사와 태그가 맞는, 팔로우하지 않은 다른 작성자의 PUBLIC 카드
+ * 게스트는 기존처럼 전체 공개 카드(`following=false`)만 본다.
+ *
+ * 혼합·중복 제거·shuffle 은 렌더 밖에서 처리한다: 순수 함수는 lib/feed-mix.ts, 조회·shuffle 시점은
+ * hooks/use-public-feed.ts 가 담당한다. 이 컴포넌트는 상태별 렌더만 한다.
+ *
+ * 카드에 "추천 사유"·"관심사 일치" 같은 문구를 새로 붙이지 않는다 — 어떤 카드가 팔로잉이고 어떤
+ * 카드가 추천인지 화면에서 구분해 표시하지 않는다(서버가 그런 라벨을 주지 않는다).
+ *
  * 상태 분기(success / empty / error)는 목업 variants/home-feed-states.html 기준을 유지한다.
  * 인증 복구 로딩은 상위(home-screen HomeSkeleton)가, 데이터 로딩은 여기 FeedSkeleton 이 담당한다.
- *
- * [피드]는 공개 전용이라 개인 "오늘 아침 브리핑(나만 보기)" 블록은 두지 않는다(개인 보고서는
- * [내 보고서] MemberFeed). 서버 쿼리가 PUBLIC 카드만 조회하므로 프론트에서 다시 걸러내지 않는다.
- *
- * guest/member 분기가 없다: 카드가 렌더하는 값이 전부 공개 데이터라 숨길 개인화 신호가 없다
- * (mock 시절의 추천 사유·보관 상태·본인 강조는 실 계약에 없어 제거됐다). 좋아요는 읽기 전용
- * 표시라 로그인 게이트가 필요한 액션도 없다 → requireAuth 를 쓰지 않는다.
+ * 부분 실패(팔로잉만 성공 등)는 훅이 흡수해 목록으로 내려주므로 여기서 따로 안내하지 않는다.
  */
 export function FeedRec() {
-  // 데이터 계층: 인증 확정 후 useRecFeed 가 loading/success/empty/error 를 정규화한다.
-  const result = useRecFeed();
+  const result = usePublicFeed();
   const retry = result.refetch;
 
   if (result.status === "loading") return <FeedSkeleton />;
@@ -40,6 +45,7 @@ export function FeedRec() {
   }
 
   if (result.status === "empty") {
+    // 세 조회가 정상이고 혼합 결과가 0건인 경우도 여기로 온다(기존 공개 피드 Empty 유지).
     return (
       <StateView
         className="min-h-[320px]"
@@ -52,15 +58,13 @@ export function FeedRec() {
     );
   }
 
-  const cards = result.data;
   return (
     <div>
-      {cards.map((card) => (
+      {result.data.map((card) => (
         <PublicFeedCard key={card.publicId} card={card} />
       ))}
 
-      {/* .feed-end — 제목 한 줄만 둔다. 보조 문구를 없앤 만큼 위 여백(20px→16px)과 제목 아래
-          margin(4px)을 걷어 한 줄에 맞는 간격으로 정리한다(handoff 하단 6px 은 유지). */}
+      {/* .feed-end — 제목 한 줄만 둔다(PR #33에서 정리한 한 줄·간격 유지). */}
       <div className="px-2.5 pt-4 pb-1.5 text-center">
         <div className="text-[13.5px] font-bold text-ink-mid">{MOCK_FEED_END.rec.title}</div>
       </div>
