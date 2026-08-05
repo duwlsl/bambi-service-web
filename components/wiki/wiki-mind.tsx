@@ -6,7 +6,7 @@ import { StateView } from "@/components/ui/state-view";
 import type { WikiInterestsState } from "@/hooks/use-wiki-interests";
 import type { WikiTag } from "@/types/wiki";
 
-/** 목업 .mind 기준 표시 상한 — 상위 4개(강도순). 나머지는 발견 후보·자료 필터에서 노출된다. */
+/** 목업 .mind 기준 표시 상한 — 상위 4개(강도순). 나머지는 발견 후보에서 노출된다. */
 const MIND_ROW_LIMIT = 4;
 
 /**
@@ -15,16 +15,12 @@ const MIND_ROW_LIMIT = 4;
  * - 막대 폭 = round(score×100)%, 최소 8%(0 에 가까워도 막대가 사라져 보이지 않게 — rail 집계와 동일 규칙).
  * - 강도 워딩(.mw)은 목업 문구 그대로: 1위 "가장 큰 관심" / score≥0.5 "꾸준함" / 그 외 "가끔".
  *   ("잠시 쉬는 중"은 활성/중지 백엔드가 없어 만들지 않는다.)
- * - 행 클릭 = 하단 [내가 저장한 자료] 필터 토글(정보구조: 관심사 클릭 → 근거 자료).
+ * 기존 하단 자료 목록은 LLM Wiki 진입 카드로 대체되어 행은 동작 없는 강도 표시로 렌더한다.
  */
 export function WikiMind({
   state,
-  selectedId,
-  onSelect,
 }: {
   state: WikiInterestsState & { refetch: () => void };
-  selectedId: string | null;
-  onSelect: (tagId: string) => void;
 }) {
   return (
     <section aria-label="AI가 이해한 지금의 나" className="mb-8">
@@ -65,8 +61,6 @@ export function WikiMind({
                 key={tag.tagId}
                 tag={tag}
                 word={intensityWord(tag, index)}
-                selected={tag.tagId === selectedId}
-                onSelect={() => onSelect(tag.tagId)}
               />
             ))}
           </ul>
@@ -85,40 +79,25 @@ function intensityWord(tag: WikiTag, index: number): string {
 function MindRow({
   tag,
   word,
-  selected,
-  onSelect,
 }: {
   tag: WikiTag;
   word: string;
-  selected: boolean;
-  onSelect: () => void;
 }) {
   const width = Math.max(8, Math.round(tag.score * 100));
   return (
-    <li>
-      <button
-        type="button"
-        onClick={onSelect}
-        aria-pressed={selected}
-        className={`focus-ring flex w-full items-center gap-3 rounded-[8px] px-1.5 py-1 text-left ${
-          selected ? "bg-background" : "hover:bg-background"
-        }`}
-      >
+    <li className="flex w-full items-center gap-3 rounded-[8px] px-1.5 py-1">
+      <span className="w-32 shrink-0 truncate text-[13px] font-semibold text-foreground">
+        {tag.tag}
+      </span>
+      <span aria-hidden="true" className="h-2 min-w-0 flex-1 rounded-full bg-background">
         <span
-          className={`w-32 shrink-0 truncate text-[13px] font-semibold ${
-            selected ? "text-signal-ink" : "text-foreground"
-          }`}
-        >
-          {tag.tag}
-        </span>
-        <span aria-hidden="true" className="h-2 min-w-0 flex-1 rounded-full bg-background">
-          <span
-            className="block h-full rounded-full bg-primary/70"
-            style={{ width: `${width}%` }}
-          />
-        </span>
-        <span className="w-24 shrink-0 text-right text-[12px] text-muted-foreground">{word}</span>
-      </button>
+          className="block h-full rounded-full bg-primary/70"
+          style={{ width: `${width}%` }}
+        />
+      </span>
+      <span className="w-24 shrink-0 text-right text-[12px] text-muted-foreground">
+        {word}
+      </span>
     </li>
   );
 }

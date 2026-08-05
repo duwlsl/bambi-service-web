@@ -10,16 +10,13 @@ import { HomeNav } from "@/components/home/home-nav";
 import { SideLeft } from "@/components/home/side-left";
 import { IconAlert } from "@/components/ui/state-icons";
 import { PageState } from "@/components/ui/page-state";
-import { WikiDocuments } from "@/components/wiki/wiki-documents";
+import { LlmWikiEntry } from "@/components/wiki/llm-wiki-entry";
 import { WikiFound } from "@/components/wiki/wiki-found";
 import { WikiMind } from "@/components/wiki/wiki-mind";
 import { WikiMyInterests } from "@/components/wiki/wiki-my-interests";
 import { useMyInterests, type MyInterestsState } from "@/hooks/use-my-interests";
-import { useWikiDocuments, type WikiDocumentsState } from "@/hooks/use-wiki-documents";
 import { useWikiInterests, type WikiInterestsState } from "@/hooks/use-wiki-interests";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
-import { filterWikiDocuments } from "@/lib/wiki";
-import type { WikiTag } from "@/types/wiki";
 
 const WIKI_MENU_LABEL = "관심사 · LLM Wiki";
 
@@ -48,22 +45,14 @@ export function WikiScreen() {
 
 /**
  * 실제 본문 — authenticated 에서만 도달. 목업 wiki.html 순서(2026-08-05 정렬):
- * ① AI가 이해한 지금의 나(강도 바, 클릭=하단 자료 필터) ② AI가 최근 발견한 관심사(＋추가)
- * ③ 내 관심사(USER 목록 관리) ④ 내가 저장한 자료(기존 유지 — 07-27 정보구조가 목업보다 우선).
- * 발견 후보 추가/삭제는 [내 관심사]만 다시 읽는다(위키 태그·자료는 영향 없음 — 불필요한 재조회 금지).
+ * ① AI가 이해한 지금의 나(강도 바) ② AI가 최근 발견한 관심사(＋추가)
+ * ③ 내 관심사(USER 목록 관리) ④ 나의 LLM Wiki 진입 카드.
+ * 발견 후보 추가/삭제는 [내 관심사]만 다시 읽는다(위키 태그는 영향 없음 — 불필요한 재조회 금지).
  */
 function WikiView() {
   const interests = useWikiInterests();
   const my = useMyInterests();
-  const documents = useWikiDocuments();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [amOpen, setAmOpen] = useState(false);
-
-  // 선택된 관심 태그(파생) — 목록에서 사라졌으면 필터 없음으로 자연 복귀한다.
-  const selectedTag: WikiTag | null =
-    interests.status === "success"
-      ? (interests.data.find((t) => t.tagId === selectedId) ?? null)
-      : null;
 
   const wikiTags = interests.status === "success" ? interests.data : null;
   const myInterests = my.status === "success" ? my.data : null;
@@ -86,31 +75,22 @@ function WikiView() {
               </p>
             </header>
 
-            <WikiMind
-              state={interests}
-              selectedId={selectedId}
-              onSelect={(id) => setSelectedId((cur) => (cur === id ? null : id))}
-            />
+            <WikiMind state={interests} />
             <WikiFound tags={interests} myInterests={myInterests} onAdded={my.refetch} />
             <WikiMyInterests state={my} wikiTags={wikiTags} onChanged={my.refetch} />
-            <WikiDocuments
-              state={documents}
-              selectedTag={selectedTag}
-              onClearFilter={() => setSelectedId(null)}
-            />
+            <LlmWikiEntry />
           </main>
 
-          <WikiRail interests={interests} my={my} documents={documents} selectedTag={selectedTag} />
+          <WikiRail interests={interests} my={my} />
         </div>
       </div>
 
-      {/* 저장 성공 시 위키 관심사·자료를 재조회(§4 refetch 패턴). Agent 직접 호출은 하지 않는다. */}
+      {/* 저장 성공 시 위키 관심사를 재조회한다. Agent 직접 호출은 하지 않는다. */}
       <AddMaterialModal
         open={amOpen}
         onClose={() => setAmOpen(false)}
         onSaved={() => {
           interests.refetch();
-          documents.refetch();
         }}
       />
     </div>
@@ -125,13 +105,9 @@ function WikiView() {
 function WikiRail({
   interests,
   my,
-  documents,
-  selectedTag,
 }: {
   interests: WikiInterestsState;
   my: MyInterestsState;
-  documents: WikiDocumentsState;
-  selectedTag: WikiTag | null;
 }) {
   const myCount = my.status === "success" ? my.data.length : null;
   const newThisWeek =
@@ -143,11 +119,6 @@ function WikiRail({
       : null;
   const inferredCount =
     interests.status === "success" ? interests.data.length : interests.status === "empty" ? 0 : null;
-  const visibleDocCount =
-    documents.status === "success"
-      ? filterWikiDocuments(documents.data, selectedTag).length
-      : null;
-
   return (
     <aside className="sticky top-4 flex w-[300px] shrink-0 flex-col gap-3.5 max-[1240px]:hidden">
       <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
@@ -155,7 +126,6 @@ function WikiRail({
         <RailStat label="내 관심사" value={myCount} />
         <RailStat label="AI 추론 관심사" value={inferredCount} />
         <RailStat label="이번 주 신규" value={newThisWeek} />
-        <RailStat label={selectedTag ? "이 관심사 자료" : "표시 중 자료"} value={visibleDocCount} />
       </div>
     </aside>
   );
