@@ -1,9 +1,9 @@
 import { ERROR_CODES } from "@/constants/errors";
-import { ApiError, apiGet } from "@/lib/api-client";
+import { ApiError, apiGet, apiPost } from "@/lib/api-client";
 import { REPORT_REGISTRY, type ReportDetail } from "@/lib/mock/report";
 import { isUuid } from "@/lib/utils";
 import type { CardResponse } from "@/types/feed";
-import type { ReportResponse } from "@/types/report";
+import type { GenerateReportResponse, ReportResponse } from "@/types/report";
 
 /**
  * 리포트 상세 데이터 repository — 단일 seam.
@@ -142,4 +142,13 @@ export async function fetchReportBody(
     }
     throw err;
   }
+}
+
+/**
+ * 온디맨드 보고서 생성 요청 — POST /api/reports/generate(인증).
+ * body 없음(계약에 요청 필드가 없다 — 임의로 만들지 않는다). 성공은 "서버 접수" 확인일 뿐이며
+ * 실제 생성 진행·완료는 알림(REPORT_READY)으로 별도 도착한다(이 요청의 응답으로는 알 수 없다).
+ */
+export function generateReport(signal?: AbortSignal): Promise<GenerateReportResponse> {
+  return apiPost<GenerateReportResponse>("/api/reports/generate", undefined, { signal });
 }

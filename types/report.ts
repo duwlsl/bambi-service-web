@@ -60,3 +60,22 @@ export type ReportResponse = {
   citations: ReportCitation[];
   createdAt: string; // ISO-8601 (서버 OffsetDateTime)
 };
+
+/* ============================================================================
+ * 온디맨드 보고서 생성 요청 API 계약 타입 — POST /api/reports/generate
+ * (검증일 2026-08-06, 계약 출처: 백엔드 확정 응답 명세)
+ * ========================================================================== */
+
+/**
+ * POST /api/reports/generate 성공 data — "생성 요청이 서버에 접수됨"만 의미한다.
+ * 실제 생성 진행 중·완료 여부는 이 응답으로 알 수 없다(Pending 조회 API 미구현, 별도 범위).
+ *
+ * - id: 항상 존재. **생성 요청 ID**이며 보고서/카드의 publicId 가 아니다 — `/report/{id}` 로
+ *   이동하는 등 카드·리포트 식별자로 재사용하지 않는다.
+ * - agentJobId: null 일 수 있다. 이번 범위에서는 값을 사용하지 않고 그대로 보관만 한다.
+ */
+export type GenerateReportResponse = {
+  status: string;
+  id: string;
+  agentJobId: string | null;
+};
