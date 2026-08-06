@@ -39,9 +39,18 @@ function LlmWikiView() {
   const searchParams = useSearchParams();
   const initialDocumentId = searchParams.get("document")?.trim() || null;
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(initialDocumentId);
+  const [detailRevealRequest, setDetailRevealRequest] = useState(0);
   const graph = useWikiGraph();
   const detail = useWikiDocumentDetail(selectedDocumentId);
   const [addOpen, setAddOpen] = useState(false);
+
+  function selectDocument(
+    documentId: string,
+    options: { revealDetail?: boolean } = {},
+  ) {
+    setSelectedDocumentId(documentId);
+    if (options.revealDetail) setDetailRevealRequest((request) => request + 1);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,8 +85,9 @@ function LlmWikiView() {
             <GraphContent
               state={graph}
               selectedDocumentId={selectedDocumentId}
+              detailRevealRequest={detailRevealRequest}
               detail={detail}
-              onSelect={setSelectedDocumentId}
+              onSelect={selectDocument}
               onClearSelection={() => setSelectedDocumentId(null)}
             />
           </main>
@@ -96,14 +106,16 @@ function LlmWikiView() {
 function GraphContent({
   state,
   selectedDocumentId,
+  detailRevealRequest,
   detail,
   onSelect,
   onClearSelection,
 }: {
   state: WikiGraphState & { refetch: () => void };
   selectedDocumentId: string | null;
+  detailRevealRequest: number;
   detail: WikiDocumentDetailState & { refetch: () => void };
-  onSelect: (documentId: string) => void;
+  onSelect: (documentId: string, options?: { revealDetail?: boolean }) => void;
   onClearSelection: () => void;
 }) {
   if (state.status === "loading") {
@@ -138,15 +150,24 @@ function GraphContent({
   }
 
   return (
-    <div className="relative min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-      <WikiForceGraph
-        graph={state.data}
-        selectedDocumentId={selectedDocumentId}
-        onSelect={onSelect}
-        onClear={onClearSelection}
-      />
+    <div
+      className={
+        selectedDocumentId === null
+          ? "min-h-[650px]"
+          : "grid items-start gap-4 xl:grid-cols-[360px_minmax(0,1fr)]"
+      }
+    >
+      <div className="relative order-1 min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm xl:order-2">
+        <WikiForceGraph
+          graph={state.data}
+          selectedDocumentId={selectedDocumentId}
+          onSelect={onSelect}
+          onClear={onClearSelection}
+        />
+      </div>
       <WikiDocumentPanel
         selectedDocumentId={selectedDocumentId}
+        revealRequest={detailRevealRequest}
         state={detail}
         onSelect={onSelect}
         onClear={onClearSelection}
