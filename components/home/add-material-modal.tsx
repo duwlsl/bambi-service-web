@@ -5,10 +5,9 @@ import { createPortal } from "react-dom";
 
 import { Input } from "@/components/ui/input";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
-import { ERROR_CODES, resolveErrorMessage } from "@/constants/errors";
+import { ERROR_CODES } from "@/constants/errors";
 import { ApiError } from "@/lib/api-client";
 import { createBookmark } from "@/lib/repositories/bookmark";
-import { generateReport } from "@/lib/repositories/report";
 import type { CardResponse, CreateBookmarkRequest } from "@/types/feed";
 
 /**
@@ -19,13 +18,10 @@ import type { CardResponse, CreateBookmarkRequest } from "@/types/feed";
  * guest 는 nav ＋버튼에서 requireAuth 가 GuestGateModal 로 가로채므로 이 모달은 열리지 않는다
  * (열리는 시점은 항상 authenticated).
  *
- * "관심사로 온디맨드 보고서 만들기" = 온디맨드 보고서 생성 CTA — POST /api/reports/generate(인증, body 없음,
- * 2026-08-06 계약 확정으로 잠금 해제). 위 저장(POST /api/bookmarks) 흐름과는 **독립된 액션**이라
- * url·title·content 입력값과 무관하게 클릭 즉시 생성 요청을 보낸다(현재 입력 중인 자료를 저장하거나
- * 함께 전달하지 않는다 — 문구도 이 별개 동작을 오해하지 않도록 "관심사" 기준임을 명시한다). 성공은
- * "서버 접수" 확인일 뿐이고 실제 생성 진행·완료는 알림(REPORT_READY)에서 별도로 확인한다 — Pending
- * 조회 API 는 이번 범위 밖이라 진행 중·완료 상태를 만들지 않는다. 응답의 id 는 생성 요청 ID(카드
- * publicId 아님)라 화면에 노출하지 않고 내부 참조용으로만 보관한다.
+ * 이 모달의 범위는 **관심 자료 저장뿐**이다. 목업 #am-modal 의 "저장하고 지금 분석 받기"(온디맨드
+ * 보고서 생성) 옵션은 두지 않는다 — 온디맨드 생성은 이 모달이 아니라 홈 우측 rail 에서 관심사를
+ * 고른 뒤 요청하는 흐름으로 확정됐다(2026-08-06). 그 UI 는 POST /api/reports/generate 에 선택
+ * 관심사를 전달할 body 계약이 생긴 뒤에 만든다 — 여기에 생성 CTA 를 되살리지 않는다.
  */
 const FIELD_CLASS =
   "h-[46px] rounded-[10px] bg-card px-3.5 text-sm text-foreground placeholder:text-low focus-visible:ring-[3px] focus-visible:ring-wash dark:bg-card";
@@ -60,16 +56,6 @@ export function AddMaterialModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const dialogRef = useRef<HTMLFormElement>(null);
 
-  // 온디맨드 생성 CTA 상태 — 저장(submitting/errorMessage)과 독립된 자체 상태 머신.
-  const [generateState, setGenerateState] = useState<"idle" | "generating" | "success" | "error">(
-    "idle",
-  );
-  const [generateError, setGenerateError] = useState<string | null>(null);
-  // 생성 요청 ID — 화면에는 노출하지 않고 내부 참조용으로만 보관(요구사항: UUID 비노출).
-  const generateRequestIdRef = useRef<string | null>(null);
-  // setState 커밋 전 빠른 연속 클릭까지 막는 동기 가드(React state 만으로는 같은 tick 중복 클릭을 못 막는다).
-  const generatingRef = useRef(false);
-
   // 포커스 트랩 + 배경(#app-shell) inert + 트리거 복원. 초기 포커스는 url 입력의 data-autofocus.
   // 모달은 아래 createPortal 로 #app-shell 바깥(document.body)에 렌더한다.
   useFocusTrap(open, dialogRef);
@@ -82,20 +68,17 @@ export function AddMaterialModal({
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !submitting && generateState !== "generating") {
+      if (e.key === "Escape" && !submitting) {
         setUrl("");
         setTitle("");
         setContent("");
         setErrorMessage(null);
-        setGenerateState("idle");
-        setGenerateError(null);
-        generateRequestIdRef.current = null;
         onClose();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, submitting, generateState, onClose]);
+  }, [open, submitting, onClose]);
 
   if (!open) return null;
 
@@ -104,35 +87,12 @@ export function AddMaterialModal({
     setTitle("");
     setContent("");
     setErrorMessage(null);
-    setGenerateState("idle");
-    setGenerateError(null);
-    generateRequestIdRef.current = null;
   }
 
   function close() {
-    if (submitting || generateState === "generating") return; // 제출·생성 요청 중 닫기 차단
+    if (submitting) return; // 제출 중 닫기 차단
     resetFields();
     onClose();
-  }
-
-  async function handleGenerate() {
-    // 동기 가드 먼저(같은 tick 연속 클릭 방지) — disabled 만으로는 setState 커밋 전 클릭을 못 막는다.
-    if (generatingRef.current || generateState === "generating" || generateState === "success") return;
-    generatingRef.current = true;
-    setGenerateState("generating");
-    setGenerateError(null);
-
-    try {
-      const data = await generateReport();
-      generateRequestIdRef.current = data.id; // 기준값으로 보관(화면 비노출)
-      setGenerateState("success");
-    } catch (err) {
-      const code = err instanceof ApiError ? err.code : ERROR_CODES.INTERNAL_ERROR;
-      setGenerateError(resolveErrorMessage(code));
-      setGenerateState("error");
-    } finally {
-      generatingRef.current = false;
-    }
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -187,7 +147,7 @@ export function AddMaterialModal({
           <button
             type="button"
             onClick={close}
-            disabled={submitting || generateState === "generating"}
+            disabled={submitting}
             aria-label="닫기"
             className="focus-ring rounded-[7px] px-[7px] py-1 text-sm text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-50"
           >
@@ -274,57 +234,6 @@ export function AddMaterialModal({
             </div>
           </div>
         </div>
-        {/* .amopt — 온디맨드 보고서 생성 CTA(POST /api/reports/generate, body 없음). 저장(POST
-            /api/bookmarks)과 독립된 액션이라 폼 입력값과 무관하게 클릭 즉시 요청을 보낸다. */}
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={generateState === "generating" || generateState === "success"}
-          aria-busy={generateState === "generating"}
-          className="focus-ring mb-[9px] flex w-full items-start gap-[11px] rounded-xl border border-border px-3.5 py-[13px] text-left hover:bg-background disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          <span
-            className={`relative mt-px h-4 w-4 shrink-0 rounded-full border-[1.5px] ${
-              generateState === "success"
-                ? "border-primary after:absolute after:inset-[3px] after:rounded-full after:bg-primary after:content-['']"
-                : "border-input"
-            }`}
-          />
-          <div>
-            <div className="text-[13.5px] font-bold text-foreground">
-              {generateState === "generating"
-                ? "요청 중…"
-                : generateState === "success"
-                  ? "생성 요청 완료"
-                  : "관심사로 온디맨드 보고서 만들기"}
-            </div>
-            <div className="mt-[3px] text-xs leading-[1.55] text-muted-foreground">
-              등록한 관심사를 바탕으로 보고서를 생성해요. 위 관심 자료 저장과는 별도로 요청됩니다.
-            </div>
-          </div>
-        </button>
-
-        {/* 생성 요청 성공 안내 — role=status(§ 접근성 패턴은 signup-notice.tsx 와 동일). */}
-        {generateState === "success" && (
-          <p
-            role="status"
-            aria-live="polite"
-            className="mb-2.5 rounded-[10px] border border-primary/30 bg-wash px-3 py-2 text-[12.5px] leading-[1.55] text-signal-ink"
-          >
-            보고서 생성 요청을 받았어요. 완료되면 알림에서 확인할 수 있어요.
-          </p>
-        )}
-
-        {/* 생성 요청 실패 안내 — §4 공통 문구(코드 기준, 서버 원문 비노출), 버튼은 위에서 이미 재활성화됨. */}
-        {generateState === "error" && generateError && (
-          <p
-            role="alert"
-            aria-live="assertive"
-            className="mb-2.5 rounded-[10px] border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            {generateError}
-          </p>
-        )}
 
         {/* 에러 — §4 공통 문구(코드 기준, 서버 원문 비노출) */}
         {hasError && (
@@ -342,7 +251,7 @@ export function AddMaterialModal({
           <button
             type="button"
             onClick={close}
-            disabled={submitting || generateState === "generating"}
+            disabled={submitting}
             className="focus-ring inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-border bg-card px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-foreground hover:bg-background disabled:opacity-50"
           >
             취소
