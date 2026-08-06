@@ -1,4 +1,5 @@
 import { normalizeHttpUrl, normalizeText } from "@/lib/normalize";
+import { toReportType } from "@/lib/report-type";
 import { isUuid } from "@/lib/utils";
 import type {
   CardAuthor,
@@ -143,6 +144,8 @@ export function toFeedCardVM(card: CardResponse): FeedCardVM {
     // 서버 값 그대로 — 없거나 예상 밖이어도 여기서 PUBLIC/PRIVATE 로 보정하지 않는다.
     visibility: card.visibility,
     tags: toCardTags(card.tags),
+    // 미배포 필드 — 없거나 계약 밖 값이면 null(화면은 종류 배지를 생략한다).
+    reportType: toReportType(card.reportType),
     sources: toCardSources(card.sources),
     createdAtLabel: formatCreatedAt(card.createdAt),
     createdAtTimeLabel: formatCreatedTime(card.createdAt),

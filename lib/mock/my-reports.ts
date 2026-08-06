@@ -12,18 +12,24 @@ import type { MyReport } from "@/types/report";
  * 이 배열에는 PREPARING·ERROR 생성 작업만 담는다.
  */
 
-/** 처리중 슬롯 QA용 샘플 */
+/** 처리중 슬롯 QA용 샘플 — reportType 3종을 모두 덮는다. */
 export const QA_PREPARING_SAMPLES: MyReport[] = [
   {
     id: "rep-job-ondemand",
-    kind: "ON_DEMAND",
+    reportType: "ON_DEMAND",
     title: "관심 자료 분석 보고서",
     status: "PREPARING",
   },
   {
-    id: "rep-job-daily",
-    kind: "DAILY",
+    id: "rep-job-morning",
+    reportType: "MORNING_BRIEFING",
     title: "오늘의 아침 브리핑",
+    status: "PREPARING",
+  },
+  {
+    id: "rep-job-onboarding",
+    reportType: "ONBOARDING",
+    title: "첫 리포트",
     status: "PREPARING",
   },
 ];
@@ -32,14 +38,20 @@ export const QA_PREPARING_SAMPLES: MyReport[] = [
 export const QA_ERROR_SAMPLES: MyReport[] = [
   {
     id: "rep-err-ondemand",
-    kind: "ON_DEMAND",
+    reportType: "ON_DEMAND",
     title: "관심 자료 분석 보고서",
     status: "ERROR",
   },
   {
-    id: "rep-err-daily",
-    kind: "DAILY",
+    id: "rep-err-morning",
+    reportType: "MORNING_BRIEFING",
     title: "오늘의 아침 브리핑",
+    status: "ERROR",
+  },
+  {
+    id: "rep-err-onboarding",
+    reportType: "ONBOARDING",
+    title: "첫 리포트",
     status: "ERROR",
   },
 ];
