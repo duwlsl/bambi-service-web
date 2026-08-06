@@ -140,7 +140,7 @@ function NotificationGroups({
           </ul>
         </section>
       ))}
-      <p className="mt-5 text-center text-[13px] font-bold text-ink-mid">최근 7일 알림을 모두 봤어요</p>
+      <p className="mt-5 text-center text-[13px] font-bold text-ink-mid">최근 알림을 모두 봤어요</p>
     </>
   );
 }
