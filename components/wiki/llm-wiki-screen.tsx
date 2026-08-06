@@ -138,13 +138,21 @@ function GraphContent({
   }
 
   return (
-    <div className="relative min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-      <WikiForceGraph
-        graph={state.data}
-        selectedDocumentId={selectedDocumentId}
-        onSelect={onSelect}
-        onClear={onClearSelection}
-      />
+    <div
+      className={
+        selectedDocumentId === null
+          ? "min-h-[650px]"
+          : "grid items-start gap-4 xl:grid-cols-[360px_minmax(0,1fr)]"
+      }
+    >
+      <div className="relative order-1 min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm xl:order-2">
+        <WikiForceGraph
+          graph={state.data}
+          selectedDocumentId={selectedDocumentId}
+          onSelect={onSelect}
+          onClear={onClearSelection}
+        />
+      </div>
       <WikiDocumentPanel
         selectedDocumentId={selectedDocumentId}
         state={detail}

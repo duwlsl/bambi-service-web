@@ -65,7 +65,6 @@ export function WikiForceGraph({
   const alphaRef = useRef(0);
   const dragRef = useRef<DragState | null>(null);
   const panRef = useRef<PanState | null>(null);
-  const suppressClickRef = useRef(false);
 
   const visibleNodes = useMemo(
     () =>
@@ -184,7 +183,7 @@ export function WikiForceGraph({
   function startNodeDrag(event: ReactPointerEvent<SVGGElement>, nodeId: string) {
     if (event.button !== 0) return;
     event.stopPropagation();
-    svgRef.current?.setPointerCapture(event.pointerId);
+    event.currentTarget.setPointerCapture(event.pointerId);
     const point = positionsRef.current.get(nodeId);
     if (!point) return;
     point.fixed = true;
@@ -236,14 +235,14 @@ export function WikiForceGraph({
     if (drag?.pointerId === event.pointerId) {
       const point = positionsRef.current.get(drag.id);
       if (point) point.fixed = false;
-      suppressClickRef.current = drag.moved;
       dragRef.current = null;
       if (drag.moved) reheat(0.25);
+      return;
     }
     const pan = panRef.current;
     if (pan?.pointerId === event.pointerId) {
-      suppressClickRef.current = pan.moved;
       panRef.current = null;
+      if (!pan.moved) onClear();
     }
   }
 
@@ -273,22 +272,6 @@ export function WikiForceGraph({
       y: mouseY - ((mouseY - current.y) / current.scale) * scale,
       scale,
     });
-  }
-
-  function selectFromClick(nodeId: string) {
-    if (suppressClickRef.current) {
-      suppressClickRef.current = false;
-      return;
-    }
-    onSelect(nodeId);
-  }
-
-  function clearFromBackground(event: ReactPointerEvent<SVGSVGElement>) {
-    if (suppressClickRef.current) {
-      suppressClickRef.current = false;
-      return;
-    }
-    if (!closestNode(event.target)) onClear();
   }
 
   return (
@@ -354,7 +337,6 @@ export function WikiForceGraph({
           onPointerUp={endPointer}
           onPointerCancel={cancelPointer}
           onWheel={zoom}
-          onClick={clearFromBackground}
         >
           <rect width={GRAPH_WIDTH} height={GRAPH_HEIGHT} fill="var(--card)" />
           <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`}>
@@ -382,7 +364,7 @@ export function WikiForceGraph({
                   mutedBySelection={selectedDocumentId !== null && !neighborIds.has(node.id)}
                   mutedBySearch={matchingNodeIds !== null && !matchingNodeIds.has(node.id)}
                   onPointerDown={(event) => startNodeDrag(event, node.id)}
-                  onSelect={() => selectFromClick(node.id)}
+                  onSelect={() => onSelect(node.id)}
                 />
               ))}
             </g>
@@ -421,7 +403,7 @@ function ForceEdge({
       y1={source.y}
       x2={target.x}
       y2={target.y}
-      stroke={focused ? "var(--primary)" : "var(--border)"}
+      stroke={focused ? "var(--wiki-related)" : "var(--border)"}
       strokeWidth={focused ? 2.4 : 1.25}
       opacity={mutedBySelection || mutedBySearch ? 0.15 : focused ? 0.95 : 0.72}
     />
@@ -449,7 +431,7 @@ function ForceNode({
 }) {
   const radius = Math.min(18, 8 + Math.sqrt(node.degree + 1) * 2.2);
   const label = node.title.length > 28 ? `${node.title.slice(0, 27)}…` : node.title;
-  const fill = node.documentKind === "entity" ? "var(--primary)" : "var(--signal-ink)";
+  const fill = node.documentKind === "entity" ? "var(--wiki-entity)" : "var(--wiki-concept)";
   return (
     <g
       data-node-id={node.id}
@@ -459,10 +441,6 @@ function ForceNode({
       transform={`translate(${position.x} ${position.y})`}
       opacity={mutedBySelection || mutedBySearch ? 0.14 : 1}
       onPointerDown={onPointerDown}
-      onClick={(event) => {
-        event.stopPropagation();
-        onSelect();
-      }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
@@ -474,7 +452,7 @@ function ForceNode({
       <circle
         r={radius + (selected ? 6 : 3)}
         fill="transparent"
-        stroke={selected ? "var(--ring)" : neighbor ? "var(--primary)" : "transparent"}
+        stroke={selected ? "var(--foreground)" : neighbor ? "var(--wiki-related)" : "transparent"}
         strokeWidth={selected ? 3 : 1.5}
       />
       <circle r={radius} fill={fill} stroke="var(--card)" strokeWidth="3" />
@@ -519,7 +497,7 @@ function GraphFilter({
       {tone && (
         <span
           aria-hidden="true"
-          className={`h-2 w-2 rounded-full ${tone === "entity" ? "bg-primary" : "bg-signal-ink"}`}
+          className={`h-2 w-2 rounded-full ${tone === "entity" ? "bg-wiki-entity" : "bg-wiki-concept"}`}
         />
       )}
       {label}

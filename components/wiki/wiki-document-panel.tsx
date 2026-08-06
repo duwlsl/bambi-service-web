@@ -11,7 +11,7 @@ import type {
   WikiGraphNode,
 } from "@/types/wiki";
 
-/** 선택한 Wiki Node를 같은 Graph 화면 위 고정 패널에서 조회한다. */
+/** 선택한 Wiki Node를 Graph와 겹치지 않는 별도 패널에서 조회한다. */
 export function WikiDocumentPanel({
   selectedDocumentId,
   state,
@@ -25,7 +25,7 @@ export function WikiDocumentPanel({
 }) {
   if (selectedDocumentId === null || state.status === "idle") return null;
   return (
-    <aside className="absolute right-0 bottom-0 z-30 flex h-[72%] w-full flex-col overflow-hidden border-t border-border bg-card shadow-[-18px_0_50px_rgba(0,0,0,.12)] xl:inset-y-0 xl:h-full xl:w-[420px] xl:border-t-0 xl:border-l">
+    <aside className="order-2 flex h-[650px] min-h-[520px] w-full flex-col overflow-hidden rounded-[18px] border border-border bg-card shadow-sm xl:order-1">
       {state.status === "loading" ? (
         <div className="p-5" aria-hidden="true">
           <FeedSkeleton />
@@ -131,7 +131,9 @@ function WikiDocumentFile({
                     <span
                       aria-hidden="true"
                       className={`h-2 w-2 shrink-0 rounded-full ${
-                        relation.relatedDocumentKind === "entity" ? "bg-primary" : "bg-signal-ink"
+                        relation.relatedDocumentKind === "entity"
+                          ? "bg-wiki-entity"
+                          : "bg-wiki-concept"
                       }`}
                     />
                     <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-foreground">
@@ -156,8 +158,8 @@ function KindBadge({ kind }: { kind: WikiGraphNode["documentKind"] }) {
     <span
       className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
         kind === "entity"
-          ? "bg-primary/10 text-primary"
-          : "bg-signal-ink/10 text-signal-ink"
+          ? "bg-wiki-entity/10 text-wiki-entity"
+          : "bg-wiki-concept/10 text-wiki-concept"
       }`}
     >
       {kind}
