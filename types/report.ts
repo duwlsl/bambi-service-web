@@ -18,11 +18,20 @@ export type ReportStatus = "PREPARING" | "READY" | "ERROR";
  */
 export type ReportType = "MORNING_BRIEFING" | "ON_DEMAND" | "ONBOARDING";
 
+/**
+ * 생성 **진행 상태를 추적할 수 있는** 종류만 — PREPARING·ERROR 슬롯이 다룰 수 있는 집합이다.
+ *
+ * `ONBOARDING` 이 빠진 이유: 완성된 보고서의 `reportType` 값으로는 존재하지만, Service 트리거와
+ * Pending 행이 없는 **agent 자동 생성 경로**라 처리중·실패 상태 자체가 계약에 없다. 있지도 않은
+ * 상태의 안내 문구를 만들지 않기 위해 타입 수준에서 막는다(완성 후 배지 표시는 ReportType 그대로).
+ */
+export type TrackableReportType = Exclude<ReportType, "ONBOARDING">;
+
 /** 내 보고서 1건의 생성 상태 요약. 처리중 여부는 status 로 파생한다(status === "PREPARING"). */
 export type MyReport = {
   id: string;
   title: string;
-  reportType: ReportType;
+  reportType: TrackableReportType;
   status: ReportStatus;
 };
 

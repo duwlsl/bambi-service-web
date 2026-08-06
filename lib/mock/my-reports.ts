@@ -12,7 +12,10 @@ import type { MyReport } from "@/types/report";
  * 이 배열에는 PREPARING·ERROR 생성 작업만 담는다.
  */
 
-/** 처리중 슬롯 QA용 샘플 — reportType 3종을 모두 덮는다. */
+/**
+ * 처리중 슬롯 QA용 샘플 — 추적 가능한 종류(TrackableReportType)만 담는다.
+ * ONBOARDING 은 Service 트리거·Pending 행이 없는 agent 자동 생성이라 이 상태가 존재하지 않는다.
+ */
 export const QA_PREPARING_SAMPLES: MyReport[] = [
   {
     id: "rep-job-ondemand",
@@ -24,12 +27,6 @@ export const QA_PREPARING_SAMPLES: MyReport[] = [
     id: "rep-job-morning",
     reportType: "MORNING_BRIEFING",
     title: "오늘의 아침 브리핑",
-    status: "PREPARING",
-  },
-  {
-    id: "rep-job-onboarding",
-    reportType: "ONBOARDING",
-    title: "첫 리포트",
     status: "PREPARING",
   },
 ];
@@ -46,12 +43,6 @@ export const QA_ERROR_SAMPLES: MyReport[] = [
     id: "rep-err-morning",
     reportType: "MORNING_BRIEFING",
     title: "오늘의 아침 브리핑",
-    status: "ERROR",
-  },
-  {
-    id: "rep-err-onboarding",
-    reportType: "ONBOARDING",
-    title: "첫 리포트",
     status: "ERROR",
   },
 ];
