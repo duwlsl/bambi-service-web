@@ -18,7 +18,9 @@ COPY . .
 RUN mkdir -p public
 # NEXT_PUBLIC_* 는 빌드 시 번들에 인라인된다 → 배포 origin 을 build-arg 로 주입
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_MCP_SERVER_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_MCP_SERVER_URL=${NEXT_PUBLIC_MCP_SERVER_URL}
 RUN npm run build
 
 # ---- 3) runner: 최소 실행 이미지 ----

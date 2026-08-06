@@ -73,7 +73,12 @@ export function McpApiKeySettings() {
             Claude, ChatGPT, Codex에서 내 LLM Wiki를 검색할 수 있는 읽기 전용 키예요.
           </p>
         </div>
-        <Button type="button" size="sm" onClick={() => setFormOpen((open) => !open)}>
+        <Button
+          type="button"
+          size="sm"
+          disabled={!MCP_SERVER_URL}
+          onClick={() => setFormOpen((open) => !open)}
+        >
           {formOpen ? "취소" : "새 키 발급"}
         </Button>
       </div>
@@ -91,7 +96,7 @@ export function McpApiKeySettings() {
           </div>
         ) : (
           <p className="mt-1 text-[12px] text-destructive">
-            MCP 서버 URL이 아직 설정되지 않았어요. 운영 환경 설정을 확인해 주세요.
+            MCP 서버가 준비되지 않아 새 키를 발급할 수 없어요. 운영 환경 설정을 확인해 주세요.
           </p>
         )}
         <p className="mt-2 text-[11.5px] leading-[1.55] text-muted-foreground">
