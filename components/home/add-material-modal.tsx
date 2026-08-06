@@ -18,10 +18,8 @@ import type { CardResponse, CreateBookmarkRequest } from "@/types/feed";
  * guest 는 nav ＋버튼에서 requireAuth 가 GuestGateModal 로 가로채므로 이 모달은 열리지 않는다
  * (열리는 시점은 항상 authenticated).
  *
- * 이 모달의 범위는 **관심 자료 저장뿐**이다. 목업 #am-modal 의 "저장하고 지금 분석 받기"(온디맨드
- * 보고서 생성) 옵션은 두지 않는다 — 온디맨드 생성은 이 모달이 아니라 홈 우측 rail 에서 관심사를
- * 고른 뒤 요청하는 흐름으로 확정됐다(2026-08-06). 그 UI 는 POST /api/reports/generate 에 선택
- * 관심사를 전달할 body 계약이 생긴 뒤에 만든다 — 여기에 생성 CTA 를 되살리지 않는다.
+ * 이 모달은 관심 자료 저장만 담당한다. 온디맨드 보고서 생성은 홈 우측 rail 에서 관심사를
+ * 선택하는 별도 흐름으로 제공한다.
  */
 const FIELD_CLASS =
   "h-[46px] rounded-[10px] bg-card px-3.5 text-sm text-foreground placeholder:text-low focus-visible:ring-[3px] focus-visible:ring-wash dark:bg-card";
