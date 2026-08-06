@@ -19,12 +19,13 @@ import type { CardResponse, CreateBookmarkRequest } from "@/types/feed";
  * guest 는 nav ＋버튼에서 requireAuth 가 GuestGateModal 로 가로채므로 이 모달은 열리지 않는다
  * (열리는 시점은 항상 authenticated).
  *
- * "저장하고 지금 분석 받기" = 온디맨드 보고서 생성 CTA — POST /api/reports/generate(인증, body 없음,
+ * "관심사로 온디맨드 보고서 만들기" = 온디맨드 보고서 생성 CTA — POST /api/reports/generate(인증, body 없음,
  * 2026-08-06 계약 확정으로 잠금 해제). 위 저장(POST /api/bookmarks) 흐름과는 **독립된 액션**이라
- * url·title·content 입력값과 무관하게 클릭 즉시 생성 요청을 보낸다. 성공은 "서버 접수" 확인일 뿐이고
- * 실제 생성 진행·완료는 알림(REPORT_READY)에서 별도로 확인한다 — Pending 조회 API 는 이번 범위 밖이라
- * 진행 중·완료 상태를 만들지 않는다. 응답의 id 는 생성 요청 ID(카드 publicId 아님)라 화면에 노출하지
- * 않고 내부 참조용으로만 보관한다.
+ * url·title·content 입력값과 무관하게 클릭 즉시 생성 요청을 보낸다(현재 입력 중인 자료를 저장하거나
+ * 함께 전달하지 않는다 — 문구도 이 별개 동작을 오해하지 않도록 "관심사" 기준임을 명시한다). 성공은
+ * "서버 접수" 확인일 뿐이고 실제 생성 진행·완료는 알림(REPORT_READY)에서 별도로 확인한다 — Pending
+ * 조회 API 는 이번 범위 밖이라 진행 중·완료 상태를 만들지 않는다. 응답의 id 는 생성 요청 ID(카드
+ * publicId 아님)라 화면에 노출하지 않고 내부 참조용으로만 보관한다.
  */
 const FIELD_CLASS =
   "h-[46px] rounded-[10px] bg-card px-3.5 text-sm text-foreground placeholder:text-low focus-visible:ring-[3px] focus-visible:ring-wash dark:bg-card";
@@ -295,10 +296,10 @@ export function AddMaterialModal({
                 ? "요청 중…"
                 : generateState === "success"
                   ? "생성 요청 완료"
-                  : "저장하고 지금 분석 받기"}
+                  : "관심사로 온디맨드 보고서 만들기"}
             </div>
             <div className="mt-[3px] text-xs leading-[1.55] text-muted-foreground">
-              이 주제로 온디맨드 보고서를 바로 만들어드려요.
+              등록한 관심사를 바탕으로 보고서를 생성해요. 위 관심 자료 저장과는 별도로 요청됩니다.
             </div>
           </div>
         </button>
