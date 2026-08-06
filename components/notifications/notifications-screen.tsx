@@ -8,6 +8,7 @@ import { AddMaterialModal } from "@/components/home/add-material-modal";
 import { HomeNav } from "@/components/home/home-nav";
 import { SideLeft } from "@/components/home/side-left";
 import { NotificationRow } from "@/components/notifications/notification-row";
+import { NotificationsRail } from "@/components/notifications/notifications-rail";
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
@@ -25,8 +26,11 @@ import type { NotificationDto } from "@/types/notification";
  * 렌더되므로(components/home/notification-menu.tsx), 여기 본문의 useNotifications 인스턴스
  * 하나만 30초 polling한다(드롭다운과 중복 없음).
  *
- * 현재 알림 타입이 REPORT_READY 하나뿐이라 전체/조건 달성 탭·모두 읽음·알림 설정 링크는 만들지
- * 않는다(목업 대비 미지원 범위 — bambi-service-web CLAUDE.md, PR 문서 §3 참고).
+ * 목업(docs/design-handoff/product/notifications.html) 구조를 지원 범위 안에서 최대한 따른다 —
+ * 좌측 네비·중앙 리스트·우측 rail 3단 구성, 상단 제목/보조문구, 탭 바. 다만 조건 달성 알림이
+ * 없어 탭은 "전체" 하나만 렌더하고, 모두 읽음(bulk API 없음)·알림 설정 토글(API 없음)은 만들지
+ * 않는다. 우측 rail은 실제 설정 API가 없어 읽기 전용 요약(components/notifications/notifications-rail.tsx)
+ * 으로만 존재한다(목업 대비 미지원 범위 — bambi-service-web CLAUDE.md, PR 문서 §3 참고).
  */
 export function NotificationsScreen() {
   const { status, refreshAuth } = useAuth();
@@ -51,10 +55,21 @@ function NotificationsView() {
           <SideLeft footLines={[]} />
 
           <main className="min-w-0 max-w-[760px] flex-1">
-            <h1 className="mb-1 text-[22px] font-bold tracking-[-0.015em] text-foreground">알림</h1>
-            <p className="mb-4 text-[13px] text-muted-foreground">
-              새 보고서와 중요한 업데이트를 알려드려요.
-            </p>
+            <div className="mb-3.5">
+              <h1 className="text-[22px] font-bold tracking-[-0.015em] text-foreground">알림</h1>
+              <p className="mt-[5px] text-[13px] text-muted-foreground">
+                새 보고서와 주요 업데이트를 알려드려요.
+              </p>
+            </div>
+
+            {/* 조건 달성 알림이 아직 없어 "전체" 하나만 표시한다 — 가짜 두 번째 탭을 만들지 않는다. */}
+            <div className="mb-4 overflow-hidden rounded-[14px] border border-border bg-card">
+              <div className="text-center text-[14.5px] font-semibold text-foreground">
+                <span className="relative inline-block py-[15px] after:absolute after:-right-[11px] after:-left-[11px] after:bottom-0 after:h-1 after:rounded-full after:bg-primary">
+                  전체
+                </span>
+              </div>
+            </div>
 
             {error && (
               <p
@@ -91,6 +106,8 @@ function NotificationsView() {
               />
             )}
           </main>
+
+          <NotificationsRail />
         </div>
       </div>
 
@@ -117,35 +134,41 @@ function NotificationGroups({
     <>
       {groups.map((group) => (
         <section key={group.key} className="mb-1">
-          <h2 className="mt-4 mb-2.5 px-0.5 text-[13px] font-bold text-ink-mid">{group.label}</h2>
-          <ul className="overflow-hidden rounded-[14px] border border-border bg-card">
+          <h2 className="mt-4 mb-[9px] px-0.5 text-[12.5px] font-bold text-ink-mid">{group.label}</h2>
+          <ul className="flex flex-col gap-[7px]">
             {group.items.map((notification) => (
               <NotificationRow
                 key={notification.id}
                 notification={notification}
                 pending={pendingId === notification.id}
                 onOpen={onOpen}
+                variant="card"
               />
             ))}
           </ul>
         </section>
       ))}
-      <p className="mt-5 text-center text-[12px] text-muted-foreground">여기까지예요.</p>
+      <div className="mt-5 text-center">
+        <p className="text-[13px] font-bold text-ink-mid">여기까지예요.</p>
+        <p className="mt-1 text-[12px] text-muted-foreground">
+          새 알림이 오면 이 화면과 헤더 알림에서 함께 알려드려요.
+        </p>
+      </div>
     </>
   );
 }
 
-/** 목록 로딩 스켈레톤 — 그룹 헤딩 2개 + 행 골격(내 보고서 전체 보기와 동일 규율). */
+/** 목록 로딩 스켈레톤 — 그룹 헤딩 2개 + 카드형 행 골격(목업 카드 톤과 동일한 gap 기반 배치). */
 function NotificationsListSkeleton() {
   const bar = "rounded-md bg-[var(--skel1)]";
   return (
     <div aria-hidden="true">
       {Array.from({ length: 2 }).map((_, g) => (
         <div key={g} className="animate-pulse">
-          <div className={`mt-4 mb-2.5 h-3.5 w-16 ${bar}`} />
-          <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+          <div className={`mt-4 mb-[9px] h-3.5 w-16 ${bar}`} />
+          <div className="flex flex-col gap-[7px]">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="border-b border-border px-4 py-3 last:border-b-0">
+              <div key={i} className="rounded-[12px] border border-border bg-card px-[15px] py-3">
                 <div className={`h-4 w-2/3 ${bar}`} />
                 <div className={`mt-2 h-3.5 w-full ${bar}`} />
                 <div className={`mt-2 h-3 w-16 ${bar}`} />

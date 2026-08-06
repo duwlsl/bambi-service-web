@@ -1,24 +1,33 @@
+import { cn } from "@/lib/utils";
 import type { NotificationVM } from "@/lib/adapters/notifications";
 
 const REPORT_READY_TYPE = "REPORT_READY";
+const REPORT_READY_LABEL = "새 보고서";
 
 /**
  * 알림 행 — 헤더 드롭다운·독립 /notifications 화면이 공유한다.
  * 제목·본문은 항상 서버 값 그대로(§7 — 가짜 한국어 타입명 금지). 화살표는 이동 가능한 것으로
  * 확인된 타입(현재는 REPORT_READY 하나)에만 보이는 장식이고, 실제 이동 가능 여부는 클릭 시
  * resolver(lib/notifications/resolve-notification-target.ts)가 최종 판정한다.
+ *
+ * variant: "list"(기본) — 헤더 드롭다운의 연속 목록(구분선). "card" — /notifications 목업의
+ * 개별 카드형(둥근 모서리·자체 테두리·hover 시 화살표 노출). 두 표면이 같은 행 컴포넌트를
+ * 공유하면서도 각자 맥락에 맞는 밀도를 유지한다.
  */
 export function NotificationRow({
   notification,
   pending,
   onOpen,
+  variant = "list",
 }: {
   notification: NotificationVM;
   pending: boolean;
   onOpen: (notification: NotificationVM) => void;
+  variant?: "list" | "card";
 }) {
   const navigable = notification.type === REPORT_READY_TYPE;
   const unread = !notification.read;
+  const isCard = variant === "card";
 
   return (
     <li className="list-none">
@@ -26,9 +35,12 @@ export function NotificationRow({
         type="button"
         disabled={pending}
         onClick={() => onOpen(notification)}
-        className={`focus-ring flex w-full items-start gap-2.5 border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-background disabled:cursor-wait disabled:opacity-60 ${
-          unread ? "bg-wash/50" : "bg-card"
-        }`}
+        className={cn(
+          "focus-ring group flex w-full items-start gap-2.5 bg-card text-left disabled:cursor-wait disabled:opacity-60",
+          isCard
+            ? "rounded-[12px] border border-border px-[15px] py-3 hover:border-wash-strong"
+            : "border-b border-border px-4 py-3 last:border-b-0 hover:bg-background",
+        )}
       >
         <NotificationTypeIcon type={notification.type} />
 
@@ -38,18 +50,33 @@ export function NotificationRow({
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
             )}
             {unread && <span className="sr-only">읽지 않음, </span>}
-            <span className="block truncate text-[13px] font-bold text-foreground">
+            <span
+              className={cn(
+                "block text-[13.5px] text-foreground",
+                unread ? "font-bold" : "font-medium",
+              )}
+            >
               {notification.title}
             </span>
           </span>
           <span className="mt-0.5 block line-clamp-2 text-[12px] leading-5 text-muted-foreground">
             {notification.body}
           </span>
-          <span className="mt-1 block text-[10.5px] text-muted-foreground">{notification.timeLabel}</span>
+          <span className="mt-1 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+            {navigable && <span>{REPORT_READY_LABEL}</span>}
+            {navigable && <span aria-hidden="true">·</span>}
+            <span>{notification.timeLabel}</span>
+          </span>
         </span>
 
         {navigable && (
-          <span aria-hidden="true" className="mt-1.5 shrink-0 text-low">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "mt-1.5 shrink-0 text-low",
+              isCard && "opacity-0 transition-opacity duration-150 group-hover:opacity-100",
+            )}
+          >
             <ChevronRightIcon />
           </span>
         )}
