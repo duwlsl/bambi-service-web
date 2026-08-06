@@ -26,10 +26,11 @@ import type { NotificationDto } from "@/types/notification";
  * 렌더되므로(components/home/notification-menu.tsx), 여기 본문의 useNotifications 인스턴스
  * 하나만 30초 polling한다(드롭다운과 중복 없음).
  *
- * 목업(docs/design-handoff/product/notifications.html) 구조를 지원 범위 안에서 최대한 따른다 —
- * 좌측 네비·중앙 리스트·우측 rail 3단 구성, 상단 제목/보조문구, 탭 바. 다만 조건 달성 알림이
- * 없어 탭은 "전체" 하나만 렌더하고, 모두 읽음(bulk API 없음)·알림 설정 토글(API 없음)은 만들지
- * 않는다. 우측 rail은 실제 설정 API가 없어 읽기 전용 요약(components/notifications/notifications-rail.tsx)
+ * 목업(docs/design-handoff/product/notifications.html) 구조를 지원 범위 안에서 따르되, 정보
+ * 구조는 더 단순하게 정리했다 — 좌측 네비·중앙 리스트·우측 rail 3단 구성, 상단 제목/보조문구는
+ * 유지하지만 "전체/조건 달성" 탭 바는 조건 달성 알림 자체가 없어 렌더할 내용이 없으므로 아예
+ * 없앴다(빈 탭을 억지로 보여주지 않는다). 모두 읽음(bulk API 없음)·알림 설정 토글(API 없음)도
+ * 만들지 않는다. 우측 rail은 실제 설정 API가 없어 읽기 전용 요약(components/notifications/notifications-rail.tsx)
  * 으로만 존재한다(목업 대비 미지원 범위 — bambi-service-web CLAUDE.md, PR 문서 §3 참고).
  */
 export function NotificationsScreen() {
@@ -55,20 +56,11 @@ function NotificationsView() {
           <SideLeft footLines={[]} />
 
           <main className="min-w-0 max-w-[760px] flex-1">
-            <div className="mb-3.5">
+            <div className="mb-4">
               <h1 className="text-[22px] font-bold tracking-[-0.015em] text-foreground">알림</h1>
               <p className="mt-[5px] text-[13px] text-muted-foreground">
                 새 보고서와 주요 업데이트를 알려드려요.
               </p>
-            </div>
-
-            {/* 조건 달성 알림이 아직 없어 "전체" 하나만 표시한다 — 가짜 두 번째 탭을 만들지 않는다. */}
-            <div className="mb-4 overflow-hidden rounded-[14px] border border-border bg-card">
-              <div className="text-center text-[14.5px] font-semibold text-foreground">
-                <span className="relative inline-block py-[15px] after:absolute after:-right-[11px] after:-left-[11px] after:bottom-0 after:h-1 after:rounded-full after:bg-primary">
-                  전체
-                </span>
-              </div>
             </div>
 
             {error && (
@@ -148,12 +140,7 @@ function NotificationGroups({
           </ul>
         </section>
       ))}
-      <div className="mt-5 text-center">
-        <p className="text-[13px] font-bold text-ink-mid">여기까지예요.</p>
-        <p className="mt-1 text-[12px] text-muted-foreground">
-          새 알림이 오면 이 화면과 헤더 알림에서 함께 알려드려요.
-        </p>
-      </div>
+      <p className="mt-5 text-center text-[13px] font-bold text-ink-mid">최근 7일 알림을 모두 봤어요</p>
     </>
   );
 }

@@ -1,14 +1,23 @@
 import { cn } from "@/lib/utils";
+import { reportTypeLabel } from "@/lib/adapters/notifications";
 import type { NotificationVM } from "@/lib/adapters/notifications";
 
 const REPORT_READY_TYPE = "REPORT_READY";
-const REPORT_READY_LABEL = "새 보고서";
+const REPORT_READY_FALLBACK_LABEL = "새 보고서";
 
 /**
  * 알림 행 — 헤더 드롭다운·독립 /notifications 화면이 공유한다.
- * 제목·본문은 항상 서버 값 그대로(§7 — 가짜 한국어 타입명 금지). 화살표는 이동 가능한 것으로
- * 확인된 타입(현재는 REPORT_READY 하나)에만 보이는 장식이고, 실제 이동 가능 여부는 클릭 시
- * resolver(lib/notifications/resolve-notification-target.ts)가 최종 판정한다.
+ * 정보 구조는 "제목 1줄 + 메타(유형 · 시간) 1줄"로 단순화했다 — 본문/요약은 렌더하지 않는다
+ * (목록에서는 제목·시각만으로 충분하고, 상세는 클릭해서 본다).
+ *
+ * 제목은 항상 서버 값 그대로(§7 — 가짜 한국어 타입명 금지). REPORT_READY는 reportType(아침
+ * 브리핑/온디맨드)이 있으면 그 라벨을, 없거나 모르는 값이면 일반 "새 보고서"로 표시한다(추측 금지).
+ * REPORT_READY 이외의 타입(좋아요·댓글·팔로우 등 소셜 알림 포함)은 현재 백엔드가 내려주지 않으므로
+ * 특정 타입 문자열을 임의로 만들지 않고, 아이콘·라벨·화살표 모두 중립 fallback으로 자연스럽게
+ * 수용한다 — 백엔드가 실제 타입을 추가하면 이 fallback 경로가 그대로 대응한다.
+ *
+ * 화살표는 이동 가능한 것으로 확인된 타입(현재는 REPORT_READY 하나)에만 보이는 장식이고, 실제
+ * 이동 가능 여부는 클릭 시 resolver(lib/notifications/resolve-notification-target.ts)가 최종 판정한다.
  *
  * variant: "list"(기본) — 헤더 드롭다운의 연속 목록(구분선). "card" — /notifications 목업의
  * 개별 카드형(둥근 모서리·자체 테두리·hover 시 화살표 노출). 두 표면이 같은 행 컴포넌트를
@@ -28,6 +37,7 @@ export function NotificationRow({
   const navigable = notification.type === REPORT_READY_TYPE;
   const unread = !notification.read;
   const isCard = variant === "card";
+  const typeLabel = navigable ? reportTypeLabel(notification.reportType) ?? REPORT_READY_FALLBACK_LABEL : null;
 
   return (
     <li className="list-none">
@@ -59,12 +69,9 @@ export function NotificationRow({
               {notification.title}
             </span>
           </span>
-          <span className="mt-0.5 block line-clamp-2 text-[12px] leading-5 text-muted-foreground">
-            {notification.body}
-          </span>
           <span className="mt-1 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
-            {navigable && <span>{REPORT_READY_LABEL}</span>}
-            {navigable && <span aria-hidden="true">·</span>}
+            {typeLabel && <span>{typeLabel}</span>}
+            {typeLabel && <span aria-hidden="true">·</span>}
             <span>{notification.timeLabel}</span>
           </span>
         </span>
