@@ -11,6 +11,7 @@ import { SideLeft } from "@/components/home/side-left";
 import { useTheme } from "@/components/theme/theme-provider";
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
+import { McpApiKeySettings } from "@/components/settings/mcp-api-key-settings";
 import type { ThemeMode } from "@/lib/theme";
 
 const SETTINGS_MENU_LABEL = "설정";
@@ -18,7 +19,7 @@ const SETTINGS_MENU_LABEL = "설정";
 /**
  * 설정 — member 전용(§15). 화면 구조·스타일은 docs/design-handoff/product/settings.html 의
  * `.set-sec`/`.srow` 섹션-행 구조를 따른다. 기능은 지금 실제 지원 가능한 것만 포함한다:
- * 테마(라이트/다크/시스템), 계정 이메일(읽기 전용, auth user), 로그아웃.
+ * 테마(라이트/다크/시스템), MCP 연결 키, 계정 이메일(읽기 전용, auth user), 로그아웃.
  *
  * 목업의 브리핑·공개범위·이메일 변경·비밀번호 변경·회원 탈퇴·요금제 레일은 실 API·비활성 표현이 없어 제외한다
  * (동작하지 않는 토글·버튼을 만들지 않는다).
@@ -61,7 +62,7 @@ function SettingsView() {
             <div className="mb-4">
               <h1 className="text-[22px] font-bold tracking-[-0.015em] text-foreground">설정</h1>
               <p className="mt-[5px] text-[13px] leading-[1.6] text-muted-foreground">
-                계정과 화면 테마를 관리해요.
+                계정, 화면 테마, 외부 AI 연결을 관리해요.
               </p>
             </div>
 
@@ -73,6 +74,8 @@ function SettingsView() {
                 control={<ThemeModeSegment />}
               />
             </SettingsSection>
+
+            <McpApiKeySettings />
 
             {/* .set-sec — 계정 (실 API 있는 항목만: 이메일 표시 · 로그아웃) */}
             <SettingsSection title="계정">
