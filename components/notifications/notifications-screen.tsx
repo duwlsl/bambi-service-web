@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
+
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
+import { AddMaterialModal } from "@/components/home/add-material-modal";
 import { HomeNav } from "@/components/home/home-nav";
 import { SideLeft } from "@/components/home/side-left";
 import { NotificationRow } from "@/components/notifications/notification-row";
@@ -37,10 +40,11 @@ export function NotificationsScreen() {
 function NotificationsView() {
   const notifications = useNotifications();
   const { pendingId, error, openNotification } = useNotificationOpen(notifications.refetch);
+  const [amOpen, setAmOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
-      <HomeNav onAddOpen={() => {}} />
+      <HomeNav onAddOpen={() => setAmOpen(true)} />
 
       <div className="mx-auto max-w-[1440px]">
         <div className="flex items-start justify-center gap-[22px] px-5 pt-6 pb-14">
@@ -89,6 +93,9 @@ function NotificationsView() {
           </main>
         </div>
       </div>
+
+      {/* 알림 목록과는 독립적인 저장 흐름이라 onSaved(refetch)를 연결하지 않는다. */}
+      <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} />
     </div>
   );
 }
