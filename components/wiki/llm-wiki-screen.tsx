@@ -154,10 +154,10 @@ function GraphContent({
       className={
         selectedDocumentId === null
           ? "min-h-[650px]"
-          : "grid items-start gap-4 xl:grid-cols-[360px_minmax(0,1fr)]"
+          : "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
       }
     >
-      <div className="relative order-1 min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm xl:order-2">
+      <div className="relative min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
         <WikiForceGraph
           graph={state.data}
           selectedDocumentId={selectedDocumentId}
