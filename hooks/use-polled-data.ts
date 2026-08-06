@@ -17,6 +17,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * isRevalidating=true 로만 표시한다. use-async-data.ts 는 수정하지 않는다(기존 소비자
  * 회귀 위험 — 이 훅은 새 소비자가 opt-in 으로 골라 쓴다).
  *
+ * enabled=false 는 "요청 없음" 이상의 의미다 — 알림·Pending 처럼 사용자별 데이터를 다루는
+ * 소비자는 로그아웃 등으로 enabled 가 false 로 떨어졌다가 다른 사용자 세션으로 다시 true 가
+ * 될 수 있다. 그래서 disable→enable 전환(재활성화)은 이전 데이터를 SWR 캐시로 재사용하지
+ * 않고 loading 부터 다시 시작한다(아래 "activate" 이벤트) — 그 외의 재조회(같은 활성 구간
+ * 안의 interval tick·수동 refetch·visibility 복귀)만 기존 데이터를 유지한 채 배경 갱신한다.
+ *
  * 계약(use-async-data.ts 와 동일한 규율): fetcher 는 호출부가 useCallback 으로 identity 를
  * 고정해서 넘겨야 한다. fetcher 가 매 렌더 새 함수면 매 렌더 재조회 + polling 타이머가
  * 재생성된다 — exhaustive-deps 를 비활성화하지 않고 이 규율로 해결한다.
@@ -39,22 +45,32 @@ type InternalState<T> =
   | { kind: "success"; data: T; revalidating: boolean; error?: unknown }
   | { kind: "error"; error: unknown };
 
-type FetchEvent<T> = { type: "start" } | { type: "success"; data: T } | { type: "failure"; error: unknown };
+type FetchEvent<T> =
+  | { type: "activate" }
+  | { type: "start" }
+  | { type: "success"; data: T }
+  | { type: "failure"; error: unknown };
 
 /**
  * 순수 상태 전이 — 부수효과(요청·타이머·구독) 없이 "현재 상태 + 이벤트 → 다음 상태"만 계산한다.
- * 배경 재조회 실패가 기존 data 를 지우지 않는 규칙(요구사항 8)과, 성공 시 이전 error 가
- * 사라지는 규칙이 여기 한 곳에 있다.
+ *
+ * - "activate": 비활성→활성 전환 직후의 첫 요청. prev 를 절대 참조하지 않고 항상 loading 으로
+ *   리셋한다 — 이전 활성 구간(예: 이전 로그인 세션)의 data·error 를 새 세션에 잠깐이라도
+ *   노출하지 않기 위해서다.
+ * - "start": 같은 활성 구간 안의 재조회(interval tick·수동 refetch·visibility 복귀). 기존
+ *   성공 데이터가 있으면 유지한 채 배경 재조회 중으로만 표시한다(SWR).
+ * - "failure": 성공 데이터가 있었던 배경 재조회 실패는 data 를 지우지 않고 error 만 최신으로
+ *   보관한다.
  */
 function reduceFetchEvent<T>(prev: InternalState<T>, event: FetchEvent<T>): InternalState<T> {
   switch (event.type) {
+    case "activate":
+      return { kind: "loading" };
     case "start":
-      // 기존 성공 데이터가 있으면 그 데이터를 유지한 채 배경 재조회 중으로만 표시한다.
       return prev.kind === "success" ? { ...prev, revalidating: true } : { kind: "loading" };
     case "success":
       return { kind: "success", data: event.data, revalidating: false };
     case "failure":
-      // 성공 데이터가 있었던 배경 재조회 실패 — data 는 그대로 두고 error 만 최신으로 보관한다.
       return prev.kind === "success"
         ? { kind: "success", data: prev.data, revalidating: false, error: event.error }
         : { kind: "error", error: event.error };
@@ -91,8 +107,10 @@ export function usePolledData<T>(
   // (idle 은 내부 상태로 존재하지 않는다 — 아래 반환부가 enabled 로 직접 계산한다).
   const [internal, setInternal] = useState<InternalState<T>>({ kind: "loading" });
 
-  // 언마운트 이후 setState 방지 — 매 effect 실행 시작에 true, 마지막(진짜 언마운트) cleanup 에서만
-  // 계속 false 로 남는다(재실행 중간의 false 는 곧바로 다음 effect 본문이 true 로 되돌린다).
+  // 언마운트 이후 setState 방지 — 활성(enabled) effect 실행 시작에만 true, 그 effect 의
+  // cleanup(재실행 또는 진짜 언마운트)에서 false 로 되돌린다. disabled 분기는 이 값을 절대
+  // true 로 만들지 않는다 — disabled 상태로 마운트가 끝나면 false 로 남아, 그 이전 활성
+  // 구간에서 남아 있던 지연 응답이 뒤늦게 도착해도 setState 로 이어지지 않는다.
   const mountedRef = useRef(false);
   // 이 요청이 아직 "최신"인지 판정하는 단조 증가 카운터. 재실행·재조회로 새 요청이 시작되면
   // 이전 요청의 응답은 이 값과 더 이상 일치하지 않아 무시된다.
@@ -103,42 +121,60 @@ export function usePolledData<T>(
   // 풀어버리면 안 되기 때문이다(그 경우 새 요청이 아직 끝나지 않았는데 중복 요청이 새어나간다).
   const inFlightIdRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // "지금 활성 구간 안에 있는가" — disabled 로 떨어지면 false 로 리셋되고, 그 다음 enabled 로
+  // 돌아오는 첫 요청이 이 값을 보고 "재활성화(activate)"인지 "같은 구간의 재조회(start)"인지
+  // 판정한다. useState 가 아니라 ref 인 이유: 이 값 자체를 화면에 렌더링하지 않고(렌더링되는
+  // 것은 setInternal 을 통해 나오는 internal 상태뿐이다) effect 안에서만 읽고 쓴다.
+  const activeSessionRef = useRef(false);
 
-  const runFetch = useCallback(() => {
-    if (inFlightIdRef.current !== null) return Promise.resolve(); // 진행 중 — 이 tick/호출은 건너뜀
-    const myId = ++requestIdRef.current;
-    inFlightIdRef.current = myId;
-    const controller = new AbortController();
-    abortRef.current = controller;
+  const runFetch = useCallback(
+    (isActivation = false) => {
+      // enabled=false 계약은 effect 뿐 아니라 외부에 반환하는 refetch() 호출에도 동일하게
+      // 적용한다 — 요청·setState·AbortController 생성이 전부 발생하지 않아야 한다.
+      if (!enabled) return Promise.resolve();
+      if (inFlightIdRef.current !== null) return Promise.resolve(); // 진행 중 — 이 tick/호출은 건너뜀
+      const myId = ++requestIdRef.current;
+      inFlightIdRef.current = myId;
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    setInternal((prev) => reduceFetchEvent(prev, { type: "start" }));
+      setInternal((prev) => reduceFetchEvent(prev, isActivation ? { type: "activate" } : { type: "start" }));
 
-    return fetcher(controller.signal)
-      .then((data) => {
-        if (!mountedRef.current || myId !== requestIdRef.current) return;
-        setInternal((prev) => reduceFetchEvent(prev, { type: "success", data }));
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return; // abort 는 오류로 취급하지 않는다
-        if (!mountedRef.current || myId !== requestIdRef.current) return;
-        setInternal((prev) => reduceFetchEvent(prev, { type: "failure", error }));
-      })
-      .finally(() => {
-        if (inFlightIdRef.current === myId) inFlightIdRef.current = null;
-      });
-  }, [fetcher]);
+      return fetcher(controller.signal)
+        .then((data) => {
+          if (!mountedRef.current || myId !== requestIdRef.current) return;
+          setInternal((prev) => reduceFetchEvent(prev, { type: "success", data }));
+        })
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return; // abort 는 오류로 취급하지 않는다
+          if (!mountedRef.current || myId !== requestIdRef.current) return;
+          setInternal((prev) => reduceFetchEvent(prev, { type: "failure", error }));
+        })
+        .finally(() => {
+          if (inFlightIdRef.current === myId) inFlightIdRef.current = null;
+        });
+    },
+    [fetcher, enabled],
+  );
 
   const refetch = useCallback(() => runFetch(), [runFetch]);
 
   useEffect(() => {
+    if (!enabled) {
+      // 다음에 enabled 로 돌아오면 그 첫 요청은 "재활성화"로 취급한다(이전 데이터를 SWR
+      // 캐시로 재사용하지 않음). mountedRef 는 여기서 절대 true 로 만들지 않는다 — 이 effect
+      // 실행은 아무것도 새로 시작하지 않으므로 cleanup 도 필요 없다(직전 활성 effect 의
+      // cleanup 이 이미 abort·락 해제를 했을 것이나, 방어적으로 한 번 더 정리한다).
+      activeSessionRef.current = false;
+      abortRef.current?.abort();
+      inFlightIdRef.current = null;
+      return;
+    }
+
     mountedRef.current = true;
-
-    // enabled=false 는 setState 로 동기화하지 않는다 — 아래 반환부가 enabled 로 직접 "idle" 을
-    // 계산한다(react-hooks/set-state-in-effect: effect 본문에서 파생 가능한 값을 굳이
-    // setState 로 동기화하지 않는다). 여기서는 요청·타이머를 걸지 않고 조용히 끝낸다.
-    if (!enabled) return;
-
-    void runFetch(); // 최초(또는 재활성화 직후) 즉시 조회
+    const isActivation = !activeSessionRef.current;
+    activeSessionRef.current = true;
+    void runFetch(isActivation); // 최초(또는 재활성화 직후) 즉시 조회
 
     let timer: ReturnType<typeof setInterval> | null = null;
 
