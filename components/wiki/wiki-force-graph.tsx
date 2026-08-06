@@ -25,7 +25,13 @@ type Position = {
 };
 
 type ViewTransform = { x: number; y: number; scale: number };
-type DragState = { id: string; pointerId: number; moved: boolean };
+type DragState = {
+  id: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  moved: boolean;
+};
 type PanState = {
   pointerId: number;
   x: number;
@@ -46,7 +52,7 @@ export function WikiForceGraph({
 }: {
   graph: WikiGraph;
   selectedDocumentId: string | null;
-  onSelect: (documentId: string) => void;
+  onSelect: (documentId: string, options: { revealDetail: boolean }) => void;
   onClear: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -187,8 +193,13 @@ export function WikiForceGraph({
     const point = positionsRef.current.get(nodeId);
     if (!point) return;
     point.fixed = true;
-    dragRef.current = { id: nodeId, pointerId: event.pointerId, moved: false };
-    onSelect(nodeId);
+    dragRef.current = {
+      id: nodeId,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+    };
   }
 
   function startPan(event: ReactPointerEvent<SVGSVGElement>) {
@@ -208,6 +219,10 @@ export function WikiForceGraph({
   function movePointer(event: ReactPointerEvent<SVGSVGElement>) {
     const drag = dragRef.current;
     if (drag?.pointerId === event.pointerId) {
+      drag.moved =
+        drag.moved ||
+        Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY) > 3;
+      if (!drag.moved) return;
       const point = positionsRef.current.get(drag.id);
       const cursor = graphPoint(event.clientX, event.clientY);
       if (point) {
@@ -237,6 +252,7 @@ export function WikiForceGraph({
       if (point) point.fixed = false;
       dragRef.current = null;
       if (drag.moved) reheat(0.25);
+      onSelect(drag.id, { revealDetail: !drag.moved });
       return;
     }
     const pan = panRef.current;
@@ -364,7 +380,7 @@ export function WikiForceGraph({
                   mutedBySelection={selectedDocumentId !== null && !neighborIds.has(node.id)}
                   mutedBySearch={matchingNodeIds !== null && !matchingNodeIds.has(node.id)}
                   onPointerDown={(event) => startNodeDrag(event, node.id)}
-                  onSelect={() => onSelect(node.id)}
+                  onSelect={() => onSelect(node.id, { revealDetail: true })}
                 />
               ))}
             </g>

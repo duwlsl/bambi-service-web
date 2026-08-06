@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
@@ -14,18 +16,51 @@ import type {
 /** 선택한 Wiki Node를 Graph와 겹치지 않는 별도 패널에서 조회한다. */
 export function WikiDocumentPanel({
   selectedDocumentId,
+  revealRequest,
   state,
   onSelect,
   onClear,
 }: {
   selectedDocumentId: string | null;
+  revealRequest: number;
   state: WikiDocumentDetailState & { refetch: () => void };
   onSelect: (documentId: string) => void;
   onClear: () => void;
 }) {
+  const panelRef = useRef<HTMLElement>(null);
+  const handledRevealRequestRef = useRef(0);
+
+  useEffect(() => {
+    if (
+      revealRequest === 0 ||
+      handledRevealRequestRef.current >= revealRequest ||
+      selectedDocumentId === null ||
+      state.status === "idle"
+    ) {
+      return;
+    }
+
+    if (window.matchMedia("(min-width: 1280px)").matches) {
+      handledRevealRequestRef.current = revealRequest;
+      return;
+    }
+
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth";
+    const frame = window.requestAnimationFrame(() => {
+      handledRevealRequestRef.current = revealRequest;
+      panelRef.current?.scrollIntoView({ behavior, block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [revealRequest, selectedDocumentId, state.status]);
+
   if (selectedDocumentId === null || state.status === "idle") return null;
   return (
-    <aside className="order-2 flex h-[650px] min-h-[520px] w-full flex-col overflow-hidden rounded-[18px] border border-border bg-card shadow-sm xl:order-1">
+    <aside
+      ref={panelRef}
+      className="order-2 flex h-[650px] min-h-[520px] w-full scroll-mt-4 flex-col overflow-hidden rounded-[18px] border border-border bg-card shadow-sm xl:order-1"
+    >
       {state.status === "loading" ? (
         <div className="p-5" aria-hidden="true">
           <FeedSkeleton />
@@ -156,10 +191,10 @@ function WikiDocumentFile({
 function KindBadge({ kind }: { kind: WikiGraphNode["documentKind"] }) {
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+      className={`rounded-full border px-2 py-0.5 text-[10px] font-bold text-foreground uppercase ${
         kind === "entity"
-          ? "bg-wiki-entity/10 text-wiki-entity"
-          : "bg-wiki-concept/10 text-wiki-concept"
+          ? "border-wiki-entity/40 bg-wiki-entity/10"
+          : "border-wiki-concept/40 bg-wiki-concept/10"
       }`}
     >
       {kind}

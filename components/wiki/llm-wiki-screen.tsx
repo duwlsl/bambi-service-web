@@ -39,9 +39,18 @@ function LlmWikiView() {
   const searchParams = useSearchParams();
   const initialDocumentId = searchParams.get("document")?.trim() || null;
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(initialDocumentId);
+  const [detailRevealRequest, setDetailRevealRequest] = useState(0);
   const graph = useWikiGraph();
   const detail = useWikiDocumentDetail(selectedDocumentId);
   const [addOpen, setAddOpen] = useState(false);
+
+  function selectDocument(
+    documentId: string,
+    options: { revealDetail?: boolean } = {},
+  ) {
+    setSelectedDocumentId(documentId);
+    if (options.revealDetail) setDetailRevealRequest((request) => request + 1);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,8 +85,9 @@ function LlmWikiView() {
             <GraphContent
               state={graph}
               selectedDocumentId={selectedDocumentId}
+              detailRevealRequest={detailRevealRequest}
               detail={detail}
-              onSelect={setSelectedDocumentId}
+              onSelect={selectDocument}
               onClearSelection={() => setSelectedDocumentId(null)}
             />
           </main>
@@ -96,14 +106,16 @@ function LlmWikiView() {
 function GraphContent({
   state,
   selectedDocumentId,
+  detailRevealRequest,
   detail,
   onSelect,
   onClearSelection,
 }: {
   state: WikiGraphState & { refetch: () => void };
   selectedDocumentId: string | null;
+  detailRevealRequest: number;
   detail: WikiDocumentDetailState & { refetch: () => void };
-  onSelect: (documentId: string) => void;
+  onSelect: (documentId: string, options?: { revealDetail?: boolean }) => void;
   onClearSelection: () => void;
 }) {
   if (state.status === "loading") {
@@ -155,6 +167,7 @@ function GraphContent({
       </div>
       <WikiDocumentPanel
         selectedDocumentId={selectedDocumentId}
+        revealRequest={detailRevealRequest}
         state={detail}
         onSelect={onSelect}
         onClear={onClearSelection}
