@@ -4,7 +4,7 @@ import { SettingsScreen } from "@/components/settings/settings-screen";
 
 export const metadata: Metadata = {
   title: "AlphaCatcher — 설정",
-  description: "계정, 화면 모드, 외부 AI용 MCP 연결 키를 관리합니다.",
+  description: "계정, 화면 모드, 외부 AI용 MCP 연결을 관리합니다.",
 };
 
 /**
