@@ -1,3 +1,4 @@
+import { getReportTypeLabel } from "@/lib/report-type";
 import type { NotificationDto } from "@/types/notification";
 
 /**
@@ -23,20 +24,12 @@ export function toNotificationVM(dto: NotificationDto): NotificationVM {
   };
 }
 
-const REPORT_TYPE_LABEL: Record<string, string> = {
-  MORNING_BRIEFING: "아침 브리핑",
-  ON_DEMAND: "온디맨드",
-};
-
 /**
- * REPORT_READY 알림의 생성 트리거 라벨. 알려진 값만 매핑하고, null·미확인 값은 추측하지 않고
- * null을 돌려준다(호출부가 일반 라벨로 대체하거나 생략한다) — 현재 백엔드는 이 필드를 아직
- * 내려주지 않으므로(NotificationDto.reportType 참고) 실제로는 항상 null이 된다.
+ * REPORT_READY 알림의 생성 트리거 라벨. 매핑 실체는 `lib/report-type.ts`(단일 소스)이고
+ * 여기서는 알림 문맥의 이름으로만 다시 노출한다 — 같은 표를 두 곳에 두지 않는다.
+ * null·미확인 값은 추측하지 않고 null 이며, 호출부가 일반 라벨로 대체하거나 생략한다.
  */
-export function reportTypeLabel(reportType: string | null | undefined): string | null {
-  if (!reportType) return null;
-  return REPORT_TYPE_LABEL[reportType] ?? null;
-}
+export const reportTypeLabel = getReportTypeLabel;
 
 export type NotificationGroup = {
   key: string;

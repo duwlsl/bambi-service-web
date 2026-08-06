@@ -14,6 +14,8 @@
  * - 게스트 단건 상세는 liked=false(서버가 viewerId 없음 → false, null 아님).
  */
 
+import type { ReportType } from "@/types/report";
+
 /**
  * 카드 출처 1건(API DTO) — title·url 이 각각 독립적으로 null 일 수 있고,
  * 실제 응답에는 { "title": null, "url": null } 처럼 둘 다 빈 항목도 존재한다(2026-08-04 실측).
@@ -72,6 +74,12 @@ export type CardResponse = {
    * (`toCardTags`)가 한다 — 가짜 태그를 만들지 않는다.
    */
   tags?: string[] | null;
+  /**
+   * 보고서 생성 종류(아침 브리핑·온디맨드). **아직 배포되지 않은 필드**라 optional 이다 —
+   * 없는 배포본에서도 화면이 깨지지 않게 두고, 값 판별은 `lib/report-type.ts` 가 런타임에서 한다.
+   * 제목·공개 여부·작성 시각 같은 다른 값으로 종류를 추론하거나 보정하지 않는다.
+   */
+  reportType?: ReportType | null;
   /** 카드 공개 범위. 모든 응답 경로에서 채워진다(서버 컬럼 NOT NULL). */
   visibility: CardVisibility;
   /** 단건 상세에서만 채워진다. 목록·저장·visibility 변경 응답에서는 null. */
@@ -144,6 +152,11 @@ export type FeedCardVM = {
    * 카드가 그대로 렌더할 수 있는 형태다. 카테고리·해시태그를 임의로 만들지 않는다.
    */
   tags: string[];
+  /**
+   * 검증을 통과한 보고서 생성 종류. 서버가 안 주거나(필드 미배포) 계약 밖 값이면 **null** 이고,
+   * 그때 화면은 종류 배지를 렌더하지 않는다(`ReportTypeBadge`). 기본값을 채우지 않는다.
+   */
+  reportType: ReportType | null;
   /** 정규화된 출처만 담는다 — 빈 출처는 제외되므로 length 가 곧 표시 가능한 출처 건수다. */
   sources: CardSourceVM[];
   createdAtLabel: string;
