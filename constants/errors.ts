@@ -12,7 +12,9 @@ export const ERROR_CODES = {
   AUTH_INVALID_TOKEN: "AUTH_INVALID_TOKEN",
   FORBIDDEN: "FORBIDDEN",
   NOT_FOUND: "NOT_FOUND",
+  INTEREST_NOT_FOUND: "INTEREST_NOT_FOUND",
   DUPLICATE_RESOURCE: "DUPLICATE_RESOURCE",
+  AGENT_UNAVAILABLE: "AGENT_UNAVAILABLE",
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
 
@@ -28,7 +30,9 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   AUTH_INVALID_TOKEN: "로그인이 만료됐어요. 다시 로그인해 주세요.",
   FORBIDDEN: "이 페이지를 볼 권한이 없어요.",
   NOT_FOUND: "요청한 정보를 찾을 수 없어요. 목록에서 다시 확인해 주세요.",
+  INTEREST_NOT_FOUND: "선택한 관심사가 더 이상 존재하지 않아요. 관심사 목록을 새로고침해 다시 선택해 주세요.",
   DUPLICATE_RESOURCE: "이미 가입된 이메일이에요.",
+  AGENT_UNAVAILABLE: "AI 처리 서비스에 잠시 연결할 수 없어요. 잠시 후 다시 시도해 주세요.",
   INTERNAL_ERROR: "일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요.",
 };
 
