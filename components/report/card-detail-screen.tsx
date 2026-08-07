@@ -13,11 +13,19 @@ import { IconAlert, IconSearch } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
 import { CardComments } from "@/components/report/card-comments";
 import { CardLikeButton } from "@/components/report/card-like-button";
+import { CardScrapButton } from "@/components/report/card-scrap-button";
 import { CardShareModal } from "@/components/report/card-share-modal";
+import { ReportTypeBadge } from "@/components/report/report-type-badge";
 import { useCardDetail } from "@/hooks/use-card-detail";
 import { useCopyCardLink } from "@/hooks/use-copy-card-link";
 import { useReportBody, type ReportBodyState } from "@/hooks/use-report-body";
-import { isCardOwner, isPublicCard, toCardSocial, toFeedCardVM } from "@/lib/adapters/card";
+import {
+  isCardOwner,
+  isPublicCard,
+  toCardSocial,
+  toFeedCardVM,
+  toScrapped,
+} from "@/lib/adapters/card";
 import { toReportRailVM } from "@/lib/adapters/report";
 import { ReportMarkdown } from "@/components/report/report-markdown";
 import type { CardResponse, CardVisibility } from "@/types/feed";
@@ -36,6 +44,8 @@ import type { CardResponse, CardVisibility } from "@/types/feed";
  * 좋아요(2026-08-04, service-api PR #35 소셜 필드): PUBLIC 카드에서만 토글을 렌더하고,
  * 작성자 본인 여부로는 숨기거나 막지 않는다(정책 확정 — 서버도 소유자를 차단하지 않는다).
  * 소셜 값이 검증되지 않으면(미배포 응답·비정상 null) 좋아요 UI 자체를 두지 않는다.
+ * 보관(2026-08-07, service-api #53 `CardResponse.scrapped`)도 같은 규율이다 — PUBLIC + 값 검증
+ * 통과일 때만 readbar 에 토글을 렌더하고, 좋아요 값과 **독립적으로** 판정한다.
  * 인증(복구) 상태 우선 → 데이터 상태(두 loading 분리). 백엔드가 주는 값만 렌더한다.
  * 리포트의 title·summary·citations 는 카드의 title·summary·sources 와 같은 발행 payload 라
  * 다시 렌더하지 않는다(중복 방지, PublishProcessingService 실측) — 본문(body)만 추가한다.
@@ -111,6 +121,9 @@ function CardDetailView({
   // 좋아요 초기값 — 단건 상세 응답의 author·likeCount·liked 를 런타임 검증해 좁힌다.
   // 소셜 필드가 없는 응답(미배포·비정상 null)이면 null 이고, 그때는 좋아요 UI 를 렌더하지 않는다.
   const social = toCardSocial(shown);
+  // 보관 초기값 — 좋아요와 **독립적으로** 검증한다(소셜 값이 없어도 보관은 그대로 쓸 수 있다).
+  // null(필드 미배포·비정상 값)이면 담긴 상태를 알 수 없다는 뜻이라 버튼을 두지 않는다.
+  const scrapped = toScrapped(shown.scrapped);
   // 본문(리포트) — 카드 ready 후에만 이 컴포넌트가 mount 되므로 여기서 2단계 요청을 시작한다.
   const body = useReportBody(card.reportId);
   // 공개 범위 변경은 **카드 소유자에게만** 노출한다(비소유자·게스트는 링크 복사만).
@@ -127,7 +140,7 @@ function CardDetailView({
 
           <main className="min-w-0 max-w-[760px] flex-1">
             {/*
-              .readbar — 좌측 뒤로가기 + 우측 공유 액션(보관·MD 는 실 카드 미지원 → 두지 않음).
+              .readbar — 좌측 뒤로가기 + 우측 액션(보관·공유). MD 내려받기는 실 카드 미지원 → 두지 않음.
 
               목업(report-detail.html)의 readbar 는 padding 9px 12px 이고, **두께는 내부
               `.btn`(height:32px)이 만든다** → 좌측 링크와 우측 버튼 모두 32px 높이를 줘 목업과
@@ -149,6 +162,23 @@ function CardDetailView({
                 홈 피드로
               </Link>
               {/*
+                보관 — readbar 의 공유 왼쪽. PUBLIC 이고 `scrapped` 가 검증됐을 때만 렌더한다
+                (PRIVATE 카드는 서버가 스크랩을 404 로 막으므로 버튼 자체를 두지 않는다).
+                소유자 여부는 보지 않는다 — 좋아요와 같은 정책으로 본인 PUBLIC 카드도 담을 수 있다.
+
+                좋아요(카드 article 하단)와 같은 줄에 두지 않은 이유: 두 액션의 노출 조건이 서로
+                달라(`social !== null` vs `scrapped !== null`) 한 줄로 묶으면 한쪽이 없을 때 빈
+                구분선만 남는다. readbar 는 이미 `공유` 를 담은 액션 자리이고 스크롤과 무관하게
+                고정돼 있어, 상세 레이아웃을 건드리지 않고 들어갈 수 있는 가장 자연스러운 위치다.
+              */}
+              {isPublic && scrapped !== null && (
+                <CardScrapButton
+                  publicId={shown.publicId}
+                  initialScrapped={scrapped}
+                  variant="bar"
+                />
+              )}
+              {/*
                 공유 — 권한과 상태에 따라 할 수 있는 일이 다르다.
                 - 소유자: 공개 범위 설명·변경과 링크 복사를 담은 모달을 연다.
                 - 비소유자·게스트(PUBLIC 만 여기 도달): 링크 복사만. 공개 범위 변경 UI 도,
@@ -169,8 +199,17 @@ function CardDetailView({
 
             {/* .dcard */}
             <article className="mb-4 rounded-2xl border border-border bg-card px-[30px] py-[26px]">
-              {vm.createdAtLabel && (
-                <div className="mb-2 text-xs text-muted-foreground">{vm.createdAtLabel}</div>
+              {/*
+                생성 종류 + 작성 시각 한 줄. 종류 배지는 **내 보고서에만** 의미가 있으므로
+                소유자에게만 렌더한다 — 이 화면은 소유자와 공개 카드 열람자(타인·게스트)가 같은
+                컴포넌트를 공유하는 유일한 자리라, 게이트 없이 두면 남의 카드에 배지가 노출된다.
+                값이 없으면 배지가 스스로 사라지고 기존 날짜 줄만 남는다(레이아웃 동일).
+              */}
+              {(owner || vm.createdAtLabel) && (
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  {owner && <ReportTypeBadge reportType={vm.reportType} />}
+                  {vm.createdAtLabel && <span>{vm.createdAtLabel}</span>}
+                </div>
               )}
               <h1 className="mb-3 text-[25px] leading-[1.38] font-bold tracking-[-0.015em] text-foreground">
                 {vm.title}

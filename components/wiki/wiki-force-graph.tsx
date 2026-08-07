@@ -6,7 +6,6 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
 } from "react";
 
 import type { WikiGraph, WikiGraphEdge, WikiGraphNode } from "@/types/wiki";
@@ -15,6 +14,8 @@ const GRAPH_WIDTH = 960;
 const GRAPH_HEIGHT = 650;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 4;
+const MIN_NODE_RADIUS = 10;
+const MAX_NODE_RADIUS = 30;
 
 type Position = {
   x: number;
@@ -85,6 +86,10 @@ export function WikiForceGraph({
     () => new Set(visibleNodes.map((node) => node.id)),
     [visibleNodes],
   );
+  const maxGraphDegree = useMemo(
+    () => Math.max(0, ...graph.nodes.map((node) => node.degree)),
+    [graph.nodes],
+  );
   const visibleEdges = useMemo(
     () =>
       graph.edges.filter(
@@ -139,6 +144,34 @@ export function WikiForceGraph({
     transformRef.current = next;
     setTransform(next);
   }
+
+  useEffect(() => {
+    const graphElement = svgRef.current;
+    if (graphElement === null) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const rect = graphElement.getBoundingClientRect();
+      const mouseX = (event.clientX - rect.left) * (GRAPH_WIDTH / rect.width);
+      const mouseY = (event.clientY - rect.top) * (GRAPH_HEIGHT / rect.height);
+      const current = transformRef.current;
+      const scale = clamp(
+        current.scale * Math.exp(-event.deltaY * 0.0012),
+        MIN_SCALE,
+        MAX_SCALE,
+      );
+      const next = {
+        x: mouseX - ((mouseX - current.x) / current.scale) * scale,
+        y: mouseY - ((mouseY - current.y) / current.scale) * scale,
+        scale,
+      };
+      transformRef.current = next;
+      setTransform(next);
+    };
+
+    graphElement.addEventListener("wheel", handleWheel, { passive: false });
+    return () => graphElement.removeEventListener("wheel", handleWheel);
+  }, [visibleNodes.length]);
 
   function reheat(alpha = 1) {
     alphaRef.current = Math.max(alphaRef.current, alpha);
@@ -272,24 +305,6 @@ export function WikiForceGraph({
     panRef.current = null;
   }
 
-  function zoom(event: ReactWheelEvent<SVGSVGElement>) {
-    event.preventDefault();
-    const rect = event.currentTarget.getBoundingClientRect();
-    const mouseX = (event.clientX - rect.left) * (GRAPH_WIDTH / rect.width);
-    const mouseY = (event.clientY - rect.top) * (GRAPH_HEIGHT / rect.height);
-    const current = transformRef.current;
-    const scale = clamp(
-      current.scale * Math.exp(-event.deltaY * 0.0012),
-      MIN_SCALE,
-      MAX_SCALE,
-    );
-    updateTransform({
-      x: mouseX - ((mouseX - current.x) / current.scale) * scale,
-      y: mouseY - ((mouseY - current.y) / current.scale) * scale,
-      scale,
-    });
-  }
-
   return (
     <section className="h-full min-h-[650px] bg-card">
       <div className="absolute top-4 left-4 z-10 w-[min(360px,calc(100%-32px))] rounded-[14px] border border-border bg-card/95 p-3.5 shadow-sm backdrop-blur">
@@ -347,12 +362,11 @@ export function WikiForceGraph({
           role="application"
           aria-label={`LLM Wiki Graph, 노드 ${visibleNodes.length}개, 연결 ${visibleEdges.length}개`}
           tabIndex={0}
-          style={{ touchAction: "none" }}
+          style={{ overscrollBehavior: "contain", touchAction: "none" }}
           onPointerDown={startPan}
           onPointerMove={movePointer}
           onPointerUp={endPointer}
           onPointerCancel={cancelPointer}
-          onWheel={zoom}
         >
           <rect width={GRAPH_WIDTH} height={GRAPH_HEIGHT} fill="var(--card)" />
           <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`}>
@@ -379,6 +393,7 @@ export function WikiForceGraph({
                   neighbor={neighborIds.has(node.id)}
                   mutedBySelection={selectedDocumentId !== null && !neighborIds.has(node.id)}
                   mutedBySearch={matchingNodeIds !== null && !matchingNodeIds.has(node.id)}
+                  maxDegree={maxGraphDegree}
                   onPointerDown={(event) => startNodeDrag(event, node.id)}
                   onSelect={() => onSelect(node.id, { revealDetail: true })}
                 />
@@ -433,6 +448,7 @@ function ForceNode({
   neighbor,
   mutedBySelection,
   mutedBySearch,
+  maxDegree,
   onPointerDown,
   onSelect,
 }: {
@@ -442,10 +458,11 @@ function ForceNode({
   neighbor: boolean;
   mutedBySelection: boolean;
   mutedBySearch: boolean;
+  maxDegree: number;
   onPointerDown: (event: ReactPointerEvent<SVGGElement>) => void;
   onSelect: () => void;
 }) {
-  const radius = Math.min(18, 8 + Math.sqrt(node.degree + 1) * 2.2);
+  const radius = nodeRadius(node.degree, maxDegree);
   const label = node.title.length > 28 ? `${node.title.slice(0, 27)}…` : node.title;
   const fill = node.documentKind === "entity" ? "var(--wiki-entity)" : "var(--wiki-concept)";
   return (
@@ -463,7 +480,7 @@ function ForceNode({
           onSelect();
         }
       }}
-      className="cursor-grab outline-none active:cursor-grabbing"
+      className="cursor-pointer outline-none active:cursor-grabbing"
     >
       <circle
         r={radius + (selected ? 6 : 3)}
@@ -654,4 +671,10 @@ function hash(text: string): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function nodeRadius(degree: number, maxDegree: number): number {
+  if (maxDegree <= 0) return MIN_NODE_RADIUS;
+  const importance = Math.sqrt(clamp(degree, 0, maxDegree) / maxDegree);
+  return MIN_NODE_RADIUS + importance * (MAX_NODE_RADIUS - MIN_NODE_RADIUS);
 }

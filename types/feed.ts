@@ -14,6 +14,8 @@
  * - 게스트 단건 상세는 liked=false(서버가 viewerId 없음 → false, null 아님).
  */
 
+import type { ReportType } from "@/types/report";
+
 /**
  * 카드 출처 1건(API DTO) — title·url 이 각각 독립적으로 null 일 수 있고,
  * 실제 응답에는 { "title": null, "url": null } 처럼 둘 다 빈 항목도 존재한다(2026-08-04 실측).
@@ -72,6 +74,12 @@ export type CardResponse = {
    * (`toCardTags`)가 한다 — 가짜 태그를 만들지 않는다.
    */
   tags?: string[] | null;
+  /**
+   * 보고서 생성 종류(아침 브리핑·온디맨드). **아직 배포되지 않은 필드**라 optional 이다 —
+   * 없는 배포본에서도 화면이 깨지지 않게 두고, 값 판별은 `lib/report-type.ts` 가 런타임에서 한다.
+   * 제목·공개 여부·작성 시각 같은 다른 값으로 종류를 추론하거나 보정하지 않는다.
+   */
+  reportType?: ReportType | null;
   /** 카드 공개 범위. 모든 응답 경로에서 채워진다(서버 컬럼 NOT NULL). */
   visibility: CardVisibility;
   /** 단건 상세에서만 채워진다. 목록·저장·visibility 변경 응답에서는 null. */
@@ -80,6 +88,17 @@ export type CardResponse = {
   likeCount: number | null;
   /** 단건 상세에서만 채워진다(게스트는 false). 목록·저장·visibility 변경 응답에서는 null. */
   liked: boolean | null;
+  /**
+   * **조회자 기준** 스크랩(보관) 여부 — service-api #53(2026-08-07 실측: 단건 상세에서 boolean,
+   * 게스트도 false). 스크랩은 카드 전체 값이 아니라 "내가 담았는지"라 조회자마다 다르다.
+   *
+   * optional + nullable 인 이유는 두 가지다:
+   * - 이 필드가 없는 배포본이 남아 있을 수 있다(단계적 배포 — 기존 필드 규약과 동일).
+   * - `liked` 와 같은 이유로 **상세 외 경로(목록·저장·PATCH 응답)에서는 null 일 수 있다.**
+   * 값 판별은 `lib/adapters/card.ts` 의 `toScrapped` 가 하고, **null 을 false 로 보정하지 않는다**
+   * ("담지 않음"과 "알 수 없음"은 다르다 — 후자에서는 화면이 버튼을 렌더하지 않는다).
+   */
+  scrapped?: boolean | null;
   sources: CardSource[];
   createdAt: string; // ISO-8601 (서버 OffsetDateTime)
 };
@@ -144,6 +163,11 @@ export type FeedCardVM = {
    * 카드가 그대로 렌더할 수 있는 형태다. 카테고리·해시태그를 임의로 만들지 않는다.
    */
   tags: string[];
+  /**
+   * 검증을 통과한 보고서 생성 종류. 서버가 안 주거나(필드 미배포) 계약 밖 값이면 **null** 이고,
+   * 그때 화면은 종류 배지를 렌더하지 않는다(`ReportTypeBadge`). 기본값을 채우지 않는다.
+   */
+  reportType: ReportType | null;
   /** 정규화된 출처만 담는다 — 빈 출처는 제외되므로 length 가 곧 표시 가능한 출처 건수다. */
   sources: CardSourceVM[];
   createdAtLabel: string;
@@ -209,15 +233,32 @@ export type PublicFeedCardResponse = {
   likeCount: number;
   /** **조회자 기준** 좋아요 여부. primitive boolean → null 없음. 비로그인은 false. */
   liked: boolean;
+  /**
+   * **조회자 기준** 스크랩(보관) 여부 — service-api #53. 공개 피드에서는 `liked` 와 마찬가지로
+   * primitive boolean 이라 **유효한 응답에서는 항상 true/false** 이고 비로그인은 false 다
+   * (2026-08-07 실측: 게스트·로그인 모두 필드 존재).
+   *
+   * 그래도 optional 로 두는 건 이 필드가 없는 배포본에서 화면이 깨지지 않게 하려는 것뿐이다.
+   * 값 판별은 어댑터(`toScrapped`)가 하고 없으면 null → 그 카드만 보관 버튼을 렌더하지 않는다.
+   */
+  scrapped?: boolean | null;
   sources: CardSource[];
   createdAt: string; // ISO-8601 (서버 OffsetDateTime)
 };
 
 /**
  * 정규화된 작성자(화면 모델).
- * `name` 은 displayName → username 순으로 고른 **실제** 표시 이름이고, 둘 다 없으면 null 이다.
- * null 을 임의 이름("익명"·"사용자1" 등)으로 채우지 않는다 — 화면이 "식별 불가"로 렌더한다.
- * `initial` 은 name 에서 파생한 첫 글자이므로 name 이 null 이면 같이 null 이다(가짜 이니셜 금지).
+ *
+ * `displayName` 과 `username` 을 **합치지 않고 따로** 담는다. 목업(home-feed.html `.pname`)이
+ * `표시이름 @핸들` 두 값을 나란히 보여주기 때문이고, 합쳐 두면 화면이 둘을 되살릴 수 없다.
+ * 각 값은 서버가 실제로 준 것만 담고 없으면 null 이다 — "익명"·"사용자1" 같은 이름이나 가짜 핸들을
+ * 만들지 않는다(서버는 탈퇴/부재 작성자에 대해 세 필드가 전부 null 인 객체를 준다).
+ *
+ * `@` 는 **여기 담지 않는다.** API 원문을 변조하지 않고, 표기는 화면 단계에서만 붙인다.
+ * 둘 다 없으면 화면이 "작성자 정보 없음"으로 렌더한다.
+ *
+ * `initial` 은 `displayName ?? username` 에서 파생한 첫 글자다 — 이름이 없으면 이니셜도 null
+ * (가짜 이니셜 금지).
  */
 export type PublicFeedAuthorVM = {
   /**
@@ -225,7 +266,10 @@ export type PublicFeedAuthorVM = {
    * 화면이 링크를 만들지 않고 텍스트로만 렌더한다(죽은 링크 금지).
    */
   publicId: string | null;
-  name: string | null;
+  /** 서버 `displayName` 원문(공백 정리만). 없으면 null. */
+  displayName: string | null;
+  /** 서버 `username` 원문(공백 정리만, `@` 없음). 없으면 null. */
+  username: string | null;
   initial: string | null;
 };
 
@@ -254,13 +298,20 @@ export type PublicFeedCardVM = {
    * 카드의 나머지(제목·요약·작성자·출처)는 social 이 null 이어도 그대로 렌더한다.
    */
   social: PublicFeedSocialVM | null;
+  /**
+   * 조회자 기준 보관 여부 — **보관 토글 버튼의 초기값**이자 노출 조건이다. null 이면(필드 미배포·
+   * 비정상 값) 그 카드만 버튼을 렌더하지 않는다. `social` 과 **별도 필드로 둔다**: 둘은 서로 다른
+   * 검증을 거치므로 좋아요 값이 깨졌다고 보관 버튼까지 사라지면 안 된다(그 반대도 마찬가지).
+   */
+  scrapped: boolean | null;
   /** 정규화된 출처만 담는다 — 빈 출처는 제외되므로 length 가 곧 표시 가능한 출처 건수다. */
   sources: CardSourceVM[];
   /** 파싱 실패 시 빈 문자열(임의 날짜 생성 금지) — 화면은 빈 값이면 줄을 생략한다. */
   createdAtLabel: string;
   /**
-   * 정규화된 관심사 태그(공백 제거·빈 값 제외). **화면에 표시하지 않는다** — 추천 후보 판정
-   * (내 관심사와 하나 이상 일치)에만 쓴다. 서버가 tags 를 안 주는 배포본에서는 빈 배열이다.
+   * 정규화된 관심사 태그(공백 제거·빈 값 제외). 두 곳에서 쓴다:
+   * 추천 후보 판정(내 관심사와 하나 이상 일치)과, 카드의 관심사 메타 표시(첫 태그 + `+N`).
+   * 서버가 tags 를 안 주는 배포본에서는 빈 배열이고, 그때 화면은 관심사 줄을 렌더하지 않는다.
    */
   tags: string[];
 };
