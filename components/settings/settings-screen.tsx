@@ -11,18 +11,28 @@ import { SideLeft } from "@/components/home/side-left";
 import { useTheme } from "@/components/theme/theme-provider";
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
-import { McpApiKeySettings } from "@/components/settings/mcp-api-key-settings";
-import type { ThemeMode } from "@/lib/theme";
+import { McpApiKeySettings, MCP_SERVER_URL } from "@/components/settings/mcp-api-key-settings";
+import { SettingsRail } from "@/components/settings/settings-rail";
+import { THEME_MODE_OPTIONS } from "@/components/settings/theme-modes";
+import { useMcpApiKeys } from "@/hooks/use-mcp-api-keys";
+import { useOAuthConnections } from "@/hooks/use-oauth-connections";
 
 const SETTINGS_MENU_LABEL = "설정";
 
 /**
  * 설정 — member 전용(§15). 화면 구조·스타일은 docs/design-handoff/product/settings.html 의
  * `.set-sec`/`.srow` 섹션-행 구조를 따른다. 기능은 지금 실제 지원 가능한 것만 포함한다:
- * 테마(라이트/다크/시스템), MCP 연결 키, 계정 이메일(읽기 전용, auth user), 로그아웃.
+ * 화면 테마(라이트/다크/시스템), MCP 연결 키, 계정 이메일(읽기 전용, auth user), 로그아웃.
  *
- * 목업의 브리핑·공개범위·이메일 변경·비밀번호 변경·회원 탈퇴·요금제 레일은 실 API·비활성 표현이 없어 제외한다
- * (동작하지 않는 토글·버튼을 만들지 않는다).
+ * 본문 정보 위계는 `화면` → `외부 AI 연결` → `계정` 순이다. 그 사이에 들어갈 `보고서` 섹션
+ * (새 보고서 기본 공개 범위 · 보고서 완료 알림)은 **서버에 설정값도 저장 API 도 없어 렌더하지 않는다.**
+ * 자리만 잡아두는 disabled 토글·"준비 중" 문구·가짜 기본값도 두지 않는다 — 있는 것처럼 보이면
+ * 사용자는 이미 설정된 값이라고 읽는다. 계정 섹션은 뒤에 `비밀번호 변경`이 이메일과 로그아웃 사이로,
+ * `Danger Zone`(회원 탈퇴)이 마지막 섹션으로 들어갈 수 있는 위계·간격을 유지한다(버튼은 미리 만들지 않는다).
+ *
+ * 목업의 브리핑·공개범위·이메일 변경·비밀번호 변경·회원 탈퇴는 실 API 가 없어 제외한다.
+ * 목업 우측 레일(요금제 카드)도 플랜 API 가 없고 목업 자체가 한도 수치를 "팀 결정 대기"로 표시해 두어
+ * 그대로 옮기지 않고, 대신 지금 읽을 수 있는 값만 요약하는 `SettingsRail`(현재 설정)을 둔다.
  *
  * 인증 상태 4분기(홈·상세와 동일 패턴): loading→스켈레톤 / error→복원오류 / guest→접근제한 / authenticated→본문.
  */
@@ -42,6 +52,12 @@ function SettingsView() {
   const [amOpen, setAmOpen] = useState(false);
 
   const email = user?.email ?? "";
+
+  // 외부 AI 연결 조회는 **여기서 한 번만** 한다. 본문(McpApiKeySettings)과 rail 이 같은 훅
+  // 인스턴스를 나눠 쓰므로 요청이 두 번 나가지 않고, 발급·폐기 후 refetch 도 양쪽에 함께 반영된다.
+  const mcpConfigured = MCP_SERVER_URL.length > 0;
+  const keys = useMcpApiKeys(mcpConfigured);
+  const connections = useOAuthConnections(mcpConfigured);
 
   // 로그아웃 = 로컬 토큰 제거 + guest 전환(기존 logoutUser) → 공개 홈(/)으로 이동.
   function handleLogout() {
@@ -66,8 +82,8 @@ function SettingsView() {
               </p>
             </div>
 
-            {/* .set-sec — 테마 */}
-            <SettingsSection title="테마">
+            {/* .set-sec — 화면 */}
+            <SettingsSection title="화면">
               <SettingsRow
                 label="화면 테마"
                 description="시스템을 선택하면 기기 설정을 따라가요."
@@ -75,9 +91,16 @@ function SettingsView() {
               />
             </SettingsSection>
 
-            <McpApiKeySettings />
+            {/* `보고서` 섹션(기본 공개 범위 · 완료 알림)이 들어올 자리 — API 배포 전까지 렌더하지 않는다. */}
 
-            {/* .set-sec — 계정 (실 API 있는 항목만: 이메일 표시 · 로그아웃) */}
+            <McpApiKeySettings
+              mcpConfigured={mcpConfigured}
+              keys={keys}
+              connections={connections}
+            />
+
+            {/* .set-sec — 계정 (실 API 있는 항목만: 이메일 표시 · 로그아웃).
+                `비밀번호 변경`은 이메일과 로그아웃 사이, `Danger Zone`(회원 탈퇴)은 이 섹션 뒤에 붙는다. */}
             <SettingsSection title="계정">
               <SettingsRow label="이메일" description={<span className="break-all">{email}</span>} />
               <SettingsRow
@@ -95,6 +118,9 @@ function SettingsView() {
               />
             </SettingsSection>
           </main>
+
+          {/* 우측 rail — 지금 읽을 수 있는 설정만 요약. 본문과 같은 state 를 그대로 받는다. */}
+          <SettingsRail mcpConfigured={mcpConfigured} keys={keys} connections={connections} />
         </div>
       </div>
 
@@ -103,22 +129,17 @@ function SettingsView() {
   );
 }
 
-const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
-  { value: "light", label: "라이트" },
-  { value: "dark", label: "다크" },
-  { value: "system", label: "시스템" },
-];
-
 /**
  * 화면 테마 선택 — 목업 `.kseg`/`.ks` 세그먼트 컨트롤. 선택 상태는 배경(카드)+그림자+글자색+aria-checked 로
  * 전달한다(색상만으로 구분하지 않음). ARIA radiogroup + roving tabindex(선택 항목만 tab 진입) + 방향키/Home/End.
+ * 라벨은 rail 요약과 공유한다(THEME_MODE_OPTIONS) — 같은 값이 두 곳에서 다르게 보이지 않게.
  */
 function ThemeModeSegment() {
   const { mode, setMode } = useTheme();
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const count = THEME_OPTIONS.length;
+    const count = THEME_MODE_OPTIONS.length;
     let next = index;
     switch (event.key) {
       case "ArrowRight":
@@ -139,7 +160,7 @@ function ThemeModeSegment() {
         return;
     }
     event.preventDefault();
-    setMode(THEME_OPTIONS[next].value);
+    setMode(THEME_MODE_OPTIONS[next].value);
     buttonRefs.current[next]?.focus();
   }
 
@@ -149,7 +170,7 @@ function ThemeModeSegment() {
       aria-label="화면 테마"
       className="inline-flex shrink-0 gap-0.5 rounded-[9px] border border-border bg-accent p-0.5"
     >
-      {THEME_OPTIONS.map((option, index) => {
+      {THEME_MODE_OPTIONS.map((option, index) => {
         const selected = mode === option.value;
         return (
           <button
@@ -177,11 +198,15 @@ function ThemeModeSegment() {
   );
 }
 
-/** .set-sec — 섹션 카드(제목 st2 + 행들). */
+/**
+ * .set-sec — 섹션 카드(제목 st2 + 행들).
+ * 제목은 heading 으로 둔다 — 같은 위계의 「외부 AI 연결」 섹션이 이미 h2 라, div 로 두면
+ * 세 섹션이 문서 구조에서 서로 다른 층에 놓인다(보이는 모습은 그대로다).
+ */
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-3.5 rounded-2xl border border-border bg-card px-[22px] py-1.5">
-      <div className="pt-4 pb-1 text-[14.5px] font-bold text-foreground">{title}</div>
+      <h2 className="pt-4 pb-1 text-[14.5px] font-bold text-foreground">{title}</h2>
       {children}
     </section>
   );

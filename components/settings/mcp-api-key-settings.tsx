@@ -2,21 +2,34 @@ import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { resolveErrorMessage } from "@/constants/errors";
-import { useMcpApiKeys } from "@/hooks/use-mcp-api-keys";
-import { useOAuthConnections } from "@/hooks/use-oauth-connections";
+import type { useMcpApiKeys } from "@/hooks/use-mcp-api-keys";
+import type { useOAuthConnections } from "@/hooks/use-oauth-connections";
 import { ApiError } from "@/lib/api-client";
 import { createMcpApiKey, revokeMcpApiKey } from "@/lib/repositories/mcp-api-keys";
 import { revokeOAuthConnection } from "@/lib/repositories/oauth";
 import type { IssuedMcpApiKey, McpApiKey } from "@/types/mcp";
 import type { OAuthConnection } from "@/types/oauth";
 
-const MCP_SERVER_URL = process.env.NEXT_PUBLIC_MCP_SERVER_URL?.trim() ?? "";
+/** MCP 서버 URL — 빌드 시 주입되는 환경값. 본문·rail 이 같은 값을 보도록 여기 한 곳에서만 읽는다. */
+export const MCP_SERVER_URL = process.env.NEXT_PUBLIC_MCP_SERVER_URL?.trim() ?? "";
 
-/** MCP UI OAuth 안내와 개발자용 Personal Access Token 발급·목록·폐기 UI. */
-export function McpApiKeySettings() {
-  const mcpConfigured = MCP_SERVER_URL.length > 0;
-  const keys = useMcpApiKeys(mcpConfigured);
-  const connections = useOAuthConnections(mcpConfigured);
+/**
+ * MCP UI OAuth 안내와 개발자용 Personal Access Token 발급·목록·폐기 UI.
+ *
+ * 조회 상태(`keys`·`connections`)는 **상위(SettingsView)가 소유**하고 여기로 내려준다.
+ * 우측 rail 이 같은 값을 요약해야 하는데, 양쪽이 각자 훅을 부르면 같은 API 를 두 번 치고
+ * 두 화면의 값이 서로 어긋날 수 있다. 발급·폐기·해제 후 `refetch` 는 여기서 그대로 부르며,
+ * 같은 훅 인스턴스라 본문과 rail 이 함께 갱신된다.
+ */
+export function McpApiKeySettings({
+  mcpConfigured,
+  keys,
+  connections,
+}: {
+  mcpConfigured: boolean;
+  keys: ReturnType<typeof useMcpApiKeys>;
+  connections: ReturnType<typeof useOAuthConnections>;
+}) {
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [issued, setIssued] = useState<IssuedMcpApiKey | null>(null);
