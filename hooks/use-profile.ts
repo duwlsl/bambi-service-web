@@ -4,8 +4,9 @@ import { useCallback } from "react";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { useAsyncData } from "@/hooks/use-async-data";
+import { toAuthorCards } from "@/lib/adapters/profile";
 import { fetchAuthorCards, fetchProfile } from "@/lib/repositories/profile";
-import type { AuthorCard, Profile } from "@/types/profile";
+import type { AuthorCardVM, Profile } from "@/types/profile";
 
 /**
  * 공개 프로필 데이터 훅 — 게스트도 열람 가능(백엔드 permitAll).
@@ -37,10 +38,13 @@ export function useProfile(publicId: string): ProfileState & { refetch: () => vo
 /**
  * 작성자 공개 카드(브리핑 리스트) 훅 — 프로필과 동일한 게스트 허용 정책.
  * 0건은 정상(empty) — "아직 공개한 브리핑이 없어요".
+ *
+ * 응답 DTO 는 **fetcher 안에서 한 번** 화면 모델로 좁힌다(lib/adapters/profile.ts). 화면은 검증된
+ * 값만 보고, 카드 목록·우측 rail 이 같은 결과를 나눠 쓰므로 요청은 화면당 1건이다.
  */
 export type AuthorCardsState =
   | { status: "loading" }
-  | { status: "success"; data: AuthorCard[] }
+  | { status: "success"; data: AuthorCardVM[] }
   | { status: "empty" }
   | { status: "error" };
 
@@ -49,10 +53,10 @@ export function useAuthorCards(publicId: string): AuthorCardsState & { refetch: 
   const enabled = status !== "loading";
   const authed = status === "authenticated";
   const fetcher = useCallback(
-    (signal: AbortSignal) => fetchAuthorCards(publicId, authed, signal),
+    (signal: AbortSignal) => fetchAuthorCards(publicId, authed, signal).then(toAuthorCards),
     [publicId, authed],
   );
-  const state = useAsyncData<AuthorCard[]>(fetcher, enabled);
+  const state = useAsyncData<AuthorCardVM[]>(fetcher, enabled);
 
   if (state.status === "success") {
     return state.data.length > 0

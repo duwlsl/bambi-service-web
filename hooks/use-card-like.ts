@@ -21,6 +21,10 @@ import type { CardSocial } from "@/types/feed";
  *
  * 인증 게이트는 이 훅이 하지 않는다 — 호출부(CardLikeButton)가 useRequireAuth 로 감싸
  * 게스트 클릭이 /like 요청 자체를 만들지 않게 한다.
+ *
+ * `initial` 은 **좋아요 두 값만** 받는다(`CardSocial` 그대로도 대입된다). 상세는 `CardSocial`,
+ * 공개 프로필 카드는 `PublicFeedSocialVM` 을 넘기는데 이 훅은 `author` 를 쓰지 않으므로,
+ * 화면마다 쓰지도 않는 작성자 객체를 억지로 만들어 넘기게 하지 않는다.
  */
 export type CardLikeState = {
   liked: boolean;
@@ -30,7 +34,10 @@ export type CardLikeState = {
   toggle: () => void;
 };
 
-export function useCardLike(publicId: string, initial: CardSocial): CardLikeState {
+export function useCardLike(
+  publicId: string,
+  initial: Pick<CardSocial, "liked" | "likeCount">,
+): CardLikeState {
   const [state, setState] = useState({ liked: initial.liked, likeCount: initial.likeCount });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
