@@ -118,6 +118,10 @@
   --wash-strong: rgba(255, 90, 0, 0.20); /* --wash-strong : 주황 틴트(테두리) */
   --today-bg: #FAFBFC;             /* --today-bg   : 오늘 브리핑 블록 배경 */
   --today-line: #E6E8EC;           /* --today-line */
+  /* 목업 전용 추가 토큰 — 프로필 hero 아바타(.pavatar-lg) 전용.
+     --wash 와 달리 **불투명**이어야 한다: 아바타가 cover 와 카드 배경 경계에 걸쳐 있어
+     반투명 틴트를 쓰면 위/아래가 서로 다른 색으로 비쳐 원이 두 톤으로 갈린다. */
+  --avatar-bg: #FCE4D4;            /* --avatar-bg */
   --img: #EEF0F3;                  /* --img        : 이미지 영역 배경 */
   --ok: #1F8A54;                   /* --ok         : 긍정 상태(공개 배지 등) */
   --wiki-entity: #278C78;          /* Wiki Entity : 밝은 배경용 teal */
@@ -181,6 +185,7 @@
   --wash-strong: rgba(255, 122, 51, 0.30); /* --wash-strong (dark) */
   --today-bg: #1C2026;             /* --today-bg (dark) */
   --today-line: #2C323C;           /* --today-line (dark) */
+  --avatar-bg: #2E2318;            /* --avatar-bg (dark) */
   --img: #20242C;                  /* --img (dark) */
   --ok: #43C088;                   /* --ok (dark) */
   --wiki-entity: #62D4BD;          /* Agent Wiki Graph --entity */

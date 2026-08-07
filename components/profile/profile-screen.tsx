@@ -142,10 +142,15 @@ function ProfileBody({
           {/*
             .pavatar-lg — 90px · 4px 카드색 링 · cover 위로 44px · 이니셜 30px(사진 업로드는 P2).
             아바타는 목업처럼 **혼자 한 줄**을 쓰고, 이름·액션은 아래 .prow 가 맡는다.
+
+            배경은 다른 아바타(`.pav`)와 달리 `--wash` 가 아니라 **불투명 `--avatar-bg`** 다.
+            이 아바타만 cover 와 카드 배경의 경계에 걸쳐 있어서, 반투명 틴트를 쓰면 위쪽은
+            cover 그라디언트가, 아래쪽은 흰 카드가 비쳐 원이 두 톤으로 갈린다(핸드오프가
+            `.pavatar-lg` 에만 별도 토큰을 둔 이유다).
           */}
           <span
             aria-hidden="true"
-            className="-mt-11 flex h-[90px] w-[90px] items-center justify-center rounded-full border-4 border-card bg-wash text-[30px] font-bold text-signal-ink shadow-[var(--shadow)]"
+            className="-mt-11 flex h-[90px] w-[90px] items-center justify-center rounded-full border-4 border-card bg-[var(--avatar-bg)] text-[30px] font-bold text-signal-ink shadow-[var(--shadow)]"
           >
             {name.slice(0, 1)}
           </span>
