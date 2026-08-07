@@ -7,7 +7,12 @@ import {
 } from "@/lib/adapters/card";
 import { normalizeText } from "@/lib/normalize";
 import { isUuid } from "@/lib/utils";
-import type { AuthorCardResponse, AuthorCardVM } from "@/types/profile";
+import type {
+  AuthorCardResponse,
+  AuthorCardVM,
+  FollowUserResponse,
+  FollowUserVM,
+} from "@/types/profile";
 
 /**
  * 프로필 화면 전용 어댑터 — GET /api/users/{publicId}/cards 응답을 화면 모델로 좁히고,
@@ -135,4 +140,55 @@ export function toProfileTopics(cards: readonly AuthorCardVM[], limit: number): 
 export function toRecentPublishedLabel(cards: readonly AuthorCardVM[]): string | null {
   const label = cards[0]?.createdAtDateLabel ?? "";
   return label === "" ? null : label;
+}
+
+/**
+ * 팔로워/팔로잉 목록 1건 변환 — 렌더 불가한 항목은 null 을 돌려 호출부가 건너뛴다.
+ *
+ * `publicId` 가 UUID 가 아니면 제외한다: 행 클릭이 `/users/{publicId}` 로 가는데 죽은 링크를
+ * 만들 수 없고, React key 로 쓸 대체 식별자도 없다(카드 목록과 같은 기준).
+ *
+ * 이름은 서버가 준 것만 담는다 — 둘 다 없으면(탈퇴 직전 계정 등) "익명"·"사용자1" 같은 이름을
+ * 지어내지 않고 null 로 둔다. 이니셜도 실제 이름에서만 뽑는다(`toPublicFeedAuthor` 와 같은 규율).
+ *
+ * `following` 은 boolean 일 때만 통과시킨다. 아니면 null = "알 수 없음" 이고, 화면이 그 행의
+ * 팔로우 버튼을 렌더하지 않는다(`toScrapped` 와 같은 이유 — 모르는 상태를 토글하면 멀쩡한 관계를
+ * 뒤집는다).
+ */
+export function toFollowUserVM(user: FollowUserResponse | null | undefined): FollowUserVM | null {
+  if (user === null || typeof user !== "object") return null;
+
+  const publicId = normalizeText(user.publicId);
+  if (publicId === null || !isUuid(publicId)) return null;
+
+  const displayName = normalizeText(user.displayName);
+  const username = normalizeText(user.username);
+  const primaryName = displayName ?? username;
+
+  return {
+    publicId,
+    displayName,
+    username,
+    initial: primaryName === null ? null : Array.from(primaryName)[0],
+    following: typeof user.following === "boolean" ? user.following : null,
+  };
+}
+
+/**
+ * 목록 배열 변환 — 렌더 불가 항목만 빼고 **서버 순서(username 오름차순) 그대로** 남긴다.
+ * 배열이 아니면(계약 위반) throw → 훅이 error 로 정규화해 "아직 팔로워가 없어요"(Empty)와
+ * "불러오지 못했어요"(Error)가 섞이지 않는다.
+ */
+export function toFollowUsers(
+  users: readonly (FollowUserResponse | null | undefined)[] | null | undefined,
+): FollowUserVM[] {
+  if (!Array.isArray(users)) {
+    throw new TypeError("follow list: expected an array of users");
+  }
+  const result: FollowUserVM[] = [];
+  for (const user of users) {
+    const vm = toFollowUserVM(user);
+    if (vm !== null) result.push(vm);
+  }
+  return result;
 }
