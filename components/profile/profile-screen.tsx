@@ -9,16 +9,17 @@ import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { HomeNav } from "@/components/home/home-nav";
 import { SideLeft } from "@/components/home/side-left";
 import { AuthorCardItem } from "@/components/profile/author-card";
+import { FollowListModal } from "@/components/profile/follow-list-modal";
 import { ProfileEditModal } from "@/components/profile/profile-edit-modal";
 import { ProfileRail } from "@/components/profile/profile-rail";
 import { ProfileShareButton } from "@/components/profile/profile-share-button";
 import { Button } from "@/components/ui/button";
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
+import { useFollowToggle } from "@/hooks/use-follow-toggle";
 import { type AuthorCardsState, useAuthorCards, useProfile } from "@/hooks/use-profile";
-import { followUser, unfollowUser } from "@/lib/repositories/profile";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
-import type { FollowData, Profile } from "@/types/profile";
+import type { FollowData, FollowListKind, Profile } from "@/types/profile";
 
 const PROFILE_MENU_LABEL = "프로필";
 
@@ -106,6 +107,8 @@ function ProfileBody({
   onEdited: () => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
+  /** null 이면 닫힘. 값이 곧 처음 열릴 탭이다(팔로워 클릭 → followers, 팔로잉 클릭 → following). */
+  const [followListTab, setFollowListTab] = useState<FollowListKind | null>(null);
   /**
    * 팔로우 상태를 hero 에서 한 번만 들고, 버튼·스탯·목록 끝 문구가 같은 값을 본다.
    * 버튼 안에 가둬 두면 팔로우 직후에도 스탯의 팔로워 수와 "팔로우하면 …" 문구가 옛 값으로 남는다.
@@ -202,7 +205,11 @@ function ProfileBody({
             <p className="mt-3.5 text-sm leading-[1.65] break-words text-ink-mid">{profile.bio}</p>
           )}
 
-          <ProfileStats profile={profile} followerCount={follow.followerCount} />
+          <ProfileStats
+            profile={profile}
+            followerCount={follow.followerCount}
+            onOpenList={setFollowListTab}
+          />
         </div>
       </section>
 
@@ -251,6 +258,27 @@ function ProfileBody({
 
       {isSelf && editOpen && (
         <ProfileEditModal profile={profile} onClose={() => setEditOpen(false)} onSaved={onEdited} />
+      )}
+
+      {/*
+        팔로워/팔로잉 목록 — 열릴 때만 마운트한다(기존 모달 규약). 탭 수치는 이미 받아 둔 프로필
+        값을 넘겨서, 목록을 연다고 프로필 API 를 다시 부르지 않는다.
+
+        `onSelfFollowChanged` 는 **내 프로필일 때만** 넘긴다. 내 팔로잉 목록에서 누군가를 언팔하면
+        내 followingCount 가 실제로 바뀌므로 프로필을 다시 받아 hero 와 어긋나지 않게 한다
+        (프론트에서 ±1 을 계산하지 않는다 — follow 응답은 대상의 followerCount 만 준다).
+        남의 프로필에서 제3자를 팔로우하는 건 그 프로필의 수치와 무관해서 아무것도 하지 않는다.
+      */}
+      {followListTab !== null && (
+        <FollowListModal
+          ownerPublicId={publicId}
+          ownerName={name}
+          initialTab={followListTab}
+          followerCount={follow.followerCount}
+          followingCount={profile.followingCount}
+          onClose={() => setFollowListTab(null)}
+          onSelfFollowChanged={isSelf ? onEdited : undefined}
+        />
       )}
     </>
   );
@@ -302,29 +330,56 @@ function FeedEnd({
  *
  * 팔로워 수는 팔로우 토글의 **서버 확정값**을 그대로 반영한다(프론트에서 ±1 을 계산하지 않는다).
  */
-function ProfileStats({ profile, followerCount }: { profile: Profile; followerCount: number }) {
-  const items: { label: string; value: number }[] = [
-    { label: "브리핑", value: profile.publicCardCount },
-    { label: "팔로워", value: followerCount },
-    { label: "팔로잉", value: profile.followingCount },
+function ProfileStats({
+  profile,
+  followerCount,
+  onOpenList,
+}: {
+  profile: Profile;
+  followerCount: number;
+  onOpenList: (kind: FollowListKind) => void;
+}) {
+  const items: { label: string; value: number; kind: FollowListKind | null }[] = [
+    { label: "브리핑", value: profile.publicCardCount, kind: null },
+    { label: "팔로워", value: followerCount, kind: "followers" },
+    { label: "팔로잉", value: profile.followingCount, kind: "following" },
   ];
+  const base = "flex items-baseline";
   // .pstats — 목업은 위 구분선 + 24px 간격이고, 값 17px / 라벨 12px(값에서 5px 띄움)이다.
   return (
     <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-4">
-      {items.map((it) => (
-        <div key={it.label} className="flex items-baseline">
-          <b className="text-[17px] font-bold text-foreground">{it.value}</b>
-          <span className="ml-[5px] text-[12px] text-muted-foreground">{it.label}</span>
-        </div>
-      ))}
+      {items.map((it) =>
+        it.kind === null ? (
+          // 브리핑 수는 목록 API 가 없다 → 목업에서도 클릭 대상이 아니다(눌리는 것처럼 보이지 않게).
+          <div key={it.label} className={base}>
+            <b className="text-[17px] font-bold text-foreground">{it.value}</b>
+            <span className="ml-[5px] text-[12px] text-muted-foreground">{it.label}</span>
+          </div>
+        ) : (
+          // .pstat.click — 목업의 hover 규칙(값에 밑줄, offset 3px)을 그대로 쓴다.
+          <button
+            key={it.label}
+            type="button"
+            onClick={() => onOpenList(it.kind as FollowListKind)}
+            aria-haspopup="dialog"
+            className={`focus-ring group rounded-[6px] ${base}`}
+          >
+            <b className="text-[17px] font-bold text-foreground underline-offset-[3px] group-hover:underline">
+              {it.value}
+            </b>
+            <span className="ml-[5px] text-[12px] text-muted-foreground">{it.label}</span>
+          </button>
+        ),
+      )}
     </div>
   );
 }
 
 /**
  * 팔로우/팔로잉 토글 — 게스트 클릭은 가입 유도 모달(requireAuth).
- * 응답(FollowData)이 확정값이므로 성공 시 그대로 상위 상태에 반영한다(낙관적 갱신 아님 —
- * 이중클릭에도 안전). 팔로워 수는 스탯 줄이 보여주므로 버튼 아래에 다시 적지 않는다.
+ * 토글 로직은 모달 행과 **같은 훅**(useFollowToggle)이다 — 응답이 확정값이라 그대로 상위 상태에
+ * 반영하고(낙관적 갱신 아님), 같은 tick 연타는 훅의 ref 락이 막는다.
+ * 팔로워 수는 스탯 줄이 보여주므로 버튼 아래에 다시 적지 않는다.
  */
 function FollowButton({
   publicId,
@@ -336,29 +391,20 @@ function FollowButton({
   onChange: (next: FollowData) => void;
 }) {
   const { requireAuth } = useRequireAuth();
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  function toggle() {
-    requireAuth(() => {
-      if (busy) return;
-      setBusy(true);
-      setFailed(false);
-      const call = state.following ? unfollowUser(publicId) : followUser(publicId);
-      call
-        .then((data) => onChange(data))
-        .catch(() => setFailed(true))
-        .finally(() => setBusy(false));
-    });
-  }
+  const { busy, failed, toggle } = useFollowToggle({
+    publicId,
+    following: state.following,
+    onChange,
+  });
 
   return (
     <div className="flex flex-col items-end gap-1">
       <Button
         variant={state.following ? "outline" : "default"}
         className="h-8 px-3 text-[12.5px]"
-        onClick={toggle}
+        onClick={() => requireAuth(toggle)}
         disabled={busy}
+        aria-busy={busy}
       >
         {state.following ? "팔로잉" : "팔로우"}
       </Button>

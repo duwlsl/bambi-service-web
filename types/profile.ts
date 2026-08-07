@@ -88,3 +88,40 @@ export type FollowData = {
   following: boolean;
   followerCount: number;
 };
+
+/** 팔로워/팔로잉 모달의 두 탭. 값이 그대로 경로 세그먼트로 쓰인다. */
+export type FollowListKind = "followers" | "following";
+
+/**
+ * GET /api/users/{publicId}/followers · /following 항목 (API DTO —
+ * service-api `FollowUserResponse` · `FollowService.toUserList` 실측, 2026-08-07).
+ *
+ * **응답 필드는 이 넷이 전부다.** bio·아바타 이미지·관심 주제는 내려오지 않는다 →
+ * 목업 행의 `@handle · 주제` 에서 주제 부분은 만들 수 없다(가짜로 채우지 않는다).
+ *
+ * - 정렬은 서버가 username 오름차순(대소문자 무시)으로 확정해 준다 → 프론트에서 다시 정렬하지 않는다.
+ * - 탈퇴(soft delete) 사용자는 서버가 제외한다(`findByIdInAndDeletedAtIsNull`).
+ * - `following` = **조회자 기준** 내가 이 사용자를 팔로우 중인지. 게스트는 전부 false.
+ * - **페이지네이션이 없다.** 컨트롤러에 page/size 파라미터 자체가 없고 전체 목록을 한 번에 준다
+ *   (2026-08-07 배포 실측: `?page=0&size=5` 를 붙여도 무시된다).
+ */
+export type FollowUserResponse = {
+  publicId: string;
+  username: string | null;
+  displayName: string | null;
+  following: boolean;
+};
+
+/**
+ * 모달 행(화면 모델) — 어댑터가 검증해 좁힌 값만 담는다.
+ * `following` 이 null 이면 "값을 모른다" → 그 행의 팔로우 버튼을 렌더하지 않는다
+ * (false 로 덮으면 이미 팔로우 중인 사람에게 `팔로우` 를 띄우고 클릭 한 번에 뒤집게 된다).
+ */
+export type FollowUserVM = {
+  publicId: string;
+  username: string | null;
+  displayName: string | null;
+  /** 아바타 이니셜 — displayName → username 순의 실제 이름에서만 뽑는다(둘 다 없으면 null). */
+  initial: string | null;
+  following: boolean | null;
+};

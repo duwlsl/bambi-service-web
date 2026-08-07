@@ -3,6 +3,8 @@ import { ApiError, apiDelete, apiGet, apiPost, apiPut } from "@/lib/api-client";
 import type {
   AuthorCardResponse,
   FollowData,
+  FollowListKind,
+  FollowUserResponse,
   Profile,
   UpdateProfileRequest,
 } from "@/types/profile";
@@ -53,6 +55,32 @@ export async function fetchAuthorCards(
   );
   if (!Array.isArray(data)) {
     throw new ApiError(FALLBACK_ERROR_CODE, `invalid cards payload for ${path}`, 200);
+  }
+  return data;
+}
+
+/**
+ * 팔로워/팔로잉 목록 — 공개 프로필과 **같은 게스트 허용 정책**이다
+ * (SecurityConfig 의 GET permitAll 목록에 두 경로가 함께 들어 있다 — 2026-08-07 배포 실측: 무토큰 200).
+ * 그래서 프로필·카드와 같은 authed 규칙으로 호출한다.
+ *
+ * **page/size 를 붙이지 않는다.** 컨트롤러에 해당 파라미터가 없고 전체 목록을 한 번에 준다 —
+ * 붙여도 무시되므로, 있는 척하는 쿼리스트링을 만들지 않는다(생기면 여기와 훅만 고치면 된다).
+ * 정상 빈 목록(팔로워 0명)은 오류가 아니다 → 빈 배열 반환, 훅이 empty 로 정규화.
+ */
+export async function fetchFollowList(
+  publicId: string,
+  kind: FollowListKind,
+  authed: boolean,
+  signal?: AbortSignal,
+): Promise<FollowUserResponse[]> {
+  const path = `/api/users/${publicId}/${kind}`;
+  const data = requireContainer(
+    await apiGet<FollowUserResponse[] | null>(path, { signal, auth: authed }),
+    path,
+  );
+  if (!Array.isArray(data)) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid ${kind} payload for ${path}`, 200);
   }
   return data;
 }
