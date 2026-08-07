@@ -14,8 +14,9 @@ const MCP_SERVER_URL = process.env.NEXT_PUBLIC_MCP_SERVER_URL?.trim() ?? "";
 
 /** MCP UI OAuth 안내와 개발자용 Personal Access Token 발급·목록·폐기 UI. */
 export function McpApiKeySettings() {
-  const keys = useMcpApiKeys();
-  const connections = useOAuthConnections();
+  const mcpConfigured = MCP_SERVER_URL.length > 0;
+  const keys = useMcpApiKeys(mcpConfigured);
+  const connections = useOAuthConnections(mcpConfigured);
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [issued, setIssued] = useState<IssuedMcpApiKey | null>(null);
@@ -28,7 +29,7 @@ export function McpApiKeySettings() {
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const normalizedName = name.trim();
-    if (!normalizedName || submitting) return;
+    if (!mcpConfigured || !normalizedName || submitting || issued !== null) return;
     setSubmitting(true);
     setMessage(null);
     try {
@@ -100,10 +101,11 @@ export function McpApiKeySettings() {
         <Button
           type="button"
           size="sm"
-          disabled={!MCP_SERVER_URL}
+          disabled={!mcpConfigured || issued !== null}
+          title={issued ? "현재 원문 키를 보관하고 닫은 뒤 새 키를 발급할 수 있어요." : undefined}
           onClick={() => setFormOpen((open) => !open)}
         >
-          {formOpen ? "취소" : "개발자 키 발급"}
+          {issued ? "원문 키 보관 필요" : formOpen ? "취소" : "개발자 키 발급"}
         </Button>
       </div>
 
@@ -135,14 +137,20 @@ export function McpApiKeySettings() {
           Claude·ChatGPT UI에서 로그인해 승인한 연결입니다. 해제하면 access token과 refresh
           token을 모두 더 이상 사용할 수 없습니다.
         </p>
-        <OAuthConnectionList
-          connections={connections}
-          disconnectingId={disconnectingId}
-          onDisconnect={handleDisconnect}
-        />
+        {mcpConfigured ? (
+          <OAuthConnectionList
+            connections={connections}
+            disconnectingId={disconnectingId}
+            onDisconnect={handleDisconnect}
+          />
+        ) : (
+          <p className="mt-3 text-[12px] text-muted-foreground">
+            MCP 서버 설정이 완료되면 승인한 연결을 확인할 수 있어요.
+          </p>
+        )}
       </div>
 
-      {formOpen && (
+      {formOpen && issued === null && (
         <form onSubmit={handleCreate} className="border-t border-border py-4">
           <label htmlFor="mcp-key-name" className="text-[12px] font-semibold text-foreground">
             개발자 키 이름
@@ -195,6 +203,11 @@ export function McpApiKeySettings() {
       )}
 
       <div className="border-t border-border py-2">
+        {!mcpConfigured && (
+          <p className="py-3 text-[12px] text-muted-foreground">
+            MCP 서버 설정이 완료되면 발급한 키 목록을 확인할 수 있어요.
+          </p>
+        )}
         {keys.status === "loading" && <p className="py-3 text-[12px] text-muted-foreground">발급한 키를 불러오는 중…</p>}
         {keys.status === "error" && (
           <div className="flex flex-wrap items-center justify-between gap-2 py-3" role="alert">
