@@ -60,7 +60,18 @@ export function OnDemandPanel({
   );
 }
 
-/** 관심사 목록 + 제출. 실제 값이 1건 이상일 때만 렌더된다. */
+/**
+ * 관심사 목록 + 제출. 실제 값이 1건 이상일 때만 렌더된다.
+ *
+ * 선택지는 목업 우측 rail 「추천 토픽」의 chip cloud(`.tpcs`/`.tpc` — gap 8 · radius 999 ·
+ * padding 6/12 · 12.5px)를 그대로 쓴다(2026-08-07 UI 검수). 이전의 세로 radio 목록은 관심사가
+ * 몇 개 없어도 패널이 길어지고 rail 의 다른 패널과 형식이 달랐다. **`#` 해시태그 표기는 붙이지
+ * 않는다** — 추천 토픽과 달리 여기 값은 이미 내 관심사로 저장된 것이고, 해시태그는 태그 필터로
+ * 이동한다는 뜻으로 읽힌다.
+ *
+ * 시각만 chip 으로 바뀌었을 뿐 **의미는 그대로 radio 그룹**이다 — input 을 sr-only 로 남겨
+ * 단일 선택·화살표 키 이동·fieldset 그룹 이름이 전부 유지된다(가짜 button 토글로 바꾸지 않는다).
+ */
 function InterestPicker({
   instanceId,
   interests,
@@ -77,43 +88,40 @@ function InterestPicker({
       {/* 단일 선택 radio. fieldset/legend 로 그룹 이름을 스크린리더에 전달한다. */}
       <fieldset className="min-w-0">
         <legend className="sr-only">보고서를 만들 관심사 선택</legend>
-        <ul className="flex flex-col gap-1">
+        {/* .tpcs — chip cloud(가로 배치 + 자연 wrap) */}
+        <div className="flex flex-wrap gap-2">
           {interests.map((interest) => {
             const inputId = `${groupName}-${interest.id}`;
             const checked = generation.selected?.id === interest.id;
             return (
-              <li key={interest.id} className="min-w-0">
-                <label
-                  htmlFor={inputId}
-                  className={`focus-within:ring-wash flex cursor-pointer items-start gap-2 rounded-[10px] border px-2.5 py-2 focus-within:ring-[3px] ${
-                    checked
-                      ? "border-primary bg-wash"
-                      : "border-border bg-transparent hover:bg-background"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    id={inputId}
-                    name={groupName}
-                    value={String(interest.id)}
-                    checked={checked}
-                    onChange={() => generation.select(interest)}
-                    disabled={generation.submitting}
-                    className="mt-[3px] h-3.5 w-3.5 shrink-0 accent-[var(--primary)] disabled:opacity-50"
-                  />
-                  {/* 긴 관심사명도 300px 폭에서 넘치지 않게 줄바꿈한다(가로 스크롤 금지). */}
-                  <span
-                    className={`min-w-0 text-[12.5px] leading-[1.45] break-words ${
-                      checked ? "font-semibold text-signal-ink" : "text-ink-mid"
-                    }`}
-                  >
-                    {interest.name}
-                  </span>
-                </label>
-              </li>
+              /* .tpc — 선택 chip 은 목업 `.tpc.plus` 와 같은 wash·signal-ink 로 상태를 알린다.
+                 긴 관심사명도 300px rail 을 넘기지 않게 줄바꿈한다(가로 스크롤 금지). */
+              <label
+                key={interest.id}
+                htmlFor={inputId}
+                className={`focus-within:ring-wash inline-flex max-w-full min-w-0 items-center rounded-full border px-3 py-1.5 text-[12.5px] leading-[1.45] break-words focus-within:ring-[3px] ${
+                  generation.submitting ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                } ${
+                  checked
+                    ? "border-primary bg-wash font-semibold text-signal-ink"
+                    : "border-input bg-background text-ink-mid hover:bg-card"
+                }`}
+              >
+                <input
+                  type="radio"
+                  id={inputId}
+                  name={groupName}
+                  value={String(interest.id)}
+                  checked={checked}
+                  onChange={() => generation.select(interest)}
+                  disabled={generation.submitting}
+                  className="sr-only"
+                />
+                {interest.name}
+              </label>
             );
           })}
-        </ul>
+        </div>
       </fieldset>
 
       <button
@@ -185,18 +193,18 @@ function InterestsError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/** 로딩 — 중립 placeholder. 실제 관심사명을 먼저 노출하지 않는다. */
+/** 로딩 — 중립 placeholder(선택지 chip 골격). 실제 관심사명을 먼저 노출하지 않는다. */
 function InterestsSkeleton() {
-  const bar = "rounded-md bg-[var(--skel1)]";
+  // chip 폭은 관심사명 길이에 따라 달라지므로 골격도 서로 다른 폭으로 둔다(가짜 이름 금지).
+  const chipWidths = ["w-20", "w-28", "w-16", "w-24"];
   return (
     <div aria-hidden="true" className="animate-pulse">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2 py-[7px]">
-          <div className={`h-3.5 w-3.5 shrink-0 rounded-full bg-[var(--skel1)]`} />
-          <div className={`h-3 w-full ${bar}`} />
-        </div>
-      ))}
-      <div className={`mt-3 h-[31px] w-full ${bar}`} />
+      <div className="flex flex-wrap gap-2">
+        {chipWidths.map((w) => (
+          <div key={w} className={`h-[29px] rounded-full bg-[var(--skel1)] ${w}`} />
+        ))}
+      </div>
+      <div className="mt-3 h-[31px] w-full rounded-md bg-[var(--skel1)]" />
     </div>
   );
 }

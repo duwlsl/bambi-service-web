@@ -1,4 +1,4 @@
-import type { CardSource } from "@/types/feed";
+import type { CardSource, CardVisibility } from "@/types/feed";
 import type { ReportType } from "@/types/report";
 
 /**
@@ -20,6 +20,18 @@ export type ArchiveCard = {
    * 화면은 종류 배지를 생략한다. mock 메타가 아니라 **실 응답에서만** 온다.
    */
   reportType: ReportType | null;
+  /**
+   * 카드 공개 범위(**실 응답 필드** — 서버 컬럼 NOT NULL + CHECK PRIVATE|PUBLIC).
+   * 홈 [내 보고서] 카드(FeedCardVM.visibility)와 같은 규율로, 계약이 깨진 응답을 임의로 한쪽으로
+   * 보정하지 않고 그대로 담는다 — 화면이 PUBLIC·PRIVATE 가 아닌 값에서는 배지를 생략한다.
+   */
+  visibility: CardVisibility;
+  /**
+   * 정규화된 관심사 태그(**실 응답 필드** — 공백 제거·대소문자 기준 중복 제거).
+   * `tags` 키가 없는 배포본에서는 빈 배열이고, 그때 화면은 태그를 렌더하지 않는다(가짜 태그 금지).
+   * mock 메타의 `tags` 와 출처가 다르다 — 이쪽이 실측이고, 표시·검색은 실측을 먼저 쓴다.
+   */
+  tags: string[];
   /** createdAt(ISO) 파싱 결과(ms). 파싱 실패 시 null — 화면을 깨뜨리지 않고 "날짜 정보 없음" 그룹으로 보낸다. */
   createdAtMs: number | null;
   /** 카드 메타에 표시할 시각(예: "오전 7:00"). 파싱 실패 시 빈 문자열(표시 생략). */
