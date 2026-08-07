@@ -15,10 +15,7 @@ import { PageState } from "@/components/ui/page-state";
 import { StateView } from "@/components/ui/state-view";
 import { WikiDocumentPanel } from "@/components/wiki/wiki-document-panel";
 import { WikiForceGraph } from "@/components/wiki/wiki-force-graph";
-import {
-  useWikiDocumentDetail,
-  type WikiDocumentDetailState,
-} from "@/hooks/use-wiki-document-detail";
+import { useWikiDocumentDetail } from "@/hooks/use-wiki-document-detail";
 import { useWikiGraph, type WikiGraphState } from "@/hooks/use-wiki-graph";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 
@@ -56,10 +53,25 @@ function LlmWikiView() {
     <div className="min-h-screen bg-background">
       <HomeNav onAddOpen={() => setAddOpen(true)} />
       <div className="mx-auto max-w-[1440px]">
-        <div className="flex items-start justify-center gap-[22px] px-5 pt-6 pb-14">
-          <SideLeft current={WIKI_MENU_LABEL} footLines={MOCK_SIDE_FOOT} />
+        <div className="flex flex-col items-start justify-center gap-[22px] px-5 pt-6 pb-14 min-[1100px]:flex-row">
+          {/* desktop 에서는 좌측 내비+상세 레일, mobile 에서는 contents 로 상세만 main 다음 순서에 배치한다. */}
+          <div className="contents min-[1100px]:block min-[1100px]:w-[300px] min-[1100px]:shrink-0">
+            <SideLeft current={WIKI_MENU_LABEL} footLines={MOCK_SIDE_FOOT} sticky={false} />
 
-          <main className="min-w-0 max-w-[1080px] flex-1">
+            {graph.status === "success" && selectedDocumentId !== null && (
+              <div className="order-2 w-full min-[1100px]:mt-4">
+                <WikiDocumentPanel
+                  selectedDocumentId={selectedDocumentId}
+                  revealRequest={detailRevealRequest}
+                  state={detail}
+                  onSelect={selectDocument}
+                  onClear={() => setSelectedDocumentId(null)}
+                />
+              </div>
+            )}
+          </div>
+
+          <main className="order-1 w-full min-w-0 max-w-[1080px] flex-1">
             <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
               <div>
                 <Link
@@ -85,8 +97,6 @@ function LlmWikiView() {
             <GraphContent
               state={graph}
               selectedDocumentId={selectedDocumentId}
-              detailRevealRequest={detailRevealRequest}
-              detail={detail}
               onSelect={selectDocument}
               onClearSelection={() => setSelectedDocumentId(null)}
             />
@@ -106,15 +116,11 @@ function LlmWikiView() {
 function GraphContent({
   state,
   selectedDocumentId,
-  detailRevealRequest,
-  detail,
   onSelect,
   onClearSelection,
 }: {
   state: WikiGraphState & { refetch: () => void };
   selectedDocumentId: string | null;
-  detailRevealRequest: number;
-  detail: WikiDocumentDetailState & { refetch: () => void };
   onSelect: (documentId: string, options?: { revealDetail?: boolean }) => void;
   onClearSelection: () => void;
 }) {
@@ -150,25 +156,10 @@ function GraphContent({
   }
 
   return (
-    <div
-      className={
-        selectedDocumentId === null
-          ? "min-h-[650px]"
-          : "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
-      }
-    >
-      <div className="relative min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
-        <WikiForceGraph
-          graph={state.data}
-          selectedDocumentId={selectedDocumentId}
-          onSelect={onSelect}
-          onClear={onClearSelection}
-        />
-      </div>
-      <WikiDocumentPanel
+    <div className="relative min-h-[650px] overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+      <WikiForceGraph
+        graph={state.data}
         selectedDocumentId={selectedDocumentId}
-        revealRequest={detailRevealRequest}
-        state={detail}
         onSelect={onSelect}
         onClear={onClearSelection}
       />

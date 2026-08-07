@@ -40,7 +40,7 @@ export function WikiDocumentPanel({
       return;
     }
 
-    if (window.matchMedia("(min-width: 1280px)").matches) {
+    if (window.matchMedia("(min-width: 1100px)").matches) {
       handledRevealRequestRef.current = revealRequest;
       return;
     }

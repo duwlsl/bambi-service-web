@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useRequireAuth } from "@/components/auth/use-require-auth";
 import { MOCK_MENU, MOCK_MENU_BOTTOM } from "@/lib/mock/feed";
+import { cn } from "@/lib/utils";
 
 /**
  * 좌측 메뉴 — 목업 .side-l. 홈·카드 상세가 공유한다.
@@ -17,6 +18,7 @@ export function SideLeft({
   current,
   footLines,
   guest = false,
+  sticky = true,
 }: {
   /** 현재 화면의 메뉴 라벨 (예: "홈"). 해당 항목이 .on 처리된다. */
   current?: string;
@@ -24,11 +26,15 @@ export function SideLeft({
   footLines: string[];
   /** true 면 아이콘 전용 guest 내비로 렌더한다. */
   guest?: boolean;
+  /** false 면 상위 레일에서 다른 패널과 세로로 조합할 수 있게 sticky 배치를 해제한다. */
+  sticky?: boolean;
 }) {
-  if (guest) return <GuestNav current={current} />;
+  if (guest) return <GuestNav current={current} sticky={sticky} />;
 
   return (
-    <aside className="sticky top-4 w-[300px] shrink-0 max-[1100px]:hidden">
+    <aside
+      className={cn("w-[300px] shrink-0 max-[1100px]:hidden", sticky && "sticky top-4")}
+    >
       {/* .menu */}
       <div className="rounded-[14px] border border-border bg-card p-2">
         {MOCK_MENU.map((item) => (
@@ -54,10 +60,12 @@ export function SideLeft({
 }
 
 /** 비로그인 아이콘 전용 내비 — member 순서(홈·보관함·지식창고·관심사·프로필·구분선·설정), 카운트 숨김. */
-function GuestNav({ current }: { current?: string }) {
+function GuestNav({ current, sticky }: { current?: string; sticky: boolean }) {
   const { requireAuth } = useRequireAuth();
   return (
-    <aside className="sticky top-4 w-[300px] shrink-0 max-[1100px]:hidden">
+    <aside
+      className={cn("w-[300px] shrink-0 max-[1100px]:hidden", sticky && "sticky top-4")}
+    >
       <div className="flex w-12 flex-col gap-2">
         {MOCK_MENU.map((item) => (
           <GuestNavIcon
