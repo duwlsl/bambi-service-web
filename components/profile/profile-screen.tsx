@@ -121,54 +121,80 @@ function ProfileBody({
 
   return (
     <>
-      {/* 프로필 헤더 — 목업 .pcard(cover + 본문) */}
-      <section className="mb-5 overflow-hidden rounded-[14px] border border-border bg-card">
+      {/* 프로필 헤더 — 목업 .pcard(radius 16 · overflow hidden · mb 16) */}
+      {/* rounded-2xl 은 이 레포의 --radius 스케일에서 18px 로 컴파일된다 → 목업 값을 명시한다. */}
+      <section className="mb-4 overflow-hidden rounded-[16px] border border-border bg-card">
         {/*
-          .pcover — **이미지가 아니라 토큰 그라디언트**다. 목업의 cover 도 빈 블록이고, 배너 업로드는
-          컬럼·API 가 없다. 사용자별로 색을 만들어내지도 않는다(같은 사람이 다시 봤을 때 달라지거나,
-          없는 개인화가 있는 것처럼 보인다). 밝기는 --wash 계열이라 light/dark 모두 토큰을 따라간다.
+          .pcover(130px) — **이미지가 아니라 토큰 그라디언트**다. 목업의 cover 도 빈 블록이고, 배너
+          업로드는 컬럼·API 가 없다. 사용자별로 색을 만들어내지도 않는다(같은 사람이 다시 봤을 때
+          달라지거나, 없는 개인화가 있는 것처럼 보인다).
+          그라디언트 정지점은 핸드오프 그대로다: `115deg, --wash-strong → --bg-soft 72%`
+          (`--bg-soft` 는 이 앱에서 `--background`). light/dark 모두 토큰을 따라간다.
+          아래 테두리는 두지 않는다 — 목업 `.pcover` 에 없고, 아바타 링과 선이 겹쳐 보인다.
         */}
         <div
           aria-hidden="true"
-          className="h-[104px] border-b border-border bg-[linear-gradient(115deg,var(--wash-strong)_0%,var(--wash)_46%,var(--muted)_100%)]"
+          className="h-[130px] bg-[linear-gradient(115deg,var(--wash-strong),var(--background)_72%)]"
         />
 
+        {/* .pbody2 */}
         <div className="px-[22px] pb-5">
-          <div className="-mt-[34px] mb-3.5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2.5">
-            {/* 이니셜 아바타(사진 업로드는 P2) — cover 위로 겹쳐 올린다. */}
-            <span
-              aria-hidden="true"
-              className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full border-4 border-card bg-wash text-[28px] font-bold text-signal-ink"
-            >
-              {name.slice(0, 1)}
-            </span>
+          {/*
+            .pavatar-lg — 90px · 4px 카드색 링 · cover 위로 44px · 이니셜 30px(사진 업로드는 P2).
+            아바타는 목업처럼 **혼자 한 줄**을 쓰고, 이름·액션은 아래 .prow 가 맡는다.
+          */}
+          <span
+            aria-hidden="true"
+            className="-mt-11 flex h-[90px] w-[90px] items-center justify-center rounded-full border-4 border-card bg-wash text-[30px] font-bold text-signal-ink shadow-[var(--shadow)]"
+          >
+            {name.slice(0, 1)}
+          </span>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 pb-1">
-              <ProfileShareButton publicId={publicId} name={name} />
+          {/*
+            .prow — 이름/핸들 ↔ 액션이 **같은 줄**(액션은 margin-left:auto 로 오른쪽 끝).
+            버튼 순서·강조도 목업을 따른다: 본인은 `프로필 편집`(signal) → `공유`,
+            타인은 `공유` → `팔로우`(signal). 두 화면 모두 주 액션이 signal 색이다.
+            버튼 치수는 핸드오프 `.btn.sm`(12.5px · padding 7/12) 에 맞춘다.
+          */}
+          <div className="mt-3 flex flex-wrap items-start gap-3">
+            {/*
+              좁은 화면(모바일)에서는 이름 옆에 버튼 두 개가 같이 서면 핸들·가입일이 세 줄로 접힌다.
+              최소 폭을 정해 그보다 좁아지면 액션이 다음 줄로 내려가게 한다(목업은 데스크톱 전용).
+            */}
+            <div className="min-w-[180px] flex-1">
+              <h1 className="text-[22px] leading-[1.3] font-bold tracking-[-0.01em] break-words text-foreground">
+                {name}
+              </h1>
+              {(profile.username !== null || joined !== "") && (
+                <div className="mt-[3px] text-[13px] break-words text-muted-foreground">
+                  {profile.username !== null ? `@${profile.username}` : null}
+                  {profile.username !== null && joined !== "" ? " · " : null}
+                  {joined !== "" ? `가입 ${joined}` : null}
+                </div>
+              )}
+            </div>
+
+            {/* .pactions */}
+            <div className="ml-auto flex shrink-0 flex-wrap justify-end gap-2">
               {isSelf ? (
-                <Button variant="outline" onClick={() => setEditOpen(true)}>
-                  프로필 편집
-                </Button>
+                <>
+                  <Button className="h-8 px-3 text-[12.5px]" onClick={() => setEditOpen(true)}>
+                    프로필 편집
+                  </Button>
+                  <ProfileShareButton publicId={publicId} name={name} />
+                </>
               ) : (
-                <FollowButton publicId={publicId} state={follow} onChange={setFollow} />
+                <>
+                  <ProfileShareButton publicId={publicId} name={name} />
+                  <FollowButton publicId={publicId} state={follow} onChange={setFollow} />
+                </>
               )}
             </div>
           </div>
 
-          <h1 className="text-[20px] leading-[1.35] font-bold tracking-[-0.015em] break-words text-foreground">
-            {name}
-          </h1>
-          {(profile.username !== null || joined !== "") && (
-            <div className="mt-0.5 text-[13px] break-words text-muted-foreground">
-              {profile.username !== null ? `@${profile.username}` : null}
-              {profile.username !== null && joined !== "" ? " · " : null}
-              {joined !== "" ? `가입 ${joined}` : null}
-            </div>
-          )}
+          {/* .pbio */}
           {profile.bio !== null && profile.bio.trim() !== "" && (
-            <p className="mt-2.5 text-[13.5px] leading-[1.65] break-words text-ink-mid">
-              {profile.bio}
-            </p>
+            <p className="mt-3.5 text-sm leading-[1.65] break-words text-ink-mid">{profile.bio}</p>
           )}
 
           <ProfileStats profile={profile} followerCount={follow.followerCount} />
@@ -277,13 +303,14 @@ function ProfileStats({ profile, followerCount }: { profile: Profile; followerCo
     { label: "팔로워", value: followerCount },
     { label: "팔로잉", value: profile.followingCount },
   ];
+  // .pstats — 목업은 위 구분선 + 24px 간격이고, 값 17px / 라벨 12px(값에서 5px 띄움)이다.
   return (
-    <div className="mt-3.5 flex flex-wrap gap-x-5 gap-y-1">
+    <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-4">
       {items.map((it) => (
-        <span key={it.label} className="text-[13px] text-muted-foreground">
-          <strong className="mr-1 text-[14.5px] font-bold text-foreground">{it.value}</strong>
-          {it.label}
-        </span>
+        <div key={it.label} className="flex items-baseline">
+          <b className="text-[17px] font-bold text-foreground">{it.value}</b>
+          <span className="ml-[5px] text-[12px] text-muted-foreground">{it.label}</span>
+        </div>
       ))}
     </div>
   );
@@ -322,7 +349,12 @@ function FollowButton({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button variant={state.following ? "outline" : "default"} onClick={toggle} disabled={busy}>
+      <Button
+        variant={state.following ? "outline" : "default"}
+        className="h-8 px-3 text-[12.5px]"
+        onClick={toggle}
+        disabled={busy}
+      >
         {state.following ? "팔로잉" : "팔로우"}
       </Button>
       <span
