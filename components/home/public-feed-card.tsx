@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { CardScrapButton } from "@/components/report/card-scrap-button";
 import { useCopyCardLink } from "@/hooks/use-copy-card-link";
 import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
 
@@ -16,7 +17,7 @@ import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
  *   요약 2줄 + 더 보기
  *   ● 관심사 ‘첫 태그’ +N · 출처 N건
  *   ─────────────
- *   ♡ 좋아요 수 · ↗ 공유
+ *   ⚑ 보관 · ♡ 좋아요 수 · ↗ 공유
  *
  * 목업 토큰: `.post`(bg-card·border·radius 14·padding 16/18/7·mb 16) · `.phead`(gap 10, mb 6) ·
  * `.pav`(38px 원형) · `.pname`(14px/700, 핸들 `.h` 13px/400 ink-dim) · `.pmeta`(12px ink-dim) ·
@@ -26,10 +27,12 @@ import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
  * 아바타(38) + gap(10) = 48px 이며, 좁은 화면에서 본문 폭을 깎지 않도록 `sm` 이상에서만 준다.
  *
  * **목업에 있지만 계약에 없어 만들지 않는 것**(가짜 UI 금지): `트리거 충족` 문구, 댓글 수·댓글 액션,
- * 보관(스크랩) 토글, ⋯ 메뉴, `내 브리핑에서 공유` 출처 문구, "본인(isMe)" 아바타 강조, 조회수.
- * 스크랩은 카드 응답에 `scrapped` 필드 자체가 없어(types/scrap.ts 의 스크랩 목록에만 존재) 상태를
- * 알 수 없다 — 항상 false 인 버튼을 두면 거짓이므로 아예 두지 않는다. 액션바를 고정 폭·고정 순서로
- * 묶지 않았으므로 필드가 배포되면 첫 칸에 들어갈 수 있다.
+ * ⋯ 메뉴, `내 브리핑에서 공유` 출처 문구, "본인(isMe)" 아바타 강조, 조회수.
+ *
+ * 보관(스크랩) 토글은 service-api #53 이 `PublicCardResponse.scrapped`(조회자 기준 boolean)를
+ * 내려주면서 **실제 상태로 연결됐다**(2026-08-07 실측). 예고한 대로 액션바 첫 칸에 들어간다.
+ * 값이 검증되지 않는 카드(`scrapped === null`)에는 여전히 버튼을 두지 않는다 — 상태를 모르는
+ * 토글은 이미 담아둔 카드를 클릭 한 번에 해제시킨다.
  *
  * **출처는 목록에서 건수만** 보여준다(이전에는 제목·외부 링크 전체 목록을 폈다). 카드가 "요약 목록"
  * 이 아니라 "본문 미리보기"처럼 보이던 주된 원인이라 접었을 뿐, 데이터는 그대로 두었고 전체 목록은
@@ -149,15 +152,30 @@ export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
 }
 
 /**
- * .pacts — 이번 범위에서 **실제로 동작하는 것만** 둔다: 읽기 전용 좋아요 표시 + 링크 복사.
- * 댓글 수·보관 토글·⋯ 메뉴는 대응 값이나 동작이 없어 두지 않는다.
+ * .pacts — 이번 범위에서 **실제로 동작하는 것만** 둔다: 보관 토글 + 읽기 전용 좋아요 표시 +
+ * 링크 복사. 댓글 수·⋯ 메뉴는 대응 값이나 동작이 없어 두지 않는다.
  *
- * 좋아요 값이 검증을 통과하지 못하면(social === null) 그 자리만 비우고 공유는 남긴다 —
- * 공유는 카드 `publicId` 만으로 성립해 좋아요 값과 무관하다.
+ * 세 액션의 노출 조건이 **서로 독립**이다 — 값이 없는 것만 빠지고 나머지는 그대로 남는다:
+ * - 보관: `card.scrapped` 가 검증된 boolean 일 때만(어댑터 `toScrapped`). null 이면 담긴 상태를
+ *   알 수 없다는 뜻이라 버튼을 두지 않는다 — 항상 `보관` 으로 보이는 버튼은 이미 담아둔 카드를
+ *   클릭 한 번에 해제시킨다.
+ * - 좋아요: `social` 이 검증됐을 때만(여전히 읽기 전용 표시 — 피드 좋아요 토글은 범위 밖).
+ * - 공유: 카드 `publicId` 만으로 성립해 항상 남는다.
+ *
+ * 게스트에게도 보관 버튼을 **숨기지 않는다.** 클릭하면 기존 `useRequireAuth` 게이트가 가입 유도
+ * 모달로 받아 요청이 나가지 않는다(카드 상세 좋아요와 같은 패턴) — 담을 수 있다는 사실 자체는
+ * 로그인 전에도 보여 주는 편이 낫다.
  */
 function CardActions({ card }: { card: PublicFeedCardVM }) {
   return (
-    <div className="mt-1 flex items-center gap-0.5 border-t border-border pt-1">
+    <div className="mt-1 flex flex-wrap items-center gap-0.5 border-t border-border pt-1">
+      {card.scrapped !== null && (
+        <CardScrapButton
+          publicId={card.publicId}
+          initialScrapped={card.scrapped}
+          title={card.title}
+        />
+      )}
       {card.social !== null && (
         <span className="inline-flex items-center gap-1.5 rounded-lg px-[11px] py-[9px] text-[12.5px]">
           <span

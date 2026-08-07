@@ -116,6 +116,21 @@ export function toCardSocial(card: CardResponse): CardSocial | null {
   return { author, likeCount, liked };
 }
 
+/**
+ * 스크랩(보관) 여부 정규화 — 공개 피드와 단건 상세가 **같은 기준**으로 좁힌다.
+ *
+ * - `true` → 담아둠 · `false` → 담지 않음(둘 다 정상 값이라 그대로 통과)
+ * - `null` · `undefined` · 비boolean(문자열 `"true"` 등) → **null = "알 수 없음"**
+ *
+ * 미상 값을 `false` 로 보정하지 않는 이유는 `toCardSocial`·`toPublicFeedSocial` 과 같다:
+ * 필드가 없는 배포본이나 상세 외 경로(목록·저장·PATCH 응답)의 null 을 "담지 않음"이라고 단정하면,
+ * 이미 담아둔 카드에 `보관` 버튼을 띄우고 클릭 한 번으로 멀쩡한 상태를 뒤집게 된다.
+ * 알 수 없을 때는 화면이 버튼 자체를 렌더하지 않는 편이 안전하다.
+ */
+export function toScrapped(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
 /** createdAt(ISO) → ms. 파싱 실패 시 null(대체 값 생성 금지) — 정렬·집계용. */
 function parseCreatedAtMs(iso: string): number | null {
   const ts = Date.parse(iso);
@@ -208,7 +223,8 @@ export function toPublicFeedAuthor(author: CardAuthor | null | undefined): Publi
  * 확정되면 그때 붙인다 — 추측으로 먼저 노출하지 않는다.
  *
  * 좋아요는 `toPublicFeedSocial` 로 분리해 검증한다 — 값이 온전하지 않으면 카드는 살리고 좋아요
- * 영역만 렌더하지 않는다(0·false 로 보정하지 않는다).
+ * 영역만 렌더하지 않는다(0·false 로 보정하지 않는다). 보관(`scrapped`)도 같은 규율이되
+ * **별도 필드**라 서로의 검증 결과에 영향을 주지 않는다.
  */
 export function toPublicFeedCardVM(
   card: PublicFeedCardResponse | null | undefined,
@@ -227,6 +243,8 @@ export function toPublicFeedCardVM(
     summary: normalizeText(card.summary) ?? "",
     author: toPublicFeedAuthor(card.author),
     social: toPublicFeedSocial(card),
+    // 좋아요와 **독립적으로** 검증한다 — 한쪽이 깨져도 다른 쪽 UI 는 살린다.
+    scrapped: toScrapped(card.scrapped),
     sources: toCardSources(card.sources),
     createdAtLabel: typeof card.createdAt === "string" ? formatCreatedAt(card.createdAt) : "",
     tags: toCardTags(card.tags),
