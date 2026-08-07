@@ -53,6 +53,7 @@ jobs:
           # 변수 미설정·빈값이면 빈값으로 빌드 → 런타임에 same-origin `/api/*`(nginx 프록시)로 요청.
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_MCP_SERVER_URL=${{ vars.NEXT_PUBLIC_MCP_SERVER_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

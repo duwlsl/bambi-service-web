@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AuthBack, AuthShell } from "@/components/auth/auth-shell";
 import { GoogleButton } from "@/components/auth/google-button";
 import { LoginForm } from "@/components/auth/login-form";
+import { LoginRedirectForm } from "@/components/auth/login-redirect-form";
 import { SignupNotice } from "@/components/auth/signup-notice";
 import { Orb } from "@/components/brand/orb";
 
@@ -37,7 +38,9 @@ export default function LoginPage() {
         <SignupNotice />
       </Suspense>
 
-      <LoginForm />
+      <Suspense fallback={<LoginForm />}>
+        <LoginRedirectForm />
+      </Suspense>
 
       {/* .auth-or */}
       <div className="my-[18px] flex items-center gap-3 text-[11.5px] text-muted-foreground before:h-px before:flex-1 before:bg-border before:content-[''] after:h-px after:flex-1 after:bg-border after:content-['']">

@@ -10,14 +10,11 @@ import { resolveErrorMessage } from "@/constants/errors";
 import { ApiError } from "@/lib/api-client";
 import { login } from "@/lib/auth";
 
-/** 로그인 성공 후 이동 경로 (홈 피드). */
-const REDIRECT_AFTER_LOGIN = "/";
-
 /** 목업 .auth .field input 과 동일한 외형 (h46 · r10 · pr42 · placeholder --low · focus wash 링). */
 const FIELD_INPUT_CLASS =
   "h-[46px] rounded-[10px] bg-card pl-3.5 pr-[42px] text-sm text-foreground placeholder:text-low focus-visible:ring-[3px] focus-visible:ring-wash dark:bg-card";
 
-export function LoginForm() {
+export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   const router = useRouter();
   const { setAuthenticatedUser } = useAuth();
   const [email, setEmail] = useState("");
@@ -41,7 +38,7 @@ export function LoginForm() {
       // 즉시 반영해(getMe 재호출 없이) 헤더 등이 바로 authenticated 로 갱신되게 한다.
       setAuthenticatedUser(data.user);
       // 홈으로 이동하고 submitting 상태를 유지해(재활성화하지 않음) 이동 중 재제출을 막는다.
-      router.push(REDIRECT_AFTER_LOGIN);
+      router.replace(redirectTo);
     } catch (err) {
       // 공통 client가 실패를 ApiError(code)로 던진다. 서버 message 원문은 쓰지 않는다.
       const code = err instanceof ApiError ? err.code : "INTERNAL_ERROR";
