@@ -19,6 +19,7 @@ import {
   groupArchiveByDate,
   searchArchiveItems,
   sortArchive,
+  topArchiveTags,
 } from "@/lib/adapters/report-archive";
 import { MOCK_ARCHIVE_TAGS, REPORT_ARCHIVE_MOCK_ENABLED } from "@/lib/mock/report-archive";
 import type {
@@ -127,6 +128,11 @@ function ArchiveView() {
  * .arch — 흰 카드형 요약. 숫자는 실제 목록 길이(주황 강조), 문구는 데이터 유무로만 갈린다.
  * 크기는 목업 .arch 기준(padding 26×28 · radius 16 · 헤드라인 20px/1.5 · 설명 12.5px, 간격 7px) —
  * 좁은 화면에서는 padding 만 한 단계 줄인다. 고정 수치(128개·주간 추가)는 목업 전용이라 쓰지 않는다.
+ *
+ * **건수는 문장보다 한 단계 두껍게 둔다**(2026-08-07 UI 검수 — 800 vs 700). 주황 색만으로는
+ * 한 자리 수(`3개`)일 때 눈에 걸리지 않아 화면에서 가장 먼저 읽혀야 할 값이 문장에 묻혔다.
+ * **글자 크기는 목업 그대로 20px 이고 굵기만 올린다** — 숫자만 키우면 문장의 밑선이 흔들린다.
+ * 굵기 800 은 Pretendard Variable(globals.css 에서 로드)이 실제로 렌더한다.
  */
 function ArchiveSummary({ total }: { total: number }) {
   return (
@@ -135,7 +141,7 @@ function ArchiveSummary({ total }: { total: number }) {
       <p className="text-[20px] leading-[1.5] font-bold tracking-[-0.015em] text-foreground">
         {total > 0 ? (
           <>
-            <b className="font-bold text-signal-ink">{total}개</b>의 보고서가 쌓였어요.
+            <b className="font-extrabold text-signal-ink">{total}개</b>의 보고서가 쌓였어요.
           </>
         ) : (
           "아직 쌓인 보고서가 없어요."
@@ -211,16 +217,24 @@ function ArchiveResults({ items }: { items: ArchiveItem[] }) {
     return cards.map((item) => <ReportArchiveCard key={item.publicId} item={item} />);
   }
 
-  const scopeText = REPORT_ARCHIVE_MOCK_ENABLED
-    ? "제목·요약·추천 이유·출처·태그에서 검색돼요."
-    : "제목·요약·추천 이유·출처에서 검색돼요.";
+  const scopeText = "제목·요약·추천 이유·출처·태그에서 검색돼요.";
+
+  /*
+    검색창 placeholder — 목업 「지식창고에서 검색 — 예: 환율 트리거, CPI, RTX」 처럼 예시를 함께
+    보여준다. 예시 문구를 지어내지 않고 **내 보고서에 실제로 붙은 태그** 상위 3개를 쓴다
+    (추가 API 호출 없이 이미 메모리에 있는 목록에서 파생). `tags` 를 안 주는 배포본에서는 태그가
+    비어 있어 예시 없이 「보고서 검색」 만 남는다.
+  */
+  const exampleTags = topArchiveTags(items, 3);
+  const searchPlaceholder =
+    exampleTags.length > 0 ? `보고서 검색 — 예: ${exampleTags.join(", ")}` : "보고서 검색";
 
   return (
     <>
       {/* .kb-srow — 검색창 + 필터 버튼 한 행(좁은 폭에서는 자연 wrap). 높이 46px = 목업 .kb-search/.kbf-btn. */}
       <div className="mb-2 flex flex-wrap items-center gap-[9px]">
         <label htmlFor="archive-search" className="sr-only">
-          내 보고서에서 검색 — {scopeText}
+          {searchPlaceholder} — {scopeText}
         </label>
         <div className="relative min-w-0 flex-1 basis-[220px]">
           <SearchIcon />
@@ -229,11 +243,13 @@ function ArchiveResults({ items }: { items: ArchiveItem[] }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="내 보고서에서 검색"
+            placeholder={searchPlaceholder}
             className="h-[46px] w-full rounded-xl border border-input bg-card pr-4 pl-10 text-sm text-foreground outline-none placeholder:text-low focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-wash"
           />
         </div>
-        {/* .kbf-btn — 활성 조건이 있으면 강조 + 점 표시 */}
+        {/* .kbf-btn — 활성 조건이 있으면 테두리·배경으로 강조한다. 문구 옆 점 표시는 뺐다
+            (2026-08-07 UI 검수) — 이미 버튼 전체가 색으로 바뀌어 상태를 말하고 있어 중복이었다.
+            스크린리더용 「(적용됨)」은 그대로 남긴다(색은 낭독되지 않는다). */}
         <button
           type="button"
           onClick={() => setPanelOpen((v) => !v)}
@@ -247,12 +263,7 @@ function ArchiveResults({ items }: { items: ArchiveItem[] }) {
         >
           <FilterIcon />
           필터
-          {panelDirty && (
-            <>
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span className="sr-only">(적용됨)</span>
-            </>
-          )}
+          {panelDirty && <span className="sr-only">(적용됨)</span>}
         </button>
       </div>
 
@@ -628,11 +639,11 @@ function ArchiveListSkeleton() {
       {Array.from({ length: 2 }).map((_, g) => (
         <div key={g} className="animate-pulse">
           <div className={`mt-4 mb-2.5 h-3.5 w-28 ${bar}`} />
+          {/* 카드 골격 = 제목 + 메타 한 줄(요약 없음 — ReportArchiveCard 와 같은 구조). */}
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="mb-2.5 rounded-[14px] border border-border bg-card px-5 py-4">
               <div className={`h-4 w-3/4 ${bar}`} />
-              <div className={`mt-2.5 h-3.5 w-full ${bar}`} />
-              <div className={`mt-2.5 h-3 w-24 ${bar}`} />
+              <div className={`mt-[9px] h-[22px] w-48 max-w-full ${bar}`} />
             </div>
           ))}
         </div>

@@ -1,3 +1,4 @@
+import { toCardTags } from "@/lib/adapters/card";
 import { getReportTypeLabel, toReportType } from "@/lib/report-type";
 import type { CardResponse } from "@/types/feed";
 import type {
@@ -35,6 +36,10 @@ export function toArchiveCard(card: CardResponse): ArchiveCard {
     sources: card.sources ?? [],
     // 미배포 필드 — 없거나 계약 밖 값이면 null(화면은 종류 배지를 생략한다).
     reportType: toReportType(card.reportType),
+    // 공개 범위·태그는 홈 [내 보고서] 카드와 **같은 응답·같은 어댑터 규율**을 쓴다(중복 정규화 금지).
+    // tags 키가 없는 배포본에서는 toCardTags 가 빈 배열을 준다 — 화면이 태그를 생략한다.
+    visibility: card.visibility,
+    tags: toCardTags(card.tags),
     createdAtMs: valid ? ts : null,
     timeLabel: valid ? TIME_FORMAT.format(ts) : "", // 잘못된 날짜는 표시 생략(임의 값 생성 금지)
   };
@@ -42,9 +47,12 @@ export function toArchiveCard(card: CardResponse): ArchiveCard {
 
 /**
  * 검색 — 대소문자 구분 없이(한글은 그대로), 항목에 실제로 존재하는 값만 대상으로 한다:
- * title · summary · whyForYou · sources[].title · sources[].url
- * + 실 reportType 표시명("아침 브리핑"/"온디맨드") · mock 메타가 있으면 tags · category.
+ * title · summary · whyForYou · sources[].title · sources[].url · **tags(실측)**
+ * + 실 reportType 표시명("아침 브리핑"/"온디맨드") · mock 메타가 있으면 mock tags · category.
  * 검색어가 비어 있으면(trim 후) 전체를 반환한다. API 재호출 없음(순수 필터).
+ *
+ * 실측 태그가 검색 대상에 들어간 이유: 카드 메타에 태그를 노출하고 검색창 placeholder 도 내 태그를
+ * 예시로 제시하므로(`topArchiveTags`), 보이는 값·권하는 값이 검색되지 않으면 안 된다.
  */
 export function searchArchiveItems(items: ArchiveItem[], rawQuery: string): ArchiveItem[] {
   const query = rawQuery.trim().toLowerCase();
@@ -55,6 +63,7 @@ export function searchArchiveItems(items: ArchiveItem[], rawQuery: string): Arch
       item.summary,
       item.whyForYou,
       ...item.sources.flatMap((s) => [s.title, s.url]),
+      ...item.tags,
       getReportTypeLabel(item.reportType) ?? "",
       ...(item.mock ? [...item.mock.tags, item.mock.category ?? ""] : []),
     ];
@@ -62,10 +71,36 @@ export function searchArchiveItems(items: ArchiveItem[], rawQuery: string): Arch
   });
 }
 
-/** 태그 필터 — mock 메타의 tags 기준 단일 선택. "all" 은 전체(실 API 모드에서는 항상 "all"). */
+/**
+ * 태그 필터 — 단일 선택. 실측 tags 와 mock tags 중 **어느 쪽이든 일치하면** 통과시킨다
+ * (필터 chip 목록 자체는 여전히 mock 전용이라 실 API 모드에서는 항상 "all" 이다).
+ */
 export function filterArchiveByTag(items: ArchiveItem[], tag: ArchiveTagFilter): ArchiveItem[] {
   if (tag === "all") return items;
-  return items.filter((item) => item.mock?.tags.includes(tag) ?? false);
+  return items.filter(
+    (item) => item.tags.includes(tag) || (item.mock?.tags.includes(tag) ?? false),
+  );
+}
+
+/**
+ * 검색창 placeholder 예시용 태그 — **내 보고서에 실제로 붙어 있는** 태그 중 많이 쓰인 순으로 최대
+ * `limit` 개. 예시 문구를 임의로 지어내지 않으려고 목록에서만 뽑는다(추가 API 호출 없음).
+ *
+ * 실측 `tags` 를 먼저 보고, 하나도 없을 때만 mock 메타 태그로 물러난다 — `tags` 미배포 배포본에서는
+ * 빈 배열이 되고, 그때 호출부가 예시 없이 "보고서 검색" 만 남긴다.
+ * 동점은 목록에 먼저 등장한 태그가 앞에 온다(Map 삽입 순서 — 정렬이 안정적이라 렌더가 흔들리지 않는다).
+ */
+export function topArchiveTags(items: ArchiveItem[], limit = 3): string[] {
+  const count = (pick: (item: ArchiveItem) => string[]) => {
+    const byTag = new Map<string, number>();
+    for (const item of items) {
+      for (const tag of pick(item)) byTag.set(tag, (byTag.get(tag) ?? 0) + 1);
+    }
+    return [...byTag.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit).map(([tag]) => tag);
+  };
+
+  const real = count((item) => item.tags);
+  return real.length > 0 ? real : count((item) => item.mock?.tags ?? []);
 }
 
 /**

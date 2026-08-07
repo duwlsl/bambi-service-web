@@ -16,6 +16,7 @@ import { CardLikeButton } from "@/components/report/card-like-button";
 import { CardScrapButton } from "@/components/report/card-scrap-button";
 import { CardShareModal } from "@/components/report/card-share-modal";
 import { ReportTypeBadge } from "@/components/report/report-type-badge";
+import { CopyToast } from "@/components/ui/copy-toast";
 import { useCardDetail } from "@/hooks/use-card-detail";
 import { useCopyCardLink } from "@/hooks/use-copy-card-link";
 import { useReportBody, type ReportBodyState } from "@/hooks/use-report-body";
@@ -319,19 +320,19 @@ function CardDetailView({
 /**
  * 링크 복사 버튼 — 비소유자·게스트가 보는 PUBLIC 상세의 유일한 공유 액션.
  * PATCH 요청은 나가지 않고(복사는 읽기 동작), 공개/비공개 문구나 변경 버튼도 노출하지 않는다.
- * 결과는 버튼 옆 live region 으로 알려 스크린리더에도 전달된다.
+ *
+ * 결과는 피드 카드와 같은 방식으로 알린다(2026-08-07 UI 검수): 눈으로는 화면 하단
+ * 토스트(`CopyToast`), 스크린리더로는 상시 sr-only live region. 버튼 옆 11.5px 회색 문구는
+ * 복사 여부를 알아채기 어려워 시각 표시를 토스트로 옮겼다.
  */
 function CopyLinkButton({ publicId }: { publicId: string }) {
   const { copy, feedback } = useCopyCardLink(publicId);
   return (
     <>
-      <span
-        role="status"
-        aria-live="polite"
-        className={`text-[11.5px] ${feedback === null ? "sr-only" : "text-muted-foreground"}`}
-      >
+      <span role="status" aria-live="polite" className="sr-only">
         {feedback?.message ?? ""}
       </span>
+      <CopyToast feedback={feedback} />
       <button
         type="button"
         onClick={copy}

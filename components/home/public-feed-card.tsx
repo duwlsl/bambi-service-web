@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
+import { PostMoreMenu } from "@/components/home/post-more-menu";
 import { CardScrapButton } from "@/components/report/card-scrap-button";
-import { useCopyCardLink } from "@/hooks/use-copy-card-link";
 import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
 
 /**
@@ -11,20 +11,23 @@ import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
  *
  * 정보 위계는 목업 `docs/design-handoff/product/home-feed.html` 의 `.post` 를 따른다:
  *
- *   아바타 | 표시이름 @핸들
+ *   아바타 | 표시이름 @핸들               ⋯
  *          | 작성 시각
  *   제목 (상세 링크)
  *   요약 2줄 + 더 보기
  *   ● 관심사 ‘첫 태그’ +N · 출처 N건
  *   ─────────────
- *   ⚑ 보관 · ♡ 좋아요 수 · ↗ 공유
+ *   ⚑ 보관 · ♡ 좋아요 수
  *
  * 목업 토큰: `.post`(bg-card·border·radius 14·padding 16/18/7·mb 16) · `.phead`(gap 10, mb 6) ·
  * `.pav`(38px 원형) · `.pname`(14px/700, 핸들 `.h` 13px/400 ink-dim) · `.pmeta`(12px ink-dim) ·
  * `.ptitle`(18px/700, 1.45, -.01em, mb 8) · `.pbody`(14px, 1.7, mb 10) · `.showmore`(600 ink-dim) ·
  * `.reason`(12px, gap 8, dot 5px signal, mb 12) · `.pacts`(border-top, mt/pt 4) · `.pact`(12.5px, 9/11).
- * 목업의 2단 구조(`.post>*:not(.phead){margin-left:48px}` — 본문이 아바타 오른쪽 라인에서 시작)는
- * 아바타(38) + gap(10) = 48px 이며, 좁은 화면에서 본문 폭을 깎지 않도록 `sm` 이상에서만 준다.
+ *
+ * 목업의 2단 구조(`.post>*:not(.phead){margin-left:48px}` — 본문이 아바타 오른쪽 라인에서 시작)를
+ * 그대로 지킨다: 아바타(38) + gap(10) = 48px 이며, 좁은 화면에서 본문 폭을 깎지 않도록 `sm` 이상에서만
+ * 준다. **제목·요약의 시작선은 작성자 이름과 같아야 한다** — 한 번 걷어냈다가 되돌렸다(2026-08-07
+ * UI 검수): 들여쓰기를 없애면 본문이 아바타 아래로 파고들어 카드의 두 단 구조가 무너진다.
  *
  * **목업에 있지만 계약에 없어 만들지 않는 것**(가짜 UI 금지): `트리거 충족` 문구, 댓글 수·댓글 액션,
  * ⋯ 메뉴, `내 브리핑에서 공유` 출처 문구, "본인(isMe)" 아바타 강조, 조회수.
@@ -43,8 +46,13 @@ import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
  * 보여주고, 가짜 로컬 토글을 만들지 않는다. `liked` 는 조회자 기준 실제 값이라 그대로 반영한다.
  * 값이 검증을 통과하지 못하면(`social === null`) 좋아요 영역만 빼고 카드는 정상 렌더한다.
  *
- * 링크는 서로 중첩되지 않게 **형제로만** 둔다: 작성자 프로필 · 제목(상세) · 더 보기(상세) · 공유
- * 버튼. 카드 전체를 링크로 감싸지 않는다.
+ * 링크는 서로 중첩되지 않게 **형제로만** 둔다: 작성자 프로필 · 제목(상세) · 더 보기(상세) · `⋯`
+ * 메뉴. 카드 전체를 링크로 감싸지 않는다.
+ *
+ * **공유는 카드 우상단 `⋯` 메뉴**(`PostMoreMenu`)가 담당한다 — 목업이 `⋯` 를 두었던 자리다.
+ * 액션바 마지막 칸에 있을 때는 보관·좋아요와 성격이 다른데도 같은 줄에 묻혔고, 결과 문구가
+ * 액션바 오른쪽 끝 작은 회색 텍스트라 복사됐는지 알기 어려웠다(2026-08-07 UI 검수).
+ * 메뉴 항목은 `링크 복사` · `다른 앱으로 공유`(Web Share 지원 시) 둘이고 결과는 하단 토스트가 알린다.
  */
 export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
   const detailHref = `/report/${card.publicId}`;
@@ -60,9 +68,9 @@ export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
         `/users/{publicId}` 공개 프로필로 이동한다(어댑터가 형식을 확인한다).
         검증되지 않았거나 이름이 없으면 링크 없는 중립 표시로 남긴다 — 죽은 링크·가짜 이름·가짜
         핸들을 만들지 않는다. 팔로우 토글은 프로필 화면에 이미 있으므로 카드에 두지 않는다.
-        목업 우상단 `⋯`(.pmore)은 실제 메뉴가 없어 두지 않는다.
+        목업 우상단 `⋯`(.pmore) 자리에는 공유 메뉴(`PostMoreMenu`)가 들어간다.
       */}
-      <div className="mb-1.5 flex items-center gap-2.5">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
         {card.author.publicId !== null ? (
           <Link
             href={`/users/${card.author.publicId}`}
@@ -77,10 +85,14 @@ export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
             <AuthorText author={card.author} createdAtLabel={card.createdAtLabel} />
           </div>
         )}
+        <PostMoreMenu publicId={card.publicId} title={card.title} />
       </div>
 
-      {/* 목업의 X식 2단 — 본문이 아바타 오른쪽 라인(48px)에서 시작. 모바일에서는 폭을 우선한다. */}
-      <div className="sm:pl-12">
+      {/* 목업의 2단 — 본문이 아바타 오른쪽 라인(48px), 즉 작성자 이름과 같은 선에서 시작한다.
+          오른쪽도 같은 48px 을 비워 본문 덩어리를 카드 안에서 좌우 대칭으로 앉힌다(2026-08-07
+          UI 검수) — 왼쪽만 들여쓰면 카드 오른쪽 테두리에 본문이 붙어 오른쪽으로 쏠려 보였다.
+          모바일에서는 폭을 우선해 양쪽 다 주지 않는다. */}
+      <div className="sm:pr-12 sm:pl-12">
         {/*
           .ptitle — 카드에서 가장 강한 정보. 상세 진입(/report/{publicId})이고, 어댑터가 UUID
           형식을 검증한 값만 온다. 아주 긴 제목이 카드를 삼키지 않게 3줄로 자른다(전문은 상세에 있다).
@@ -145,22 +157,25 @@ export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
           </div>
         )}
 
-        <CardActions card={card} />
+        {/* 공유가 우상단으로 빠지면서 액션바는 값이 있을 때만 남는다 — 둘 다 없으면 구분선만
+            남은 빈 줄이 생기므로 바 자체를 만들지 않는다. */}
+        {(card.scrapped !== null || card.social !== null) && <CardActions card={card} />}
       </div>
     </article>
   );
 }
 
 /**
- * .pacts — 이번 범위에서 **실제로 동작하는 것만** 둔다: 보관 토글 + 읽기 전용 좋아요 표시 +
- * 링크 복사. 댓글 수·⋯ 메뉴는 대응 값이나 동작이 없어 두지 않는다.
+ * .pacts — 이번 범위에서 **실제로 동작하는 것만** 둔다: 보관 토글 + 읽기 전용 좋아요 표시.
+ * 공유는 카드 우상단으로 옮겼고(`ShareAction`), 댓글 수·⋯ 메뉴는 대응 값이나 동작이 없어 두지 않는다.
  *
- * 세 액션의 노출 조건이 **서로 독립**이다 — 값이 없는 것만 빠지고 나머지는 그대로 남는다:
+ * 두 액션의 노출 조건이 **서로 독립**이다 — 값이 없는 것만 빠지고 나머지는 그대로 남는다:
  * - 보관: `card.scrapped` 가 검증된 boolean 일 때만(어댑터 `toScrapped`). null 이면 담긴 상태를
  *   알 수 없다는 뜻이라 버튼을 두지 않는다 — 항상 `보관` 으로 보이는 버튼은 이미 담아둔 카드를
  *   클릭 한 번에 해제시킨다.
  * - 좋아요: `social` 이 검증됐을 때만(여전히 읽기 전용 표시 — 피드 좋아요 토글은 범위 밖).
- * - 공유: 카드 `publicId` 만으로 성립해 항상 남는다.
+ *
+ * 둘 다 없으면 호출부가 이 바를 렌더하지 않는다(빈 구분선 금지).
  *
  * 게스트에게도 보관 버튼을 **숨기지 않는다.** 클릭하면 기존 `useRequireAuth` 게이트가 가입 유도
  * 모달로 받아 요청이 나가지 않는다(카드 상세 좋아요와 같은 패턴) — 담을 수 있다는 사실 자체는
@@ -197,43 +212,7 @@ function CardActions({ card }: { card: PublicFeedCardVM }) {
           </span>
         </span>
       )}
-      <CopyLinkAction publicId={card.publicId} title={card.title} />
     </div>
-  );
-}
-
-/**
- * 공유 — 카드 상세와 **같은 공용 훅**(useCopyCardLink)을 쓴다. 새 clipboard 유틸을 만들지 않고,
- * 서버 API 도 필요 없다(`{origin}/report/{publicId}` 문자열 복사). 카드가 전부 PUBLIC 이라
- * 게스트도 그대로 복사할 수 있고, 요청이 나가지 않으므로 카드 상태를 바꾸지 않는다.
- *
- * 결과는 버튼 옆 live region 으로 알려 스크린리더에도 전달한다(카드 상세 CopyLinkButton 과 같은
- * 규율). 피드에는 카드가 여러 장이라 버튼 이름만으로는 어느 카드인지 알 수 없어 제목을 sr-only 로
- * 덧댄다. 액션바 안의 형제 요소라 제목·작성자 링크와 중첩되지 않는다.
- */
-function CopyLinkAction({ publicId, title }: { publicId: string; title: string }) {
-  const { copy, feedback } = useCopyCardLink(publicId);
-  return (
-    <>
-      <button
-        type="button"
-        onClick={copy}
-        className="focus-ring inline-flex items-center gap-1.5 rounded-lg px-[11px] py-[9px] text-[12.5px] text-muted-foreground hover:bg-background hover:text-ink-mid"
-      >
-        <span aria-hidden="true">↗</span>
-        공유
-        <span className="sr-only"> — {title} 링크 복사</span>
-      </button>
-      <span
-        role="status"
-        aria-live="polite"
-        className={`ml-auto pl-2 text-[11.5px] ${
-          feedback === null ? "sr-only" : "text-muted-foreground"
-        }`}
-      >
-        {feedback?.message ?? ""}
-      </span>
-    </>
   );
 }
 
