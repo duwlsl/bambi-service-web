@@ -1,6 +1,11 @@
 import { FALLBACK_ERROR_CODE } from "@/constants/errors";
 import { ApiError, apiDelete, apiGet, apiPost, apiPut } from "@/lib/api-client";
-import type { AuthorCard, FollowData, Profile, UpdateProfileRequest } from "@/types/profile";
+import type {
+  AuthorCardResponse,
+  FollowData,
+  Profile,
+  UpdateProfileRequest,
+} from "@/types/profile";
 import type { User } from "@/types/auth";
 
 /**
@@ -29,15 +34,21 @@ export async function fetchProfile(
   return requireContainer(await apiGet<Profile | null>(path, { signal, auth: authed }), path);
 }
 
-/** 작성자의 공개 카드 목록(프로필 브리핑 리스트). 빈 배열이면 훅이 empty 로 정규화한다. */
+/**
+ * 작성자의 공개 카드 목록(프로필 브리핑 리스트). 빈 배열이면 훅이 empty 로 정규화한다.
+ *
+ * 서버는 PUBLIC 카드만 최신순(createdAt desc)으로 주고 `limit` 은 기본 20 · 상한 50 이다
+ * (service-api FeedService.publicCardsByAuthor 실측). 전체 공개 개수는 이 목록 길이가 아니라
+ * 프로필 응답의 `publicCardCount`(서버 count(*))를 쓴다 — 목록 길이로 총계를 말하지 않는다.
+ */
 export async function fetchAuthorCards(
   publicId: string,
   authed: boolean,
   signal?: AbortSignal,
-): Promise<AuthorCard[]> {
+): Promise<AuthorCardResponse[]> {
   const path = `/api/users/${publicId}/cards`;
   const data = requireContainer(
-    await apiGet<AuthorCard[] | null>(path, { signal, auth: authed }),
+    await apiGet<AuthorCardResponse[] | null>(path, { signal, auth: authed }),
     path,
   );
   if (!Array.isArray(data)) {
