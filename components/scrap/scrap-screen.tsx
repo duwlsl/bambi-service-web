@@ -8,6 +8,7 @@ import { AddMaterialModal } from "@/components/home/add-material-modal";
 import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { HomeNav } from "@/components/home/home-nav";
 import { SideLeft } from "@/components/home/side-left";
+import { ScrapRail } from "@/components/scrap/scrap-rail";
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
 import { useScraps } from "@/hooks/use-scraps";
@@ -63,8 +64,20 @@ export function ScrapScreen() {
   return <ScrapView />;
 }
 
-/** 공통 프레임 — 헤더 + 좌측 내비 + 본문. */
-function Shell({ children, guest = false }: { children: React.ReactNode; guest?: boolean }) {
+/**
+ * 공통 프레임 — 헤더 + 좌측 내비 + 본문 (+ 선택적 우측 rail).
+ * 목업 shell(좌 300 · 본문 760 · 우 300)과 같은 3열 구조이며, rail 은 보여줄 실제 집계가 있을
+ * 때만 상위가 넘긴다 — loading·error·guest 분기에서는 빈 칼럼조차 만들지 않는다.
+ */
+function Shell({
+  children,
+  guest = false,
+  rail,
+}: {
+  children: React.ReactNode;
+  guest?: boolean;
+  rail?: React.ReactNode;
+}) {
   const [amOpen, setAmOpen] = useState(false);
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background">
@@ -73,6 +86,7 @@ function Shell({ children, guest = false }: { children: React.ReactNode; guest?:
         <div className="flex min-h-full items-start justify-center gap-[22px] px-5 pt-6 pb-14">
           <SideLeft current={SCRAP_MENU_LABEL} footLines={MOCK_SIDE_FOOT} guest={guest} />
           <main className="flex min-h-[60dvh] min-w-0 max-w-[760px] flex-1 flex-col">{children}</main>
+          {rail}
         </div>
       </div>
       <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} />
@@ -97,7 +111,9 @@ function ScrapView() {
     scraps.status === "success" ? scraps.data.filter((c) => !removedIds.has(c.publicId)) : [];
 
   return (
-    <Shell>
+    // rail 은 **화면에 실제로 남아 있는 목록**(보관 해제분 제외)으로 집계한다 —
+    // 해제 직후 주제 빈도가 목록과 어긋나지 않는다. 태그가 없으면 ScrapRail 이 스스로 null 이다.
+    <Shell rail={<ScrapRail cards={visible} />}>
       <header className="mb-8">
         <h1 className="text-[22px] font-bold tracking-[-0.015em] text-foreground">북마크</h1>
         <p className="mt-1 text-[13.5px] leading-[1.6] text-ink-mid">
