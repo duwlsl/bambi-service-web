@@ -12,6 +12,7 @@ import { useTheme } from "@/components/theme/theme-provider";
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
 import { McpApiKeySettings, MCP_SERVER_URL } from "@/components/settings/mcp-api-key-settings";
+import { MorningBriefingInterestSettings } from "@/components/settings/morning-briefing-interest-settings";
 import { SettingsRail } from "@/components/settings/settings-rail";
 import { THEME_MODE_OPTIONS } from "@/components/settings/theme-modes";
 import { useMcpApiKeys } from "@/hooks/use-mcp-api-keys";
@@ -24,7 +25,8 @@ const SETTINGS_MENU_LABEL = "설정";
  * `.set-sec`/`.srow` 섹션-행 구조를 따른다. 기능은 지금 실제 지원 가능한 것만 포함한다:
  * 화면 테마(라이트/다크/시스템), MCP 연결 키, 계정 이메일(읽기 전용, auth user), 로그아웃.
  *
- * 본문 정보 위계는 `화면` → `외부 AI 연결` → `계정` 순이다. 그 사이에 들어갈 `보고서` 섹션
+ * 본문 정보 위계는 `화면` → `보고서` → `외부 AI 연결` → `계정` 순이다. `보고서` 섹션에는 지금
+ * **아침 브리핑 관심사 선택**만 들어간다(`MorningBriefingInterestSettings`). 같은 섹션의 나머지 항목
  * (새 보고서 기본 공개 범위 · 보고서 완료 알림)은 **서버에 설정값도 저장 API 도 없어 렌더하지 않는다.**
  * 자리만 잡아두는 disabled 토글·"준비 중" 문구·가짜 기본값도 두지 않는다 — 있는 것처럼 보이면
  * 사용자는 이미 설정된 값이라고 읽는다. 계정 섹션은 뒤에 `비밀번호 변경`이 이메일과 로그아웃 사이로,
@@ -91,7 +93,10 @@ function SettingsView() {
               />
             </SettingsSection>
 
-            {/* `보고서` 섹션(기본 공개 범위 · 완료 알림)이 들어올 자리 — API 배포 전까지 렌더하지 않는다. */}
+            {/* .set-sec — 보고서. 아직 `기본 공개 범위`·`완료 알림`은 서버 설정값이 없어 렌더하지 않고,
+                아침 브리핑 관심사 선택만 둔다(선택값 저장 API 는 미확정 — 컴포넌트 메모리에만 남는다). */}
+            <MorningBriefingInterestSettings />
+
 
             <McpApiKeySettings
               mcpConfigured={mcpConfigured}
