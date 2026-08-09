@@ -59,7 +59,7 @@ function LlmWikiView() {
             <SideLeft current={WIKI_MENU_LABEL} footLines={MOCK_SIDE_FOOT} sticky={false} />
 
             {graph.status === "success" && selectedDocumentId !== null && (
-              <div className="order-2 w-full min-[1100px]:mt-4 min-[1100px]:h-0 min-[1100px]:min-h-0 min-[1100px]:flex-1">
+              <div className="order-2 w-full min-[1100px]:relative min-[1100px]:mt-4 min-[1100px]:h-0 min-[1100px]:min-h-0 min-[1100px]:flex-1 min-[1100px]:overflow-hidden">
                 <WikiDocumentPanel
                   selectedDocumentId={selectedDocumentId}
                   revealRequest={detailRevealRequest}
