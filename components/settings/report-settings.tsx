@@ -15,6 +15,11 @@ import type { UserSettingsField } from "@/types/settings";
  *
  * 저장 규칙(훅과 함께 읽을 것 — `hooks/use-user-settings.ts`):
  * - 표시값은 서버가 확정한 값이다. 낙관 반영이 없으므로 **저장이 실패하면 화면도 이전 값 그대로**다.
+ * - **화면에는 성공·진행 문구를 그리지 않는다.** 세그먼트 선택과 스위치 위치가 서버 확정값으로
+ *   바뀌는 것 자체가 시각 피드백이고, 그 위에 문구를 얹으면 다음 저장 전까지 남아 잔상이 된다.
+ * - 대신 **`sr-only` live region 으로 성공을 낭독**한다. 저장 중에는 컨트롤이 disabled 가 되어
+ *   포커스가 풀리므로, `aria-checked` 변화만으로는 보이지 않는 사용자에게 결과가 닿지 않는다.
+ * - 실패는 시각적으로도 알린다 — 그때는 컨트롤이 안 움직이는 게 유일한 신호라 이유를 말해야 한다.
  * - 한 번에 **바꾼 항목 하나만** PATCH 로 보낸다(부분 수정) — 다른 항목을 함께 실어 보내지 않으니
  *   화면이 들고 있던 값으로 서버의 다른 설정을 덮어쓸 수 없다.
  * - 저장 중에는 **두 컨트롤이 함께 잠긴다.** 저장이 한 번에 하나만 나가므로(훅의 ref 락),
@@ -25,11 +30,27 @@ import type { UserSettingsField } from "@/types/settings";
  * 설정을 아직 읽지 못한 경우(`settings === null`)에는 컨트롤을 만들지 않고 안내 + 다시 불러오기만
  * 둔다. 기본값으로 채워 보여주면 사용자가 "이미 그렇게 설정돼 있다"고 읽기 때문이다.
  */
+/** 저장 성공 시 낭독할 문구 — 어느 항목이 저장됐는지 항목명까지 밝힌다. */
+const SAVED_ANNOUNCEMENT: Record<UserSettingsField, string> = {
+  defaultCardVisibility: "기본 공개 범위 설정이 저장되었습니다.",
+  reportReadyNotification: "보고서 완료 알림 설정이 저장되었습니다.",
+};
+
 export function ReportSettings({ settings: s }: { settings: ReturnType<typeof useUserSettings> }) {
-  const { settings, savingField, saving, savedField, errorMessage, errorField, save, reload } = s;
+  const { settings, saving, savedField, errorMessage, errorField, save, reload } = s;
 
   return (
     <SettingsSection title="보고서">
+      {/*
+        저장 성공 낭독 전용 영역. **항상 마운트한 채 내용만 바꾼다** — 저장 성공 시점에 요소를
+        새로 끼워 넣으면 live region 이 등록되기 전이라 낭독이 누락될 수 있다.
+        `aria-atomic` 으로 바뀐 부분이 아니라 문장 전체를 읽게 한다. `sr-only` 라 화면에는
+        보이지 않고 빈 줄도 만들지 않는다.
+      */}
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {savedField === null ? "" : SAVED_ANNOUNCEMENT[savedField]}
+      </p>
+
       {settings === null ? (
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-3 py-[15px]">
           <p className="min-w-0 flex-1 text-[12.5px] leading-[1.6] text-muted-foreground">
@@ -51,8 +72,6 @@ export function ReportSettings({ settings: s }: { settings: ReturnType<typeof us
             status={
               <RowStatus
                 field="defaultCardVisibility"
-                savingField={savingField}
-                savedField={savedField}
                 errorMessage={errorMessage}
                 errorField={errorField}
               />
@@ -80,8 +99,6 @@ export function ReportSettings({ settings: s }: { settings: ReturnType<typeof us
             status={
               <RowStatus
                 field="reportReadyNotification"
-                savingField={savingField}
-                savedField={savedField}
                 errorMessage={errorMessage}
                 errorField={errorField}
               />
@@ -102,35 +119,23 @@ export function ReportSettings({ settings: s }: { settings: ReturnType<typeof us
 }
 
 /**
- * 행별 저장 상태 한 줄. 저장 중·저장됨·실패는 서로 배타적이라 한 자리를 나눠 쓴다.
- * `aria-live="polite"` 로 스크린리더에도 결과가 전달된다 — 컨트롤 모양만 바뀌면 보이지 않는
- * 사용자에게는 저장 여부가 전달되지 않기 때문. 실패는 role="alert" 로 더 강하게 알린다.
+ * 행별 저장 **실패**만 그린다. 저장에 실패하면 컨트롤이 움직이지 않는 것이 유일한 신호인데,
+ * 그것만으로는 "안 눌렸나"와 "실패했나"를 구분할 수 없어 `role="alert"` 로 이유를 말해 준다.
+ * 성공·진행은 그리지 않는다(컨트롤 움직임 + 위쪽 sr-only live region 이 담당).
  */
 function RowStatus({
   field,
-  savingField,
-  savedField,
   errorMessage,
   errorField,
 }: {
   field: UserSettingsField;
-  savingField: UserSettingsField | null;
-  savedField: UserSettingsField | null;
   errorMessage: string | null;
   errorField: UserSettingsField | null;
 }) {
-  if (errorMessage !== null && errorField === field) {
-    return (
-      <p role="alert" className="mt-1.5 text-[12px] leading-[1.55] text-destructive">
-        {errorMessage} 저장되지 않아 이전 설정이 그대로예요.
-      </p>
-    );
-  }
-  const text =
-    savingField === field ? "저장 중…" : savedField === field ? "저장했어요." : null;
+  if (errorMessage === null || errorField !== field) return null;
   return (
-    <p aria-live="polite" className="mt-1.5 min-h-0 text-[12px] leading-[1.55] text-muted-foreground">
-      {text}
+    <p role="alert" className="mt-1.5 text-[12px] leading-[1.55] text-destructive">
+      {errorMessage} 저장되지 않아 이전 설정이 그대로예요.
     </p>
   );
 }

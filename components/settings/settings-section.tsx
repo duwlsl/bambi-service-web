@@ -22,8 +22,9 @@ export function SettingsSection({ title, children }: { title: string; children: 
 /**
  * .srow — 좌측 라벨(t2)+설명(d2), 우측 컨트롤. 좁은 폭에서는 컨트롤이 아래로 자연 wrap.
  *
- * `status` 는 설명 아래에 붙는 저장 상태 한 줄이다(저장 중·저장됨·실패). 컨트롤 옆이 아니라
- * 라벨 블록 안에 두어야 320px 에서 컨트롤을 밀어내지 않고, 행이 위아래로만 늘어난다.
+ * `status` 는 설명 아래에 붙는 보조 문구 슬롯이다 — 행마다 쓰임이 다르다(보고서 행은 저장 실패
+ * 안내, 계정 행은 비밀번호 변경 결과). 없으면 아무것도 그리지 않는다. 컨트롤 옆이 아니라 라벨
+ * 블록 안에 두어야 320px 에서 컨트롤을 밀어내지 않고, 행이 위아래로만 늘어난다.
  */
 export function SettingsRow({
   label,

@@ -27,5 +27,5 @@ export type UserSettings = {
   reportReadyNotification: boolean;
 };
 
-/** 저장 단위(행) 식별자 — 어느 행이 저장 중·성공·실패인지 행별로 표시하기 위한 키. */
+/** 저장 단위(행) 식별자 — 저장 결과(성공 낭독·실패 문구)를 해당 행에 연결하기 위한 키. */
 export type UserSettingsField = keyof UserSettings;

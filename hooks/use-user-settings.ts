@@ -35,20 +35,20 @@ export type UseUserSettings = {
   /** 서버가 확정한 현재 설정. 응답에 설정 필드가 없으면 null(= 아직 알 수 없음). */
   settings: UserSettings | null;
   /**
-   * 저장 중인 항목 — "저장 중…" 문구를 **그 행에만** 붙이기 위한 값이다.
-   * 컨트롤 비활성 판단에는 쓰지 않는다(그건 `saving`) — 아래 주석 참조.
-   */
-  savingField: UserSettingsField | null;
-  /**
-   * 저장이 하나라도 진행 중인지. **두 컨트롤을 함께 잠그는 데 쓴다.**
+   * 저장이 진행 중인지. **두 컨트롤을 함께 잠그는 데 쓴다.**
    *
-   * 저장은 한 번에 하나만 나간다(아래 ref 락). 그래서 저장 중인 행만 잠그면 다른 행은 눌리는데
-   * 요청은 락에 막혀 나가지 않는, **아무 일도 일어나지 않는 클릭**이 된다(2026-08-09 실측:
-   * 공개범위 저장 중 알림 토글 클릭 → PATCH 0건, 화면·안내 변화 없음). 사용자는 껐다고 믿지만
-   * 서버는 그대로다. 락과 화면을 같은 규칙으로 맞춰 눌리지 않게 한다.
+   * 저장은 한 번에 하나만 나간다(아래 ref 락). 저장 중인 행만 잠그면 다른 행은 눌리는데 요청은
+   * 락에 막혀 나가지 않는, 아무 일도 일어나지 않는 클릭이 된다. 락과 화면을 같은 규칙으로 맞춘다.
    */
   saving: boolean;
-  /** 마지막으로 저장에 성공한 항목(성공 안내용). 다음 저장 시작 시 지워진다. */
+  /**
+   * 방금 저장에 성공한 항목. **스크린리더 안내 전용**이다 — 화면에는 성공 문구를 그리지 않는다
+   * (세그먼트·스위치가 움직이는 것이 곧 시각 피드백).
+   *
+   * 저장을 시작할 때 null 로 비우고 성공한 뒤에 다시 채운다. 같은 항목을 연속 저장해도
+   * 값이 null 을 거쳐 돌아오므로 live region 의 내용이 바뀌어 다시 낭독된다.
+   * 실패하면 채우지 않으므로 이전 성공 안내가 남지 않는다.
+   */
   savedField: UserSettingsField | null;
   /** 저장 실패 문구(code 매핑, 서버 원문 아님). 성공·재시도 시 지워진다. */
   errorMessage: string | null;
@@ -62,7 +62,7 @@ export type UseUserSettings = {
 
 export function useUserSettings(): UseUserSettings {
   const { user, refreshAuth, setAuthenticatedUser } = useAuth();
-  const [savingField, setSavingField] = useState<UserSettingsField | null>(null);
+  const [saving, setSaving] = useState(false);
   const [savedField, setSavedField] = useState<UserSettingsField | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorField, setErrorField] = useState<UserSettingsField | null>(null);
@@ -83,13 +83,14 @@ export function useUserSettings(): UseUserSettings {
     (field: UserSettingsField, patch: UpdateUserSettingsRequest) => {
       if (lock.current) return; // 저장 중 중복 요청 차단
       lock.current = true;
-      setSavingField(field);
-      setSavedField(null);
+      setSaving(true);
+      setSavedField(null); // 이전 성공 안내를 비운다(같은 항목 재저장 시 다시 낭독되게)
       setErrorMessage(null);
       setErrorField(null);
       void updateUserSettings(patch)
         .then((updated) => {
           // 서버가 확정한 사용자 요약으로 인증 상태를 교체 → 표시값이 이 응답을 따라간다.
+          // 시각 피드백은 컨트롤이 이 값으로 움직이는 것이고, 낭독은 savedField 가 맡는다.
           setAuthenticatedUser(updated);
           setSavedField(field);
         })
@@ -103,7 +104,7 @@ export function useUserSettings(): UseUserSettings {
         })
         .finally(() => {
           lock.current = false;
-          setSavingField(null);
+          setSaving(false);
         });
     },
     [setAuthenticatedUser],
@@ -115,8 +116,7 @@ export function useUserSettings(): UseUserSettings {
 
   return {
     settings,
-    savingField,
-    saving: savingField !== null,
+    saving,
     savedField,
     errorMessage,
     errorField,
