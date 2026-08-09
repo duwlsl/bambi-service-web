@@ -1,9 +1,14 @@
 "use client";
 
+import {
+  reportNotificationLabel,
+  reportVisibilityLabel,
+} from "@/components/settings/report-settings-options";
 import { themeModeLabel } from "@/components/settings/theme-modes";
 import { useTheme } from "@/components/theme/theme-provider";
 import type { useMcpApiKeys } from "@/hooks/use-mcp-api-keys";
 import type { useOAuthConnections } from "@/hooks/use-oauth-connections";
+import type { UserSettings } from "@/types/settings";
 
 /**
  * 설정 우측 rail — 「현재 설정」 요약.
@@ -17,13 +22,15 @@ import type { useOAuthConnections } from "@/hooks/use-oauth-connections";
  *   그대로 센다. **rail 때문에 API 를 다시 부르지 않는다**(같은 훅 인스턴스를 공유한다).
  *   `success` 가 아니면(미설정으로 idle · loading · error) 값을 알 수 없으므로 **행 자체를 넣지 않는다** —
  *   "0개"로 적으면 "연결이 없다"는 확정 정보가 되는데, 그건 모르는 것과 다르다.
+ * - `기본 공개 범위` · `보고서 완료 알림` — 08-09 에 서버 설정값이 생겨(#63) 이제 읽을 수 있다.
+ *   본문과 **같은 훅 인스턴스**의 확정값을 상위에서 받아 쓰므로 rail 때문에 요청이 늘지 않고,
+ *   본문에서 저장에 성공한 순간 같은 렌더에서 함께 바뀐다. 아직 읽지 못했으면(`null`) 위 규칙대로
+ *   행을 넣지 않는다 — 기본값을 적으면 사용자가 고른 값처럼 읽히기 때문.
  *
  * 넣지 않은 값:
  * - `아침 브리핑 주제` — 선택 UI 자체가 `/wiki` 로 옮겨갔다. 편집하는 화면과 요약이 갈리면
  *   사용자가 값을 고치러 설정에서 헤매게 되고, 이 rail 때문에 설정 화면이 `briefing-topics` 를
  *   한 번 더 조회하게 된다. 저장 상태는 `/wiki` 의 그 섹션이 직접 보여준다.
- * - `기본 공개 범위` · `보고서 완료 알림` — 서버에 설정값 자체가 없다. 지금 모든 보고서가 PRIVATE 인 건
- *   시스템 하드코딩이지 사용자가 고른 preference 가 아니라서, 그걸 "나만 보기 설정"으로 옮겨 적지 않는다.
  * - 목업(settings.html)의 우측 rail 은 요금제(플랜) 카드인데 플랜 API 가 없고, 목업 자신도 한도 수치를
  *   "팀 결정 대기"로 표시해 두었다 — 그대로 옮기면 정해지지 않은 숫자를 사실처럼 보여주게 된다.
  *
@@ -35,10 +42,13 @@ export function SettingsRail({
   mcpConfigured,
   keys,
   connections,
+  settings,
 }: {
   mcpConfigured: boolean;
   keys: ReturnType<typeof useMcpApiKeys>;
   connections: ReturnType<typeof useOAuthConnections>;
+  /** 서버가 확정한 보고서 설정. 아직 읽지 못했으면 null → 해당 행을 넣지 않는다. */
+  settings: UserSettings | null;
 }) {
   const { mode } = useTheme();
 
@@ -62,6 +72,16 @@ export function SettingsRail({
 
         {/* 테마는 항상 읽을 수 있다(서버 값이 아니라 클라이언트 상태) → 언제나 첫 행. */}
         <Row label="화면 테마" value={themeModeLabel(mode)} first />
+
+        {settings !== null && (
+          <>
+            <Row label="기본 공개 범위" value={reportVisibilityLabel(settings.defaultCardVisibility)} />
+            <Row
+              label="보고서 완료 알림"
+              value={reportNotificationLabel(settings.reportReadyNotification)}
+            />
+          </>
+        )}
 
         {activeConnections !== null && (
           <Row

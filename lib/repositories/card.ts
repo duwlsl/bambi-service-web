@@ -1,4 +1,4 @@
-import { request } from "@/lib/api-client";
+import { apiPatch } from "@/lib/api-client";
 import type { CardResponse, CardVisibility } from "@/types/feed";
 
 /**
@@ -15,15 +15,13 @@ import type { CardResponse, CardVisibility } from "@/types/feed";
  * - 허용값은 `PUBLIC` / `PRIVATE` 뿐이고, 그 외는 @Valid 단계에서 400 VALIDATION_ERROR 다.
  * - URL 에는 카드 `publicId` 만 쓴다(`reportId`·내부 순번 id 사용 금지).
  *
- * 공통 client 에 전용 `apiPatch` 가 없어 저수준 `request` 에 `method: "PATCH"` 를 준다.
- * 중복 client 를 새로 만들지 않는다 — Bearer 부착·envelope 해석·401 처리는 그대로 공통 계층이 한다.
+ * Bearer 부착·envelope 해석·401 처리는 공통 계층(`apiPatch` → `request`)이 그대로 담당한다.
  */
 export function changeCardVisibility(
   cardPublicId: string,
   visibility: CardVisibility,
 ): Promise<CardResponse> {
-  return request<CardResponse>(
-    `/api/cards/${encodeURIComponent(cardPublicId)}/visibility`,
-    { method: "PATCH", body: { visibility } },
-  );
+  return apiPatch<CardResponse>(`/api/cards/${encodeURIComponent(cardPublicId)}/visibility`, {
+    visibility,
+  });
 }
