@@ -53,13 +53,13 @@ function LlmWikiView() {
     <div className="min-h-screen bg-background">
       <HomeNav onAddOpen={() => setAddOpen(true)} />
       <div className="mx-auto max-w-[1440px]">
-        <div className="flex flex-col items-start justify-center gap-[22px] px-5 pt-6 pb-14 min-[1100px]:flex-row">
+        <div className="flex flex-col items-start justify-center gap-[22px] px-5 pt-6 pb-14 min-[1100px]:flex-row min-[1100px]:items-stretch">
           {/* desktop 에서는 좌측 내비+상세 레일, mobile 에서는 contents 로 상세만 main 다음 순서에 배치한다. */}
-          <div className="contents min-[1100px]:block min-[1100px]:w-[300px] min-[1100px]:shrink-0">
+          <div className="contents min-[1100px]:flex min-[1100px]:w-[300px] min-[1100px]:shrink-0 min-[1100px]:flex-col">
             <SideLeft current={WIKI_MENU_LABEL} footLines={MOCK_SIDE_FOOT} sticky={false} />
 
             {graph.status === "success" && selectedDocumentId !== null && (
-              <div className="order-2 w-full min-[1100px]:mt-4">
+              <div className="order-2 w-full min-[1100px]:mt-4 min-[1100px]:h-0 min-[1100px]:min-h-0 min-[1100px]:flex-1">
                 <WikiDocumentPanel
                   selectedDocumentId={selectedDocumentId}
                   revealRequest={detailRevealRequest}
