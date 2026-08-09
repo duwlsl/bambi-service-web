@@ -59,7 +59,7 @@ export function WikiDocumentPanel({
   return (
     <aside
       ref={panelRef}
-      className="flex h-[650px] min-h-[520px] w-full scroll-mt-4 flex-col overflow-hidden rounded-[18px] border border-border bg-card shadow-sm"
+      className="flex h-[650px] min-h-[520px] w-full scroll-mt-4 flex-col overflow-hidden rounded-[18px] border border-border bg-card shadow-sm min-[1100px]:h-full min-[1100px]:min-h-0"
     >
       {state.status === "loading" ? (
         <div className="p-5" aria-hidden="true">
