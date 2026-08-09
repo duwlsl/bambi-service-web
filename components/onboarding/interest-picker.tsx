@@ -117,8 +117,8 @@ function InterestChip({
   );
 }
 
-/** .chip .pl — 미선택 ＋ (ink-dim). */
-function ChipPlusIcon() {
+/** .chip .pl — 미선택 ＋ (ink-dim). 설정의 아침 브리핑 관심사 chip 도 같은 아이콘을 쓴다. */
+export function ChipPlusIcon() {
   return (
     <svg width={11} height={11} viewBox="0 0 11 11" aria-hidden="true" className="shrink-0 text-muted-foreground">
       <path d="M5.5 0.8v9.4M0.8 5.5h9.4" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />

@@ -91,7 +91,10 @@ function SettingsView() {
               />
             </SettingsSection>
 
-            {/* `보고서` 섹션(기본 공개 범위 · 완료 알림)이 들어올 자리 — API 배포 전까지 렌더하지 않는다. */}
+            {/* `보고서` 섹션(기본 공개 범위 · 완료 알림)이 들어올 자리 — API 배포 전까지 렌더하지 않는다.
+                아침 브리핑 주제 선택은 후보가 AI 추론 관심사 + 직접 설정 관심사라
+                관심사를 실제로 관리하는 `/wiki` 로 옮겼다(components/wiki/wiki-briefing-topics.tsx). */}
+
 
             <McpApiKeySettings
               mcpConfigured={mcpConfigured}
