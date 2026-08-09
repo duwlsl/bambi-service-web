@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
@@ -14,6 +15,7 @@ import { LlmWikiEntry } from "@/components/wiki/llm-wiki-entry";
 import { WikiFound } from "@/components/wiki/wiki-found";
 import { WikiMind } from "@/components/wiki/wiki-mind";
 import { WikiMyInterests } from "@/components/wiki/wiki-my-interests";
+import { useBriefingTopics } from "@/hooks/use-briefing-topics";
 import { useInterestTaxonomy } from "@/hooks/use-interest-taxonomy";
 import { useMyInterests, type MyInterestsState } from "@/hooks/use-my-interests";
 import { useWikiInterests, type WikiInterestsState } from "@/hooks/use-wiki-interests";
@@ -54,6 +56,9 @@ function WikiView() {
   const taxonomy = useInterestTaxonomy();
   const interests = useWikiInterests();
   const my = useMyInterests();
+  // 아침 브리핑 주제 저장값. 후보(AI 태그·직접 설정 관심사)는 위 두 훅을 그대로 재사용한다.
+  // 아침 브리핑 주제 — **여기서는 요약만** 보여준다(rail). 편집·저장은 홈 [내 보고서] 상단 한 곳뿐이다.
+  const briefingTopics = useBriefingTopics();
   const [amOpen, setAmOpen] = useState(false);
 
   const wikiTags = interests.status === "success" ? interests.data : null;
@@ -88,7 +93,7 @@ function WikiView() {
             <LlmWikiEntry />
           </main>
 
-          <WikiRail interests={interests} my={my} />
+          <WikiRail interests={interests} my={my} briefing={briefingTopics} />
         </div>
       </div>
 
@@ -112,9 +117,11 @@ function WikiView() {
 function WikiRail({
   interests,
   my,
+  briefing,
 }: {
   interests: WikiInterestsState;
   my: MyInterestsState;
+  briefing: ReturnType<typeof useBriefingTopics>;
 }) {
   const myCount = my.status === "success" ? my.data.length : null;
   const newThisWeek =
@@ -134,6 +141,30 @@ function WikiRail({
         <RailStat label="AI 추론 관심사" value={inferredCount} />
         <RailStat label="이번 주 신규" value={newThisWeek} />
       </div>
+
+      {/* 아침 브리핑 — **요약 전용**이다. 여기서 고르거나 저장하지 않는다.
+          편집은 홈 [내 보고서] 상단 한 곳에서만 하고, 아래 링크가 그 자리로 보낸다.
+          저장값이 확정됐을 때만 렌더한다 — loading·error 는 모르는 상태라 "선택 안 함"으로
+          단정하면 안 된다(내 관심사 rail 규칙과 동일). */}
+      {briefing.status === "success" && (
+        <div className="rounded-[14px] border border-border bg-card px-4 py-[15px]">
+          <h4 className="mb-2 text-[13px] font-bold text-foreground">아침 브리핑</h4>
+          <p className="text-[12.5px] leading-[1.6] break-words text-ink-mid">
+            {briefing.data.length > 0 ? briefing.data.join(" · ") : "선택 안 함"}
+          </p>
+          <p className="mt-1 text-[11.5px] leading-[1.5] text-muted-foreground">
+            {briefing.data.length > 0
+              ? `주제 ${briefing.data.length}개로 매일 아침 발행돼요.`
+              : "고르지 않으면 내 관심사를 기준으로 발행돼요."}
+          </p>
+          <Link
+            href="/?briefing=edit"
+            className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center rounded-lg border border-border bg-background px-3 text-[12.5px] font-semibold text-ink-mid hover:bg-card"
+          >
+            주제 변경 →
+          </Link>
+        </div>
+      )}
     </aside>
   );
 }
