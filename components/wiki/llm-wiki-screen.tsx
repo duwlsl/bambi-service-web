@@ -16,6 +16,7 @@ import { PageState } from "@/components/ui/page-state";
 import { StateView } from "@/components/ui/state-view";
 import { WikiDocumentPanel } from "@/components/wiki/wiki-document-panel";
 import { WikiForceGraph } from "@/components/wiki/wiki-force-graph";
+import { WikiResetConfirmModal } from "@/components/wiki/wiki-reset-confirm-modal";
 import { useWikiDocumentDetail } from "@/hooks/use-wiki-document-detail";
 import { useWikiGraph, type WikiGraphState } from "@/hooks/use-wiki-graph";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
@@ -42,6 +43,7 @@ function LlmWikiView() {
   const graph = useWikiGraph();
   const detail = useWikiDocumentDetail(selectedDocumentId);
   const [addOpen, setAddOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState<
     | {
@@ -63,20 +65,13 @@ function LlmWikiView() {
   }
 
   async function resetPersonalWiki() {
-    if (
-      resetLock.current ||
-      graph.status !== "success" ||
-      !window.confirm(
-        "LLM Wiki를 초기화할까요? 저장한 원본 자료와 현재 Wiki 노드·관심사 연결이 모두 영구 삭제되며 복구할 수 없어요.",
-      )
-    ) {
-      return;
-    }
+    if (resetLock.current || graph.status !== "success") return;
     resetLock.current = true;
     setResetting(true);
     setResetResult(null);
     try {
       const result = await resetWiki();
+      setResetConfirmOpen(false);
       setSelectedDocumentId(null);
       setResetResult({
         status: "success",
@@ -85,6 +80,7 @@ function LlmWikiView() {
       });
       graph.refetch();
     } catch {
+      setResetConfirmOpen(false);
       setResetResult({ status: "error" });
     } finally {
       resetLock.current = false;
@@ -142,7 +138,10 @@ function LlmWikiView() {
                     variant="destructive"
                     size="sm"
                     disabled={resetting}
-                    onClick={() => void resetPersonalWiki()}
+                    onClick={() => {
+                      setResetResult(null);
+                      setResetConfirmOpen(true);
+                    }}
                   >
                     {resetting ? "초기화 중…" : "Wiki 초기화"}
                   </Button>
@@ -177,6 +176,12 @@ function LlmWikiView() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSaved={graph.refetch}
+      />
+      <WikiResetConfirmModal
+        open={resetConfirmOpen}
+        pending={resetting}
+        onClose={() => setResetConfirmOpen(false)}
+        onConfirm={() => void resetPersonalWiki()}
       />
     </div>
   );
