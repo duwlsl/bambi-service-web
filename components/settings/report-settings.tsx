@@ -34,6 +34,7 @@ import type { UserSettingsField } from "@/types/settings";
 const SAVED_ANNOUNCEMENT: Record<UserSettingsField, string> = {
   defaultCardVisibility: "기본 공개 범위 설정이 저장되었습니다.",
   reportReadyNotification: "보고서 완료 알림 설정이 저장되었습니다.",
+  changeHistoryEnabled: "변경사항 비교 설정이 저장되었습니다.",
 };
 
 export function ReportSettings({ settings: s }: { settings: ReturnType<typeof useUserSettings> }) {
@@ -112,6 +113,34 @@ export function ReportSettings({ settings: s }: { settings: ReturnType<typeof us
               />
             }
           />
+
+          {/*
+            변경사항 비교(Delta) — 계정 단위 설정 (service-api #74 · V19, 김기용 08-10 요청으로
+            요청 단위 토글을 대체). undefined = 구버전 백엔드 응답이라 행 자체를 그리지 않는다 —
+            기본값을 지어내 "이미 꺼져 있다"로 보여주지 않는 이 화면의 기존 원칙.
+            문구는 완료 시점·소요 시간을 약속하지 않는다("3~5분" 류 금지 규약).
+          */}
+          {settings.changeHistoryEnabled !== undefined && (
+            <SettingsRow
+              label="변경사항 비교로 보기"
+              description="보고서를 즉시 생성할 때, 지난 보고서 이후 새로 생기거나 달라진 내용을 중심으로 정리해 드려요. 주제를 처음 받는 경우에는 전체 내용으로 만들어져요."
+              status={
+                <RowStatus
+                  field="changeHistoryEnabled"
+                  errorMessage={errorMessage}
+                  errorField={errorField}
+                />
+              }
+              control={
+                <Switch
+                  label="변경사항 비교로 보기"
+                  checked={settings.changeHistoryEnabled}
+                  disabled={saving}
+                  onChange={(next) => save("changeHistoryEnabled", { changeHistoryEnabled: next })}
+                />
+              }
+            />
+          )}
         </>
       )}
     </SettingsSection>

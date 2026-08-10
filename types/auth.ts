@@ -23,6 +23,8 @@ export type User = {
   bio?: string | null;
   defaultCardVisibility?: CardVisibility;
   reportReadyNotification?: boolean;
+  // 변경점(Delta) 추적 계정 설정 (08-10 백엔드 UserSummary 확장 #74, V19). 구버전 응답엔 없다.
+  changeHistoryEnabled?: boolean;
 };
 
 /** POST /api/auth/login 성공 응답의 data. accessToken 은 data.accessToken 위치. */

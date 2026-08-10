@@ -71,11 +71,14 @@ export function useUserSettings(): UseUserSettings {
 
   // 두 필드가 **함께** 있을 때만 설정을 읽은 것으로 본다. 하나만 오는 응답은 없지만
   // (같은 DTO 에서 함께 채워진다) 한쪽만 있다고 나머지를 기본값으로 지어내지 않는다.
+  // changeHistoryEnabled(V19, 08-10)는 더 늦게 생긴 필드라 별도 취급 — 없으면 그 행만 안 그린다
+  // (두 필드 조건에 묶으면 구버전 백엔드에서 기존 두 행까지 통째로 사라진다).
   const settings: UserSettings | null =
     user?.defaultCardVisibility !== undefined && user?.reportReadyNotification !== undefined
       ? {
           defaultCardVisibility: user.defaultCardVisibility,
           reportReadyNotification: user.reportReadyNotification,
+          changeHistoryEnabled: user.changeHistoryEnabled,
         }
       : null;
 

@@ -15,16 +15,23 @@
 
 import type { CardVisibility } from "@/types/feed";
 
-/** PATCH /api/users/me/settings 요청 body. 두 필드 모두 선택적(생략 = 미변경). */
+/** PATCH /api/users/me/settings 요청 body. 모든 필드 선택적(생략 = 미변경). */
 export type UpdateUserSettingsRequest = {
   defaultCardVisibility?: CardVisibility;
   reportReadyNotification?: boolean;
+  /** 변경점(Delta) 추적 계정 설정 (service-api #74, V19 — 김기용 08-10). */
+  changeHistoryEnabled?: boolean;
 };
 
-/** 서버가 확정해 준 현재 설정값. 화면은 이 모양만 읽는다. */
+/**
+ * 서버가 확정해 준 현재 설정값. 화면은 이 모양만 읽는다.
+ * `changeHistoryEnabled` 는 08-10 추가(V19)라 **구버전 응답엔 없다** — undefined 면 해당 행을
+ * 렌더하지 않는다(값을 지어내 "이미 꺼져 있다"로 보여주지 않는 기존 원칙).
+ */
 export type UserSettings = {
   defaultCardVisibility: CardVisibility;
   reportReadyNotification: boolean;
+  changeHistoryEnabled?: boolean;
 };
 
 /** 저장 단위(행) 식별자 — 저장 결과(성공 낭독·실패 문구)를 해당 행에 연결하기 위한 키. */
