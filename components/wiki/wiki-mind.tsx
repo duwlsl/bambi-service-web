@@ -187,17 +187,29 @@ function MindRow({ item, onChanged }: { item: CategoryItem; onChanged: () => voi
       .finally(() => setBusy(false));
   }
 
+  /*
+    ≥360px 은 기존 한 줄 배치 그대로다: 이름(w-32) · 강도 막대(flex-1) · 출처(w-14) · 삭제(w-12).
+    그 아래에서는 고정폭 합(128+56+48 + gap 12×3 = 268px)이 320px 화면의 행 가용폭을 넘겨
+    가로 스크롤이 생겼다(실측 +9px). 폭을 더 깎으면 막대가 10px대로 뭉개지므로, 줄이는 대신
+    **막대만 다음 줄로 내린다**(flex-wrap + order-last + w-full):
+      1줄 — 이름(남은 폭 차지, 기존처럼 truncate) · 출처 · 삭제
+      2줄 — 강도 막대(전체 폭)
+    order 는 시각 순서만 바꾸므로 DOM·읽기 순서는 그대로고, 막대는 aria-hidden 이라 영향이 없다.
+  */
   return (
-    <li className="flex items-center gap-3">
-      <span className="w-32 shrink-0 truncate text-[13px] font-semibold text-foreground">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-foreground min-[360px]:w-32 min-[360px]:flex-none">
         {item.name}
       </span>
       {item.score === null ? (
-        <span className="min-w-0 flex-1 text-[11.5px] text-muted-foreground">
+        <span className="order-last w-full text-[11.5px] text-muted-foreground min-[360px]:order-none min-[360px]:w-auto min-[360px]:min-w-0 min-[360px]:flex-1">
           직접 추가한 관심사
         </span>
       ) : (
-        <span aria-hidden="true" className="h-2 min-w-0 flex-1 rounded-full bg-background">
+        <span
+          aria-hidden="true"
+          className="order-last h-2 w-full rounded-full bg-background min-[360px]:order-none min-[360px]:w-auto min-[360px]:min-w-0 min-[360px]:flex-1"
+        >
           <span className="block h-full rounded-full bg-primary/70" style={{ width: `${width}%` }} />
         </span>
       )}

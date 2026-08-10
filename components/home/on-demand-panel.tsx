@@ -95,11 +95,19 @@ function InterestPicker({
             const checked = generation.selected?.id === interest.id;
             return (
               /* .tpc — 선택 chip 은 목업 `.tpc.plus` 와 같은 wash·signal-ink 로 상태를 알린다.
-                 긴 관심사명도 300px rail 을 넘기지 않게 줄바꿈한다(가로 스크롤 금지). */
+                 긴 관심사명도 300px rail 을 넘기지 않게 줄바꿈한다(가로 스크롤 금지).
+
+                 `wrap-anywhere`(overflow-wrap:anywhere)를 쓴다. 이전의 `break-words`
+                 (overflow-wrap:break-word)로는 부족했다 — break-word 는 **줄 안에서만** 끊고
+                 요소의 min-content 폭은 줄이지 않는데, chip 은 inline-flex 라 안쪽 텍스트가
+                 min-width:auto 인 익명 flex 항목이 된다. 게다가 전역 `word-break: keep-all`
+                 (app/globals.css)이 한글 어절 중간 분절까지 막아서, 공백 없는 긴 관심사명이
+                 통째로 min-content 가 됐다(실측 339px) → rail·모바일에서 가로 스크롤 발생.
+                 anywhere 는 min-content 계산에도 반영돼 chip 이 컨테이너 폭까지 줄어든다. */
               <label
                 key={interest.id}
                 htmlFor={inputId}
-                className={`focus-within:ring-wash inline-flex max-w-full min-w-0 items-center rounded-full border px-3 py-1.5 text-[12.5px] leading-[1.45] break-words focus-within:ring-[3px] ${
+                className={`focus-within:ring-wash inline-flex max-w-full min-w-0 items-center rounded-full border px-3 py-1.5 text-[12.5px] leading-[1.45] wrap-anywhere focus-within:ring-[3px] ${
                   generation.submitting ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                 } ${
                   checked
