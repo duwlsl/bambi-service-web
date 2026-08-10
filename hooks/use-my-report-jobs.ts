@@ -1,65 +1,154 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/use-auth";
-import { usePolledData } from "@/hooks/use-polled-data";
-import { fetchMyReports } from "@/lib/repositories/my-reports";
-import type { MyReport } from "@/types/report";
+import {
+  observePendingFailure,
+  observePendingSuccess,
+  type PendingIdSnapshot,
+} from "@/lib/report-pending";
+import { fetchPendingReports } from "@/lib/repositories/my-reports";
+import type { GenerationPendingDto, MyReport } from "@/types/report";
 
-/**
- * 홈 [내 보고서] 생성 작업(job) 상태 훅 — member 전용. PREPARING(생성 중)·ERROR(생성 실패)를 함께 다룬다.
- * repository seam(fetchMyReports)을 **한 번만** 조회하고 status 로 파생 분리한다
- * (PREPARING·ERROR 를 각각 다시 조회하지 않는다 — 같은 MyReport[] 중복 fetch 금지).
- * READY 완료 보고서는 별도 데이터 경로(useMemberFeed = GET /api/feed)라 여기 포함하지 않는다.
- *
- * - preparing: status === "PREPARING" (처리중 슬롯)
- * - failed:    status === "ERROR"     (생성 실패 카드)
- * - 둘 다 0건이어도 error 가 아니면 ready(빈 배열) — Empty 판단은 상위(홈)가 READY 까지 합쳐 내린다.
- */
+type PendingRequestState =
+  | { status: "loading" }
+  | { status: "success"; data: GenerationPendingDto[] }
+  | { status: "error" };
+
+/** 홈 [내 보고서] 활성 생성 작업(PENDING/RUNNING/PUBLISHING) 상태. */
 export type MyReportJobsState =
   | { status: "loading"; refetch: () => Promise<void> }
   | { status: "error"; refetch: () => Promise<void> }
   | { status: "ready"; preparing: MyReport[]; failed: MyReport[]; refetch: () => Promise<void> };
 
-export function useMyReportJobs(onCompleted?: () => void): MyReportJobsState {
+/**
+ * 활성 Pending이 있을 때만 5초 polling한다. 성공 응답의 ID가 다음 성공 응답에서 사라지면
+ * 종결된 것으로 보고 완료 피드를 한 번 갱신한다. 실패 응답은 빈 목록으로 취급하지 않는다.
+ *
+ * `/pending`은 종결 상태를 반환하지 않으므로 failed는 별도 종결 API가 연결될 때까지 빈 배열이다.
+ */
+export function useMyReportJobs(onPendingSettled?: () => void): MyReportJobsState {
   const { status } = useAuth();
   const enabled = status === "authenticated";
-  const fetcher = useCallback((signal: AbortSignal) => fetchMyReports(signal), []);
-  const selectInterval = useCallback(
-    (reports: MyReport[]) => reports.some((report) => report.status === "PREPARING") ? 5_000 : 30_000,
-    [],
-  );
-  const state = usePolledData<MyReport[]>(fetcher, enabled, 30_000, selectInterval);
-  const knownCompleted = useRef<Set<string> | null>(null);
+  const fetcher = useCallback((signal: AbortSignal) => fetchPendingReports(signal), []);
+  const [requestState, setRequestState] = useState<PendingRequestState>({ status: "loading" });
+  const requestRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const refetch = useCallback(() => requestRef.current(), []);
 
   useEffect(() => {
     if (!enabled) {
-      knownCompleted.current = null;
+      requestRef.current = () => Promise.resolve();
       return;
     }
-    if (state.status !== "success" || !state.data) return;
-    const completed = new Set(
-      state.data.filter((report) => report.status === "READY").map((report) => report.id),
-    );
-    if (knownCompleted.current === null) {
-      knownCompleted.current = completed;
-      return;
-    }
-    const hasNewCompletion = [...completed].some((id) => !knownCompleted.current?.has(id));
-    knownCompleted.current = completed;
-    if (hasNewCompletion) onCompleted?.();
-  }, [enabled, onCompleted, state.status, state.data]);
 
-  if (state.status === "success") {
-    const reports = state.data ?? [];
-    return {
-      status: "ready",
-      preparing: reports.filter((report) => report.status === "PREPARING"),
-      failed: reports.filter((report) => report.status === "ERROR"),
-      refetch: state.refetch,
+    let effectActive = true;
+    let inFlight = false;
+    let queued = false;
+    let hasSuccessfulResponse = false;
+    let lastSuccessfulReports: GenerationPendingDto[] = [];
+    let snapshot: PendingIdSnapshot = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
+
+    function stopTimer() {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+
+    function scheduleNext(intervalMs: number | null) {
+      stopTimer();
+      if (!effectActive || intervalMs === null || document.hidden) return;
+      timer = setTimeout(() => {
+        timer = null;
+        void runFetch();
+      }, intervalMs);
+    }
+
+    async function runFetch(manual = false): Promise<void> {
+      if (!effectActive) return;
+      if (manual) stopTimer();
+      if (inFlight) {
+        queued = true;
+        return;
+      }
+
+      inFlight = true;
+      controller = new AbortController();
+      if (!hasSuccessfulResponse) setRequestState({ status: "loading" });
+
+      try {
+        const reports = await fetcher(controller.signal);
+        if (!effectActive) return;
+
+        const observation = observePendingSuccess(snapshot, reports);
+        snapshot = observation.snapshot;
+        hasSuccessfulResponse = true;
+        lastSuccessfulReports = reports;
+        setRequestState({ status: "success", data: reports });
+        if (observation.shouldRefreshFeed) onPendingSettled?.();
+        scheduleNext(observation.nextIntervalMs);
+      } catch {
+        if (!effectActive || controller.signal.aborted) return;
+
+        const observation = observePendingFailure(snapshot);
+        snapshot = observation.snapshot;
+        setRequestState(
+          hasSuccessfulResponse
+            ? { status: "success", data: lastSuccessfulReports }
+            : { status: "error" },
+        );
+        scheduleNext(observation.nextIntervalMs);
+      } finally {
+        inFlight = false;
+        if (effectActive && queued) {
+          queued = false;
+          stopTimer();
+          void runFetch();
+        }
+      }
+    }
+
+    function onVisibilityChange() {
+      if (document.hidden) {
+        stopTimer();
+        return;
+      }
+      if (snapshot !== null && snapshot.size > 0) void runFetch(true);
+    }
+
+    requestRef.current = () => runFetch(true);
+    void runFetch();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      effectActive = false;
+      queued = false;
+      stopTimer();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      controller?.abort();
+      requestRef.current = () => Promise.resolve();
     };
-  }
-  if (state.status === "error") return { status: "error", refetch: state.refetch };
-  return { status: "loading", refetch: state.refetch }; // idle · loading → 데이터 로딩
+  }, [enabled, fetcher, onPendingSettled]);
+
+  if (!enabled || requestState.status === "loading") return { status: "loading", refetch };
+  if (requestState.status === "error") return { status: "error", refetch };
+
+  return {
+    status: "ready",
+    preparing: requestState.data.map(toPreparingReport),
+    failed: [],
+    refetch,
+  };
+}
+
+function toPreparingReport(pending: GenerationPendingDto): MyReport {
+  return {
+    id: pending.id,
+    title: pending.topic?.trim() || "관심사 보고서",
+    reportType: pending.reportType,
+    status: "PREPARING",
+  };
 }
