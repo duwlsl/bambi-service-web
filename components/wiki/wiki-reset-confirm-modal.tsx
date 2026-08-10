@@ -50,6 +50,7 @@ export function WikiResetConfirmModal({
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
+          aria-busy={pending}
           aria-labelledby="wiki-reset-title"
           aria-describedby="wiki-reset-description"
           onClick={(event) => event.stopPropagation()}
@@ -101,13 +102,18 @@ export function WikiResetConfirmModal({
             <Button
               type="button"
               variant="destructive"
-              onClick={onConfirm}
-              disabled={pending}
-              className="sm:min-w-40"
+              onClick={() => {
+                if (!pending) onConfirm();
+              }}
+              aria-disabled={pending}
+              className="aria-disabled:pointer-events-none aria-disabled:opacity-50 sm:min-w-40"
             >
               {pending ? "초기화 중…" : "영구 삭제하고 초기화"}
             </Button>
           </div>
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {pending ? "Wiki 초기화 요청을 처리하고 있어요. 완료될 때까지 기다려 주세요." : ""}
+          </p>
         </div>
       </div>
     </div>,

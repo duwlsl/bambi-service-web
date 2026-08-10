@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
@@ -19,6 +19,8 @@ import { WikiForceGraph } from "@/components/wiki/wiki-force-graph";
 import { WikiResetConfirmModal } from "@/components/wiki/wiki-reset-confirm-modal";
 import { useWikiDocumentDetail } from "@/hooks/use-wiki-document-detail";
 import { useWikiGraph, type WikiGraphState } from "@/hooks/use-wiki-graph";
+import { ERROR_CODES, resolveErrorMessage, type ErrorCode } from "@/constants/errors";
+import { ApiError } from "@/lib/api-client";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 import { resetWiki } from "@/lib/repositories/wiki";
 
@@ -51,10 +53,15 @@ function LlmWikiView() {
         deletedSourceDocumentCount: number;
         deletedSourceVersionCount: number;
       }
-    | { status: "error" }
+    | { status: "error"; errorCode: ErrorCode }
     | null
   >(null);
   const resetLock = useRef(false);
+  const resetFeedbackRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (resetResult?.status === "success") resetFeedbackRef.current?.focus();
+  }, [resetResult]);
 
   function selectDocument(
     documentId: string,
@@ -79,9 +86,12 @@ function LlmWikiView() {
         deletedSourceVersionCount: result.deletedSourceVersionCount,
       });
       graph.refetch();
-    } catch {
+    } catch (error) {
       setResetConfirmOpen(false);
-      setResetResult({ status: "error" });
+      setResetResult({
+        status: "error",
+        errorCode: error instanceof ApiError ? error.code : ERROR_CODES.INTERNAL_ERROR,
+      });
     } finally {
       resetLock.current = false;
       setResetting(false);
@@ -151,13 +161,17 @@ function LlmWikiView() {
 
             {resetResult && (
               <p
+                ref={resetFeedbackRef}
                 role={resetResult.status === "error" ? "alert" : "status"}
+                aria-live={resetResult.status === "error" ? "assertive" : "polite"}
+                aria-atomic="true"
+                tabIndex={resetResult.status === "success" ? -1 : undefined}
                 className={`mb-3 text-right text-[12px] ${
                   resetResult.status === "error" ? "text-destructive" : "text-muted-foreground"
                 }`}
               >
                 {resetResult.status === "error"
-                  ? "Wiki를 초기화하지 못했어요. 잠시 후 다시 시도해 주세요."
+                  ? `Wiki를 초기화하지 못했어요. ${resolveErrorMessage(resetResult.errorCode)}`
                   : `원본 자료 ${resetResult.deletedSourceDocumentCount}개와 Version ${resetResult.deletedSourceVersionCount}개를 영구 삭제하고 Wiki를 초기화했어요.`}
               </p>
             )}

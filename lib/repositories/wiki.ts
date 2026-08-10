@@ -36,6 +36,41 @@ function requireContainer<T>(data: T | null | undefined, path: string): T {
   return data;
 }
 
+const WIKI_RESET_COUNT_FIELDS = [
+  "resetDocumentCount",
+  "resetRelationCount",
+  "unsearchableChunkCount",
+  "deletedSourceDocumentCount",
+  "deletedSourceVersionCount",
+  "redactedSourceEventCount",
+  "retiredWikiVersionCount",
+  "retiredInterestProfileCount",
+  "cancelledJobCount",
+] as const satisfies readonly (keyof WikiResetData)[];
+
+/** 초기화 성공 응답의 필수 필드와 건수를 런타임에서 검증한다. */
+function requireWikiResetData(data: unknown, path: string): WikiResetData {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid reset payload for ${path}`, 200);
+  }
+
+  const payload = data as Record<string, unknown>;
+  const hasValidCounts = WIKI_RESET_COUNT_FIELDS.every((field) => {
+    const value = payload[field];
+    return typeof value === "number" && Number.isInteger(value) && value >= 0;
+  });
+  if (
+    typeof payload.userId !== "string" ||
+    typeof payload.resetAt !== "string" ||
+    typeof payload.requestId !== "string" ||
+    !hasValidCounts
+  ) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid reset payload for ${path}`, 200);
+  }
+
+  return payload as WikiResetData;
+}
+
 /** 자동추출 관심 태그 목록. 빈 배열이면 훅이 empty 로 정규화한다. */
 export async function fetchWikiTags(signal?: AbortSignal): Promise<WikiTag[]> {
   const path = "/api/wiki/tags";
@@ -66,7 +101,7 @@ export async function fetchWikiGraph(signal?: AbortSignal): Promise<WikiGraph> {
 /** 사용자 원본을 영구 삭제하고 현재 개인 LLM Wiki 상태를 초기화한다. */
 export async function resetWiki(signal?: AbortSignal): Promise<WikiResetData> {
   const path = "/api/wiki";
-  return requireContainer(await apiDelete<WikiResetData | null>(path, { signal }), path);
+  return requireWikiResetData(await apiDelete<unknown>(path, { signal }), path);
 }
 
 export type WikiDocumentDetailResult =
