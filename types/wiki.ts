@@ -104,6 +104,14 @@ export type WikiGraphData = {
   edges: WikiGraphEdgeDto[];
 };
 
+/** GET /api/wiki/build-status의 사용자별 Wiki 빌드 집계 상태. */
+export type WikiBuildStatusData = {
+  status: "BUILDING" | "FAILED" | "IDLE";
+  activeCount: number;
+  updatedAt: string | null;
+  errorCode: string | null;
+};
+
 /** DELETE /api/wiki의 개인 LLM Wiki 초기화 결과. */
 export type WikiResetData = {
   userId: string;
