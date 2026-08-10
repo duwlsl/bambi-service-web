@@ -1,5 +1,5 @@
 import { FALLBACK_ERROR_CODE } from "@/constants/errors";
-import { ApiError, apiGet } from "@/lib/api-client";
+import { ApiError, apiDelete, apiGet } from "@/lib/api-client";
 import {
   toWikiDocumentDetail,
   toWikiDocuments,
@@ -15,12 +15,13 @@ import type {
   WikiGraphData,
   WikiTag,
   WikiTagsData,
+  WikiResetData,
 } from "@/types/wiki";
 
 /**
  * 관심사 · LLM Wiki 데이터 repository — 화면 훅과 Service API 사이의 단일 seam.
  *
- * - 두 엔드포인트 모두 인증이 필요하다. Bearer 헤더 부착·envelope 해석·401 처리는 공통 api-client 가 한다(§3·§5·§8).
+ * - 모든 엔드포인트는 인증이 필요하다. Bearer 헤더 부착·envelope 해석·401 처리는 공통 api-client 가 한다(§3·§5·§8).
  * - 훅이 authenticated 에서만 호출하므로 여기서 인증 상태를 다시 판단하지 않는다.
  * - 정상 빈 목록(tags·items 0건)은 오류가 아니다 → 그대로 빈 배열을 반환하고 훅이 empty 로 정규화한다.
  *   필수 컨테이너 자체가 빠진 응답만 오류로 승격한다.
@@ -60,6 +61,12 @@ export async function fetchWikiGraph(signal?: AbortSignal): Promise<WikiGraph> {
   const path = "/api/wiki/graph";
   const data = requireContainer(await apiGet<WikiGraphData | null>(path, { signal }), path);
   return toWikiGraph(data);
+}
+
+/** 사용자 원본을 보존하고 현재 개인 LLM Wiki 파생 상태를 초기화한다. */
+export async function resetWiki(signal?: AbortSignal): Promise<WikiResetData> {
+  const path = "/api/wiki";
+  return requireContainer(await apiDelete<WikiResetData | null>(path, { signal }), path);
 }
 
 export type WikiDocumentDetailResult =
