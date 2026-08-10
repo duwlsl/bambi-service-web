@@ -137,6 +137,15 @@ export function apiPut<T>(
   return request<T>(path, { ...options, method: "PUT", body });
 }
 
+/** PATCH. path 는 `/api` 포함 전체 경로. (카드 공개범위·사용자 설정 등 **부분** 갱신) */
+export function apiPatch<T>(
+  path: string,
+  body?: unknown,
+  options?: Omit<RequestOptions, "body" | "method">,
+): Promise<T> {
+  return request<T>(path, { ...options, method: "PATCH", body });
+}
+
 /** DELETE. path 는 `/api` 포함 전체 경로. (언팔로우·스크랩 해제 등 멱등 삭제) */
 export function apiDelete<T>(
   path: string,

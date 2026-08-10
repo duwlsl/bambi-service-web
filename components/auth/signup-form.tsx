@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PASSWORD_MIN_LENGTH } from "@/constants/auth";
 import { ERROR_CODES, resolveErrorMessage } from "@/constants/errors";
 import { ApiError } from "@/lib/api-client";
 import { login, signup } from "@/lib/auth";
@@ -47,7 +48,8 @@ export function SignupForm() {
     if (displayName.trim() === "") errors.displayName = "이름을 입력해 주세요.";
     if (email.trim() === "") errors.email = "이메일을 입력해 주세요.";
     else if (!EMAIL_PATTERN.test(email.trim())) errors.email = "이메일 형식이 올바르지 않아요.";
-    if (password.length < 8) errors.password = "비밀번호는 8자 이상 입력해 주세요.";
+    if (password.length < PASSWORD_MIN_LENGTH)
+      errors.password = `비밀번호는 ${PASSWORD_MIN_LENGTH}자 이상 입력해 주세요.`;
     return errors;
   }
 
