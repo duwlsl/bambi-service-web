@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
@@ -16,8 +16,11 @@ import { PageState } from "@/components/ui/page-state";
 import { StateView } from "@/components/ui/state-view";
 import { WikiDocumentPanel } from "@/components/wiki/wiki-document-panel";
 import { WikiForceGraph } from "@/components/wiki/wiki-force-graph";
+import { WikiResetConfirmModal } from "@/components/wiki/wiki-reset-confirm-modal";
 import { useWikiDocumentDetail } from "@/hooks/use-wiki-document-detail";
 import { useWikiGraph, type WikiGraphState } from "@/hooks/use-wiki-graph";
+import { ERROR_CODES, resolveErrorMessage, type ErrorCode } from "@/constants/errors";
+import { ApiError } from "@/lib/api-client";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 import { resetWiki } from "@/lib/repositories/wiki";
 
@@ -42,9 +45,23 @@ function LlmWikiView() {
   const graph = useWikiGraph();
   const detail = useWikiDocumentDetail(selectedDocumentId);
   const [addOpen, setAddOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [resetResult, setResetResult] = useState<"success" | "error" | null>(null);
+  const [resetResult, setResetResult] = useState<
+    | {
+        status: "success";
+        deletedSourceDocumentCount: number;
+        deletedSourceVersionCount: number;
+      }
+    | { status: "error"; errorCode: ErrorCode }
+    | null
+  >(null);
   const resetLock = useRef(false);
+  const resetFeedbackRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (resetResult?.status === "success") resetFeedbackRef.current?.focus();
+  }, [resetResult]);
 
   function selectDocument(
     documentId: string,
@@ -55,25 +72,26 @@ function LlmWikiView() {
   }
 
   async function resetPersonalWiki() {
-    if (
-      resetLock.current ||
-      graph.status !== "success" ||
-      !window.confirm(
-        "LLM Wiki를 초기화할까요? 저장한 원본 자료는 남지만 현재 Wiki 노드와 관심사 연결은 모두 초기화되며 되돌릴 수 없어요.",
-      )
-    ) {
-      return;
-    }
+    if (resetLock.current || graph.status !== "success") return;
     resetLock.current = true;
     setResetting(true);
     setResetResult(null);
     try {
-      await resetWiki();
+      const result = await resetWiki();
+      setResetConfirmOpen(false);
       setSelectedDocumentId(null);
-      setResetResult("success");
+      setResetResult({
+        status: "success",
+        deletedSourceDocumentCount: result.deletedSourceDocumentCount,
+        deletedSourceVersionCount: result.deletedSourceVersionCount,
+      });
       graph.refetch();
-    } catch {
-      setResetResult("error");
+    } catch (error) {
+      setResetConfirmOpen(false);
+      setResetResult({
+        status: "error",
+        errorCode: error instanceof ApiError ? error.code : ERROR_CODES.INTERNAL_ERROR,
+      });
     } finally {
       resetLock.current = false;
       setResetting(false);
@@ -130,7 +148,10 @@ function LlmWikiView() {
                     variant="destructive"
                     size="sm"
                     disabled={resetting}
-                    onClick={() => void resetPersonalWiki()}
+                    onClick={() => {
+                      setResetResult(null);
+                      setResetConfirmOpen(true);
+                    }}
                   >
                     {resetting ? "초기화 중…" : "Wiki 초기화"}
                   </Button>
@@ -140,14 +161,18 @@ function LlmWikiView() {
 
             {resetResult && (
               <p
-                role={resetResult === "error" ? "alert" : "status"}
+                ref={resetFeedbackRef}
+                role={resetResult.status === "error" ? "alert" : "status"}
+                aria-live={resetResult.status === "error" ? "assertive" : "polite"}
+                aria-atomic="true"
+                tabIndex={resetResult.status === "success" ? -1 : undefined}
                 className={`mb-3 text-right text-[12px] ${
-                  resetResult === "error" ? "text-destructive" : "text-muted-foreground"
+                  resetResult.status === "error" ? "text-destructive" : "text-muted-foreground"
                 }`}
               >
-                {resetResult === "error"
-                  ? "Wiki를 초기화하지 못했어요. 잠시 후 다시 시도해 주세요."
-                  : "Wiki를 초기화했어요. 저장한 원본 자료는 그대로 유지돼요."}
+                {resetResult.status === "error"
+                  ? `Wiki를 초기화하지 못했어요. ${resolveErrorMessage(resetResult.errorCode)}`
+                  : `원본 자료 ${resetResult.deletedSourceDocumentCount}개와 Version ${resetResult.deletedSourceVersionCount}개를 영구 삭제하고 Wiki를 초기화했어요.`}
               </p>
             )}
 
@@ -165,6 +190,12 @@ function LlmWikiView() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSaved={graph.refetch}
+      />
+      <WikiResetConfirmModal
+        open={resetConfirmOpen}
+        pending={resetting}
+        onClose={() => setResetConfirmOpen(false)}
+        onConfirm={() => void resetPersonalWiki()}
       />
     </div>
   );

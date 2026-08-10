@@ -110,6 +110,9 @@ export type WikiResetData = {
   resetDocumentCount: number;
   resetRelationCount: number;
   unsearchableChunkCount: number;
+  deletedSourceDocumentCount: number;
+  deletedSourceVersionCount: number;
+  redactedSourceEventCount: number;
   retiredWikiVersionCount: number;
   retiredInterestProfileCount: number;
   cancelledJobCount: number;
