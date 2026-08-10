@@ -63,7 +63,7 @@ export async function fetchWikiGraph(signal?: AbortSignal): Promise<WikiGraph> {
   return toWikiGraph(data);
 }
 
-/** 사용자 원본을 보존하고 현재 개인 LLM Wiki 파생 상태를 초기화한다. */
+/** 사용자 원본을 영구 삭제하고 현재 개인 LLM Wiki 상태를 초기화한다. */
 export async function resetWiki(signal?: AbortSignal): Promise<WikiResetData> {
   const path = "/api/wiki";
   return requireContainer(await apiDelete<WikiResetData | null>(path, { signal }), path);

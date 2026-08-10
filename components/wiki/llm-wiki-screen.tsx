@@ -43,7 +43,15 @@ function LlmWikiView() {
   const detail = useWikiDocumentDetail(selectedDocumentId);
   const [addOpen, setAddOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [resetResult, setResetResult] = useState<"success" | "error" | null>(null);
+  const [resetResult, setResetResult] = useState<
+    | {
+        status: "success";
+        deletedSourceDocumentCount: number;
+        deletedSourceVersionCount: number;
+      }
+    | { status: "error" }
+    | null
+  >(null);
   const resetLock = useRef(false);
 
   function selectDocument(
@@ -59,7 +67,7 @@ function LlmWikiView() {
       resetLock.current ||
       graph.status !== "success" ||
       !window.confirm(
-        "LLM Wiki를 초기화할까요? 저장한 원본 자료는 남지만 현재 Wiki 노드와 관심사 연결은 모두 초기화되며 되돌릴 수 없어요.",
+        "LLM Wiki를 초기화할까요? 저장한 원본 자료와 현재 Wiki 노드·관심사 연결이 모두 영구 삭제되며 복구할 수 없어요.",
       )
     ) {
       return;
@@ -68,12 +76,16 @@ function LlmWikiView() {
     setResetting(true);
     setResetResult(null);
     try {
-      await resetWiki();
+      const result = await resetWiki();
       setSelectedDocumentId(null);
-      setResetResult("success");
+      setResetResult({
+        status: "success",
+        deletedSourceDocumentCount: result.deletedSourceDocumentCount,
+        deletedSourceVersionCount: result.deletedSourceVersionCount,
+      });
       graph.refetch();
     } catch {
-      setResetResult("error");
+      setResetResult({ status: "error" });
     } finally {
       resetLock.current = false;
       setResetting(false);
@@ -140,14 +152,14 @@ function LlmWikiView() {
 
             {resetResult && (
               <p
-                role={resetResult === "error" ? "alert" : "status"}
+                role={resetResult.status === "error" ? "alert" : "status"}
                 className={`mb-3 text-right text-[12px] ${
-                  resetResult === "error" ? "text-destructive" : "text-muted-foreground"
+                  resetResult.status === "error" ? "text-destructive" : "text-muted-foreground"
                 }`}
               >
-                {resetResult === "error"
+                {resetResult.status === "error"
                   ? "Wiki를 초기화하지 못했어요. 잠시 후 다시 시도해 주세요."
-                  : "Wiki를 초기화했어요. 저장한 원본 자료는 그대로 유지돼요."}
+                  : `원본 자료 ${resetResult.deletedSourceDocumentCount}개와 Version ${resetResult.deletedSourceVersionCount}개를 영구 삭제하고 Wiki를 초기화했어요.`}
               </p>
             )}
 
