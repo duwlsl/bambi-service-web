@@ -104,6 +104,19 @@ export type WikiGraphData = {
   edges: WikiGraphEdgeDto[];
 };
 
+/** DELETE /api/wiki의 개인 LLM Wiki 초기화 결과. */
+export type WikiResetData = {
+  userId: string;
+  resetDocumentCount: number;
+  resetRelationCount: number;
+  unsearchableChunkCount: number;
+  retiredWikiVersionCount: number;
+  retiredInterestProfileCount: number;
+  cancelledJobCount: number;
+  resetAt: string;
+  requestId: string;
+};
+
 /** Wiki Node가 참고한 사용자 원본 자료. */
 export type WikiDocumentSourceDto = {
   sourceDocumentId: string;

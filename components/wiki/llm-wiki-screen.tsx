@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
@@ -11,6 +11,7 @@ import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { HomeNav } from "@/components/home/home-nav";
 import { SideLeft } from "@/components/home/side-left";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
+import { Button } from "@/components/ui/button";
 import { PageState } from "@/components/ui/page-state";
 import { StateView } from "@/components/ui/state-view";
 import { WikiDocumentPanel } from "@/components/wiki/wiki-document-panel";
@@ -18,6 +19,7 @@ import { WikiForceGraph } from "@/components/wiki/wiki-force-graph";
 import { useWikiDocumentDetail } from "@/hooks/use-wiki-document-detail";
 import { useWikiGraph, type WikiGraphState } from "@/hooks/use-wiki-graph";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
+import { resetWiki } from "@/lib/repositories/wiki";
 
 const WIKI_MENU_LABEL = "관심사 · LLM Wiki";
 
@@ -40,6 +42,9 @@ function LlmWikiView() {
   const graph = useWikiGraph();
   const detail = useWikiDocumentDetail(selectedDocumentId);
   const [addOpen, setAddOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<"success" | "error" | null>(null);
+  const resetLock = useRef(false);
 
   function selectDocument(
     documentId: string,
@@ -47,6 +52,32 @@ function LlmWikiView() {
   ) {
     setSelectedDocumentId(documentId);
     if (options.revealDetail) setDetailRevealRequest((request) => request + 1);
+  }
+
+  async function resetPersonalWiki() {
+    if (
+      resetLock.current ||
+      graph.status !== "success" ||
+      !window.confirm(
+        "LLM Wiki를 초기화할까요? 저장한 원본 자료는 남지만 현재 Wiki 노드와 관심사 연결은 모두 초기화되며 되돌릴 수 없어요.",
+      )
+    ) {
+      return;
+    }
+    resetLock.current = true;
+    setResetting(true);
+    setResetResult(null);
+    try {
+      await resetWiki();
+      setSelectedDocumentId(null);
+      setResetResult("success");
+      graph.refetch();
+    } catch {
+      setResetResult("error");
+    } finally {
+      resetLock.current = false;
+      setResetting(false);
+    }
   }
 
   return (
@@ -87,12 +118,38 @@ function LlmWikiView() {
                   노드를 움직이며 지식 연결을 탐색하고, 선택한 Wiki 문서와 생성 근거를 확인하세요.
                 </p>
               </div>
-              {graph.status === "success" && graph.data.wikiVersion !== null && (
-                <span className="rounded-full border border-border bg-card px-3 py-1.5 text-[11.5px] font-semibold text-muted-foreground">
-                  Wiki v{graph.data.wikiVersion}
-                </span>
+              {graph.status === "success" && (
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {graph.data.wikiVersion !== null && (
+                    <span className="rounded-full border border-border bg-card px-3 py-1.5 text-[11.5px] font-semibold text-muted-foreground">
+                      Wiki v{graph.data.wikiVersion}
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={resetting}
+                    onClick={() => void resetPersonalWiki()}
+                  >
+                    {resetting ? "초기화 중…" : "Wiki 초기화"}
+                  </Button>
+                </div>
               )}
             </header>
+
+            {resetResult && (
+              <p
+                role={resetResult === "error" ? "alert" : "status"}
+                className={`mb-3 text-right text-[12px] ${
+                  resetResult === "error" ? "text-destructive" : "text-muted-foreground"
+                }`}
+              >
+                {resetResult === "error"
+                  ? "Wiki를 초기화하지 못했어요. 잠시 후 다시 시도해 주세요."
+                  : "Wiki를 초기화했어요. 저장한 원본 자료는 그대로 유지돼요."}
+              </p>
+            )}
 
             <GraphContent
               state={graph}
