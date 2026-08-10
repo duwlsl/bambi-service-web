@@ -56,12 +56,12 @@ function HomeView({ isMember }: { isMember: boolean }) {
   // guest 는 useMemberFeed / useMyReportJobs 내부 enabled=false 라 API 를 호출하지 않는다.
   const memberFeed = useMemberFeed();
   // 생성 작업(PREPARING·ERROR)은 READY 목록과 별개 소스지만 한 번만 조회해 status 로 나눈다(중복 fetch 없음).
-  const reportJobs = useMyReportJobs();
+  const reportJobs = useMyReportJobs(memberFeed.refetch);
   // 온디맨드 생성 — 데스크톱 rail 과 모바일 패널이 **같은 상태를 공유**하도록 여기서 1회만 소유한다.
   // 패널이 각자 useMyInterests() 를 부르면 GET /api/interests 가 2번 나가고 선택도 따로 논다.
   // guest 는 useMyInterests 내부 enabled=false 라 API 를 호출하지 않는다(다른 member 훅과 동일).
   const myInterests = useMyInterests();
-  const onDemand = useOnDemandGeneration(myInterests);
+  const onDemand = useOnDemandGeneration(myInterests, reportJobs.refetch);
   // 아침 브리핑 주제 — 후보는 AI 추론 태그(위키) ∪ 직접 설정 관심사(myInterests, 위에서 이미 소유)다.
   // `/wiki` rail 의 "주제 변경"이 `/?briefing=edit` 로 보내므로, 그 경우 편집을 펼친 채로 연다.
   const wikiInterests = useWikiInterests();

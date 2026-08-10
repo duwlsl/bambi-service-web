@@ -43,6 +43,7 @@ export type OnDemandGenerationState = {
 
 export function useOnDemandGeneration(
   interests: MyInterestsState & { refetch: () => void },
+  onAccepted?: () => void,
 ): OnDemandGenerationState {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -94,6 +95,7 @@ export function useOnDemandGeneration(
       .then(() => {
         if (!mounted.current) return;
         setAccepted(true);
+        onAccepted?.();
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted || !mounted.current) return; // abort 는 오류로 취급하지 않는다
@@ -109,7 +111,7 @@ export function useOnDemandGeneration(
         inFlight.current = false;
         if (mounted.current) setSubmitting(false);
       });
-  }, [items, selectedId, interests]);
+  }, [items, selectedId, interests, onAccepted]);
 
   return { selected, select, submit, submitting, accepted, errorMessage, canSubmit };
 }

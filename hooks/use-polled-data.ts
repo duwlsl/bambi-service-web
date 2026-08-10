@@ -102,6 +102,7 @@ export function usePolledData<T>(
   fetcher: (signal: AbortSignal) => Promise<T>,
   enabled: boolean,
   intervalMs: number | null,
+  selectNextIntervalMs?: (data: T) => number | null,
 ): PolledDataState<T> {
   // enabled=true 로 시작하면 effect 가 아직 안 돌았어도 첫 페인트부터 loading 이어야 한다
   // (idle 은 내부 상태로 존재하지 않는다 — 아래 반환부가 enabled 로 직접 계산한다).
@@ -126,6 +127,7 @@ export function usePolledData<T>(
   // 판정한다. useState 가 아니라 ref 인 이유: 이 값 자체를 화면에 렌더링하지 않고(렌더링되는
   // 것은 setInternal 을 통해 나오는 internal 상태뿐이다) effect 안에서만 읽고 쓴다.
   const activeSessionRef = useRef(false);
+  const nextIntervalRef = useRef<number | null>(intervalMs);
 
   const runFetch = useCallback(
     (isActivation = false) => {
@@ -143,6 +145,9 @@ export function usePolledData<T>(
       return fetcher(controller.signal)
         .then((data) => {
           if (!mountedRef.current || myId !== requestIdRef.current) return;
+          nextIntervalRef.current = selectNextIntervalMs
+            ? selectNextIntervalMs(data)
+            : intervalMs;
           setInternal((prev) => reduceFetchEvent(prev, { type: "success", data }));
         })
         .catch((error: unknown) => {
@@ -154,7 +159,7 @@ export function usePolledData<T>(
           if (inFlightIdRef.current === myId) inFlightIdRef.current = null;
         });
     },
-    [fetcher, enabled],
+    [fetcher, enabled, intervalMs, selectNextIntervalMs],
   );
 
   const refetch = useCallback(() => runFetch(), [runFetch]);
@@ -174,18 +179,24 @@ export function usePolledData<T>(
     mountedRef.current = true;
     const isActivation = !activeSessionRef.current;
     activeSessionRef.current = true;
-    void runFetch(isActivation); // 최초(또는 재활성화 직후) 즉시 조회
+    nextIntervalRef.current = intervalMs;
 
-    let timer: ReturnType<typeof setInterval> | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let effectActive = true;
 
     function startTimer() {
-      if (intervalMs === null) return;
+      if (!effectActive) return;
+      const delay = nextIntervalRef.current;
+      if (delay === null) return;
       if (document.hidden) return; // 숨김 탭에서는 걸지 않는다 — visible 복귀 시 다시 건다
-      timer = setInterval(() => void runFetch(), intervalMs);
+      timer = setTimeout(() => {
+        timer = null;
+        void runFetch().finally(startTimer);
+      }, delay);
     }
     function stopTimer() {
       if (timer !== null) {
-        clearInterval(timer);
+        clearTimeout(timer);
         timer = null;
       }
     }
@@ -195,15 +206,15 @@ export function usePolledData<T>(
         return;
       }
       // 복귀 즉시 1회 조회(진행 중이면 runFetch 자체의 락이 중복 실행을 막는다) 후 polling 재개.
-      void runFetch();
       stopTimer();
-      startTimer();
+      void runFetch().finally(startTimer);
     }
 
-    startTimer();
+    void runFetch(isActivation).finally(startTimer); // 최초 조회 결과에 맞춰 다음 주기를 예약
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
+      effectActive = false;
       mountedRef.current = false;
       stopTimer();
       document.removeEventListener("visibilitychange", onVisibilityChange);

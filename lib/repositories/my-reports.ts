@@ -1,22 +1,62 @@
-import { MOCK_MY_REPORTS } from "@/lib/mock/my-reports";
-import type { MyReport } from "@/types/report";
+import { FALLBACK_ERROR_CODE } from "@/constants/errors";
+import { ApiError, apiGet } from "@/lib/api-client";
+import type { MyReport, ReportStatus, TrackableReportType } from "@/types/report";
 
 /**
  * 내 보고서 생성 상태 repository — 화면 훅과 데이터 소스 사이의 단일 seam.
  *
- * ★★ 실제 API 교체 지점 ★★
- * 지금은 mock 을 Promise 로 감싸 반환한다. service.reports 테이블/API 가 준비되면 이 본문만
- * apiGet<...>("<GET /reports/mine 확정 경로>", { signal }) 호출 + 어댑터로 교체한다(훅·컴포넌트 무변경).
- * 경로는 미확정이라 하드코딩하지 않는다.
+ * Service의 생성 작업 상태를 화면 어휘(PREPARING/READY/ERROR)로 정규화한다.
  */
+const REPORT_JOBS_PATH = "/api/reports/jobs";
 
-/** mock 값을 Promise 로 감싸되 AbortSignal 을 존중한다(실 API 취소 계약 선반영). */
-function resolveAbortable<T>(value: T, signal?: AbortSignal): Promise<T> {
-  if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
-  return Promise.resolve(value);
+type GenerationJobDto = {
+  id: string;
+  topic: string | null;
+  reportType: string | null;
+  status: string;
+};
+
+/** 로그인 사용자의 최근 생성 작업을 조회한다. */
+export async function fetchMyReports(signal?: AbortSignal): Promise<MyReport[]> {
+  const data = await apiGet<unknown>(REPORT_JOBS_PATH, { signal });
+  if (!Array.isArray(data)) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid report jobs payload for ${REPORT_JOBS_PATH}`, 200);
+  }
+  return data.map(toMyReport);
 }
 
-/** 내 보고서 생성 상태 목록(mock). PREPARING 필터는 훅/화면 계층에서 status 로 파생한다. */
-export function fetchMyReports(signal?: AbortSignal): Promise<MyReport[]> {
-  return resolveAbortable(MOCK_MY_REPORTS, signal);
+/** Service 작업 상태 한 건을 화면 모델로 변환한다. */
+function toMyReport(value: unknown): MyReport {
+  if (!isGenerationJobDto(value) || !isTrackableReportType(value.reportType)) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid report job item for ${REPORT_JOBS_PATH}`, 200);
+  }
+  return {
+    id: value.id,
+    title: value.topic?.trim() || "관심사 보고서",
+    reportType: value.reportType,
+    status: toReportStatus(value.status),
+  };
+}
+
+/** Agent·Publish 상태를 기존 화면 상태 어휘로 축약한다. */
+function toReportStatus(status: string): ReportStatus {
+  if (["PENDING", "RUNNING", "PUBLISHING"].includes(status)) return "PREPARING";
+  if (status === "COMPLETED") return "READY";
+  if (["FAILED", "CANCELLED"].includes(status)) return "ERROR";
+  throw new ApiError(FALLBACK_ERROR_CODE, `unknown report job status: ${status}`, 200);
+}
+
+function isTrackableReportType(value: unknown): value is TrackableReportType {
+  return value === "MORNING_BRIEFING" || value === "ON_DEMAND";
+}
+
+function isGenerationJobDto(value: unknown): value is GenerationJobDto {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === "string" &&
+    (typeof item.topic === "string" || item.topic === null) &&
+    (typeof item.reportType === "string" || item.reportType === null) &&
+    typeof item.status === "string"
+  );
 }
