@@ -10,34 +10,41 @@ import {
   buildMixedFeed,
   followedAuthorIdsOf,
   pickRecommendedCandidates,
-  shuffled,
 } from "@/lib/feed-mix";
 import { fetchPublicFeed } from "@/lib/repositories/feed";
-import { fetchUserInterests } from "@/lib/repositories/interests";
 import type { PublicFeedCardVM } from "@/types/feed";
 
 /**
  * 홈 [피드] 데이터 훅 — **하나의 목록**을 만든다. 사용자가 범위를 고르는 내부 탭·chip 은 없다.
  *
  * 게스트: `GET /api/feed/public?following=false` 하나만 조회해 그대로 보여준다.
- *   팔로잉 API·관심사 API 는 호출하지 않는다.
+ *   팔로잉 API 는 호출하지 않는다.
  *
- * 로그인: 세 요청을 **한 fetcher 안에서** 병렬로 보내고 결과를 섞는다.
+ * 로그인: 두 요청을 **한 fetcher 안에서** 병렬로 보내고 결과를 섞는다.
  *   - `GET /api/feed/public?following=true`  → 팔로잉 카드(서버 최신순 유지)
- *   - `GET /api/feed/public?following=false` → 전체 공개 카드(추천 후보 원천)
- *   - `GET /api/interests`                   → 내 USER 관심사(추천 판정 기준)
- *   팔로잉 2 : 추천 1 로 교차 배치하고 최대 20개(MIXED_FEED_LIMIT).
+ *   - `GET /api/feed/public?following=false` → 전체 공개 카드(추천 후보 원천 — 서버가 뷰어의
+ *     좋아요·북마크 이력으로 개인화 순위를 계산해 **이미 정렬한 상태로** 내려준다, service-api #86.
+ *     각 카드의 `matchedTopics`/`matchedCategories` 도 함께 내려오지만 매칭 여부 판정에만 쓴다)
+ *   팔로잉 2 : 추천 1 로 교차 배치하고 최대 20개(MIXED_FEED_LIMIT). 추천 슬롯은 서버가 내려준
+ *   추천 목록을 앞에서부터 순서대로 소비한다 — 필터링(팔로잉·본인 제외) 이후 순서를 프론트가
+ *   다시 정하지 않는다(`lib/feed-mix.ts` 의 `pickRecommendedCandidates` 참조).
  *
- * **무작위 시점**: 추천 후보 shuffle 은 응답을 받은 직후 이 fetcher 안에서 **한 번만** 한다.
- * 렌더 중에 Math.random 을 다시 부르지 않으므로 리렌더로 순서가 바뀌지 않고, refetch·새로고침
- * (fetcher/reload 태그 변경)에서는 새 순서가 나온다.
+ * **관심사 API 는 더 이상 조회하지 않는다**(service-api #81, 계약 A안 — 2026-08-11 변경).
+ * 추천 후보 판정이 프론트의 이름 문자열 비교에서 서버 계산(`matchedTopics`/`matchedCategories`)으로
+ * 바뀌면서, 뷰어의 관심사 목록을 프론트가 따로 들고 있을 이유가 없어졌다(판정은
+ * `lib/feed-mix.ts` 의 `isRecommendedCandidate` 참조).
+ *
+ * **순서는 프론트가 만들지 않는다**(service-api #86 — 2026-08-11 변경). 이전에는 응답을 받은
+ * 직후 추천 후보를 shuffle 했지만, 서버가 개인화 순위를 응답 순서에 반영하면서 프론트가 다시
+ * 섞으면 그 순위가 사라진다. 지금은 `pickRecommendedCandidates` 가 필터링만 하고 `allPublic`
+ * 순서를 그대로 보존한다 — 같은 입력이면 항상 같은 결과가 나온다(결정적).
  *
  * **부분 실패 정책**(Promise.allSettled 로 각 요청을 독립 평가):
- *   - 팔로잉 성공 + (전체 공개 또는 관심사) 실패 → 팔로잉 카드만 표시
- *   - 추천 계산 가능(전체 공개·관심사 모두 성공) + 팔로잉 실패 → 추천 카드만 표시
- *   - 두 소스 모두 구성 불가 → throw 해서 error 상태로(mock 으로 보충하지 않는다)
- *   관심사 0건은 실패가 아니다 — 추천 후보가 0건이 되어 팔로잉만 남고, 전체 공개 카드로 빈자리를
- *   채우지 않는다(관심사 기반 추천 규칙 유지, 가짜 추천 금지).
+ *   - 팔로잉 성공 + 전체 공개 실패 → 팔로잉 카드만 표시
+ *   - 전체 공개 성공(추천 계산 가능) + 팔로잉 실패 → 추천 카드만 표시
+ *   - 둘 다 실패 → throw 해서 error 상태로(mock 으로 보충하지 않는다)
+ *   추천 후보 0건(매칭 topic·category 모두 없는 경우)은 실패가 아니다 — 팔로잉만 남고, 전체 공개
+ *   카드로 빈자리를 채우지 않는다(추천 규칙 유지, 가짜 추천 금지).
  *
  * 인증이 확정된 뒤에만 요청한다 → 인증 loading 과 데이터 loading 을 분리한다(인증 loading 은
  * 상위 HomeSkeleton 담당). 응답의 `liked` 가 조회자 기준이라 토큰 복원 전에 요청하면 로그인
@@ -67,38 +74,32 @@ export function usePublicFeed(): PublicFeedState & { refetch: () => void } {
         return toPublicFeedCards(await fetchPublicFeed({ following: false, signal }));
       }
 
-      const [followingRes, allPublicRes, interestsRes] = await Promise.allSettled([
+      const [followingRes, allPublicRes] = await Promise.allSettled([
         fetchPublicFeed({ following: true, signal }),
         fetchPublicFeed({ following: false, signal }),
-        fetchUserInterests(signal),
       ]);
 
       // 취소는 오류가 아니다 — useAsyncData 가 무시할 수 있도록 그대로 던진다.
-      for (const res of [followingRes, allPublicRes, interestsRes]) {
+      for (const res of [followingRes, allPublicRes]) {
         if (res.status === "rejected" && signal.aborted) throw res.reason;
       }
 
       const followingCards =
         followingRes.status === "fulfilled" ? toPublicFeedCards(followingRes.value) : null;
-      // 추천은 "전체 공개 카드 + 내 관심사" 둘 다 있어야 계산할 수 있다.
-      const canComputeRecommended =
-        allPublicRes.status === "fulfilled" && interestsRes.status === "fulfilled";
+      const allPublic = allPublicRes.status === "fulfilled" ? toPublicFeedCards(allPublicRes.value) : null;
 
       let recommendedCards: PublicFeedCardVM[] = [];
-      if (canComputeRecommended) {
-        const allPublic = toPublicFeedCards(allPublicRes.value);
-        const candidates = pickRecommendedCandidates({
+      if (allPublic !== null) {
+        // 필터링(팔로잉·본인 제외, 매칭 여부)만 하고 allPublic 순서(서버 개인화 순위)를 그대로 쓴다.
+        recommendedCards = pickRecommendedCandidates({
           allPublic,
           followingCards: followingCards ?? [],
-          interestNames: interestsRes.value.map((interest) => interest.name),
           followedAuthorIds: followedAuthorIdsOf(followingCards ?? []),
           viewerPublicId,
         });
-        // 응답 직후 1회 shuffle — 이후 렌더에서는 이 순서가 고정된다.
-        recommendedCards = shuffled(candidates);
       }
 
-      if (followingCards === null && !canComputeRecommended) {
+      if (followingCards === null && allPublic === null) {
         // 두 소스 모두 구성 불가 → 사용자에게 오류를 알린다(mock 보충 없음).
         const reason = followingRes.status === "rejected" ? followingRes.reason : undefined;
         throw reason instanceof Error ? reason : new Error("public feed: all sources failed");
