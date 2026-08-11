@@ -25,18 +25,29 @@ export function PreparingReports({ reports }: { reports: MyReport[] }) {
 }
 
 /**
- * 유형별 하단 안내.
- * ⚠ 소요 시간·진행률처럼 **백엔드에 근거가 없는 수치는 쓰지 않는다**(트리거·조회수 노출 금지와 같은 부류).
- *   agent 생성 시간은 파이프라인·모델에 따라 달라지고 service 가 예측값을 내려주지도 않는다.
+ * 카드 본문 제목 — 무엇을 생성하고 있는지 유형별로 다르게 알린다.
+ * 온디맨드는 사용자가 고른 관심사명(title)을 그대로 문장에 넣어 "무엇을" 만드는지 드러내고,
+ * 아침 브리핑은 사용자가 고른 값이 없으므로(LLM Wiki 가 상위 관심사로 자동 생성) 관심사명 대신
+ * 고정 문구를 쓴다 — title 을 그대로 노출하면 서버가 채운 placeholder 가 새 나갈 수 있다.
  */
-const TYPE_HINT: Record<TrackableReportType, string> = {
-  ON_DEMAND: "분석이 끝나면 여기에 바로 표시돼요",
-  MORNING_BRIEFING: "완료 후 내 보고서에서 확인할 수 있어요",
-};
+function preparingBodyTitle(title: string, reportType: TrackableReportType): string {
+  if (reportType === "MORNING_BRIEFING") return "오늘의 아침 브리핑을 생성하고 있어요";
+  return `${title} 보고서를 생성하고 있어요`;
+}
+
+/**
+ * 하단 설명 — 유형과 무관하게 동일하다. 완료 시점을 약속하지 않고(§ 소요 시간 금지 규약과 동일 이유)
+ * 완료 후 어디서 확인할 수 있는지만 안내한다.
+ */
+const PREPARING_DESCRIPTION = "완료되면 내 보고서에 바로 표시돼요.";
 
 /**
  * 처리중 슬롯 1건 — READY 카드와 구분되되 오류/실패처럼 보이지 않게(브랜드 wash 배지 + 은은한 Orb).
- * Orb 회전은 motion-safe(감속 모션 존중), 링크·버튼 없음(상세 이동 없음). 하단 안내는 생성 유형별로 다르다.
+ * Orb 회전은 motion-safe(감속 모션 존중), 링크·버튼 없음(상세 이동 없음).
+ *
+ * 정보 위계(2026-08-11 개선): 관심사명과 "생성 중" 상태가 한 줄에 뭉쳐 있으면 무엇을 만드는지와
+ * 지금 상태의 구분이 약했다. 상단은 상태 배지만, 본문 제목은 무엇을 만드는지(관심사명·아침 브리핑),
+ * 하단은 완료 후 어디서 보이는지로 행을 나눈다. 색·애니메이션·카드 골격은 그대로 유지한다.
  */
 function PreparingSlot({ title, reportType }: { title: string; reportType: TrackableReportType }) {
   return (
@@ -46,16 +57,13 @@ function PreparingSlot({ title, reportType }: { title: string; reportType: Track
           <Orb size={22} className="motion-safe:animate-spin [animation-duration:3s]" />
         </span>
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="shrink-0 rounded-full border border-wash-strong bg-wash px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-signal-ink">
-              분석 중
-            </span>
-            <span className="truncate text-[14px] font-bold tracking-[-0.01em] text-foreground">
-              {title}
-            </span>
-          </div>
-          <p className="mt-1.5 text-[13px] leading-[1.6] text-ink-mid">보고서를 생성하고 있어요.</p>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">{TYPE_HINT[reportType]}</p>
+          <span className="inline-block rounded-full border border-wash-strong bg-wash px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-signal-ink">
+            생성 중
+          </span>
+          <p className="mt-1.5 truncate text-[14px] font-bold tracking-[-0.01em] text-foreground">
+            {preparingBodyTitle(title, reportType)}
+          </p>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">{PREPARING_DESCRIPTION}</p>
         </div>
       </div>
     </article>

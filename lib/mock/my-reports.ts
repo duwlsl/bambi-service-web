@@ -20,7 +20,7 @@ export const QA_PREPARING_SAMPLES: MyReport[] = [
   {
     id: "rep-job-ondemand",
     reportType: "ON_DEMAND",
-    title: "관심 자료 분석 보고서",
+    title: "개발·프로그래밍",
     status: "PREPARING",
   },
   {
@@ -36,7 +36,7 @@ export const QA_ERROR_SAMPLES: MyReport[] = [
   {
     id: "rep-err-ondemand",
     reportType: "ON_DEMAND",
-    title: "관심 자료 분석 보고서",
+    title: "개발·프로그래밍",
     status: "ERROR",
   },
   {
