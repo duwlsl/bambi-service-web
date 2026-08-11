@@ -26,27 +26,41 @@ import type { WikiTag } from "@/types/wiki";
 export function WikiMyInterests({
   state,
   wikiTags,
-  onChanged,
+  onRemoved,
 }: {
   state: MyInterestsState & { refetch: () => void };
   wikiTags: WikiTag[] | null;
-  onChanged: () => void;
+  /** 뺀 관심사 이름을 알린다 — 화면이 그 이름을 왼쪽 목록에 남겨 되돌릴 수 있게 한다. */
+  onRemoved: (name: string) => void;
 }) {
   return (
-    <section aria-label="내 관심사" className="mb-8">
-      <h2 className="mb-2.5 flex items-baseline gap-2 text-[17px] font-bold tracking-[-0.01em] text-foreground">
+    // 발견 후보 패널과 짝을 이루는 박스(2026-08-11 우석 — 2열 배치). 같은 껍데기·같은 제목 크기라
+    // 왼쪽에서 추가하면 오른쪽에 나타나는 이동이 한눈에 읽힌다.
+    <section
+      aria-label="내 관심사"
+      className="rounded-[14px] border border-border bg-card px-[18px] py-4"
+    >
+      <h2 className="flex items-baseline gap-2 text-[15px] font-bold tracking-[-0.01em] text-foreground">
         내 관심사
         {state.status === "success" && (
           <span className="text-[12px] font-semibold text-muted-foreground">{state.data.length}개</span>
         )}
       </h2>
+      {/*
+        안내는 섹션에 한 번만 둔다(2026-08-11 우석 — 화면 정리). 이전에는 카드마다
+        "직접 추가한 관심사예요 — 관련 자료를 저장하면 AI 이해가 깊어져요"가 똑같이 반복돼
+        10개면 같은 문장이 10번 나왔다. 행에는 그 관심사에만 해당하는 근거(hover)만 남긴다.
+      */}
+      <p className="mt-1 mb-3 text-[12.5px] leading-[1.6] text-muted-foreground">
+        브리핑 주제로 쓰는 관심사예요. 삭제하면 왼쪽 발견 목록으로 돌아가요.
+      </p>
 
       {state.status === "loading" && <FeedSkeleton />}
 
       {state.status === "error" && (
         <StateView
           role="alert"
-          className="min-h-[160px]"
+          className="min-h-[120px]"
           icon={<IconAlert />}
           title="내 관심사를 불러오지 못했어요"
           description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
@@ -56,21 +70,21 @@ export function WikiMyInterests({
 
       {state.status === "success" && state.data.length === 0 && (
         <StateView
-          className="min-h-[160px]"
+          className="min-h-[120px]"
           icon={<IconEmptyDoc />}
           title="아직 관심사가 없어요"
-          description="위 발견 목록에서 추가하거나, 관심 자료를 저장해 AI가 찾게 해보세요."
+          description="왼쪽 발견 목록에서 추가하거나, 관심 자료를 저장해 AI가 찾게 해보세요."
         />
       )}
 
       {state.status === "success" && state.data.length > 0 && (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-1.5">
           {state.data.map((interest) => (
             <InterestCard
               key={interest.id}
               interest={interest}
               matched={findMatchedTag(interest, wikiTags)}
-              onChanged={onChanged}
+              onRemoved={onRemoved}
             />
           ))}
         </div>
@@ -89,11 +103,11 @@ function findMatchedTag(interest: InterestDto, wikiTags: WikiTag[] | null): Wiki
 function InterestCard({
   interest,
   matched,
-  onChanged,
+  onRemoved,
 }: {
   interest: InterestDto;
   matched: WikiTag | null;
-  onChanged: () => void;
+  onRemoved: (name: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -103,11 +117,11 @@ function InterestCard({
     setBusy(true);
     setFailed(false);
     deleteInterest(interest.id)
-      .then(() => onChanged())
+      .then(() => onRemoved(interest.name))
       .catch((err) => {
         // 이미 삭제된 경우 목표 상태 달성 — 목록 재조회로 정합시킨다.
         if (err instanceof ApiError && err.code === ERROR_CODES.NOT_FOUND) {
-          onChanged();
+          onRemoved(interest.name);
           return;
         }
         setFailed(true);
@@ -115,58 +129,51 @@ function InterestCard({
       .finally(() => setBusy(false));
   }
 
-  const reasons = matched && matched.reasonMessages.length > 0 ? matched.reasonMessages.slice(0, 3) : null;
+  /**
+   * 근거 문구는 카드에 펼치지 않고 hover(title)로만 준다 (2026-08-11 우석 — 화면 정리).
+   * agent 가 주는 근거가 대부분 같은 상용구("저장한 자료에서 반복해 나타난 주제예요")라,
+   * 카드마다 "AI는 이렇게 이해했어요 + 같은 한 줄"이 반복되며 10건이면 화면 서너 개 분량이 됐다.
+   * 관심사별로 다른 정보는 이름·일치 여부·신뢰도뿐이므로 그 셋만 한 줄에 남긴다.
+   */
+  const reasonTitle = matched && matched.reasonMessages.length > 0
+    ? matched.reasonMessages.join(" · ")
+    : undefined;
 
   return (
-    <article className="rounded-[14px] border border-border bg-card px-[18px] py-4">
-      <div className="flex items-center gap-2.5">
-        <span className="min-w-0 truncate text-[14px] font-bold text-foreground">{interest.name}</span>
-        {matched ? (
-          <>
-            <span className="shrink-0 rounded-full border border-border bg-background px-2 py-0.5 text-[11.5px] font-semibold text-signal-ink">
-              ◈ LLM 추론 일치
-            </span>
-            <span className="shrink-0 text-[11.5px] text-muted-foreground">
-              신뢰도 {Math.round(matched.confidence * 100)}%
-            </span>
-          </>
-        ) : (
-          <span className="shrink-0 rounded-full border border-border bg-background px-2 py-0.5 text-[11.5px] font-semibold text-ink-mid">
-            직접 설정
+    // 한 줄 행 — 패널 배경(bg-card) 위에 놓이므로 bg-background 로 한 톤 낮춘다(발견 칩과 동일 규칙).
+    <article
+      className="rounded-[10px] border border-border bg-background px-3 py-2"
+      title={reasonTitle}
+    >
+      {/*
+        배지·신뢰도 퍼센트는 노출하지 않는다 (2026-08-11 우석).
+        confidence 는 agent 산식이 `0.4 + 출처수*0.12 + min(연결,10)*0.03` 이라 바닥이 0.4 로
+        고정이고, 온보딩으로 들어온 관심사는 전부 출처 1·연결 0 이라 **모두 52% 로 같게 나왔다**
+        — 정밀해 보이지만 변별이 0 인 수치라 「근거 없는 수치 노출 금지」 규칙에 걸린다.
+        "AI 일치" 라벨도 실제 의미는 "일치도"가 아니라 agent 의 태그 확신도라 오해를 만들었다.
+        값이 실제로 갈리기 시작하면 그때 근거와 함께 되살린다.
+      */}
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 truncate text-[13.5px] font-bold text-foreground">
+          {interest.name}
+        </span>
+        <span className="flex-1" />
+        {failed && (
+          <span role="alert" className="shrink-0 text-[11.5px] text-signal-ink">
+            삭제 실패
           </span>
         )}
-        <span className="flex-1" />
         <button
           type="button"
           onClick={remove}
           disabled={busy}
           aria-busy={busy}
-          className="focus-ring shrink-0 rounded-[8px] border border-border bg-background px-2.5 py-1 text-[12px] font-semibold text-ink-mid hover:text-signal-ink disabled:opacity-50"
+          aria-label={`${interest.name} 관심사 삭제`}
+          className="focus-ring shrink-0 rounded-[7px] border border-border bg-background px-2 py-0.5 text-[11.5px] font-semibold text-ink-mid hover:text-signal-ink disabled:opacity-50"
         >
           삭제
         </button>
       </div>
-
-      <div className="mt-2.5 text-[11.5px] font-bold tracking-wide text-muted-foreground uppercase">
-        AI는 이렇게 이해했어요
-      </div>
-      {reasons ? (
-        <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-4 text-[12.5px] leading-[1.6] text-ink-mid">
-          {reasons.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-1 text-[12.5px] leading-[1.6] text-ink-mid">
-          직접 추가한 관심사예요{matched ? "" : " — 관련 자료를 저장하면 AI 이해가 깊어져요"}.
-        </p>
-      )}
-
-      {failed && (
-        <div role="alert" className="mt-2 text-[12px] text-signal-ink">
-          삭제하지 못했어요. 다시 시도해 주세요.
-        </div>
-      )}
     </article>
   );
 }

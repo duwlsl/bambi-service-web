@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
@@ -14,7 +14,11 @@ import { LlmWikiEntry } from "@/components/wiki/llm-wiki-entry";
 import { WikiFound } from "@/components/wiki/wiki-found";
 import { WikiMind } from "@/components/wiki/wiki-mind";
 import { WikiMyInterests } from "@/components/wiki/wiki-my-interests";
-import { WikiRecentSaves, useRecentSaves } from "@/components/wiki/wiki-recent-saves";
+import {
+  WikiRecentSaves,
+  useRecentSaves,
+  type RecentSavesState,
+} from "@/components/wiki/wiki-recent-saves";
 import { useInterestTaxonomy } from "@/hooks/use-interest-taxonomy";
 import { useMyInterests, type MyInterestsState } from "@/hooks/use-my-interests";
 import { useWikiInterests, type WikiInterestsState } from "@/hooks/use-wiki-interests";
@@ -57,9 +61,58 @@ function WikiView() {
   const my = useMyInterests();
   const recentSaves = useRecentSaves();
   const [amOpen, setAmOpen] = useState(false);
+  /**
+   * 이번 화면에서 방금 뺀 관심사 이름 (2026-08-11 우석 — "빼면 왼쪽으로 가야 한다").
+   *
+   * 관심사를 삭제하면 agent 컨텍스트가 재동기화되면서 **온보딩 선택에서 파생된 위키 태그도 함께
+   * 사라진다** → 발견 후보(위키 태그 − 내 관심사)에도 안 잡혀서 화면에서 완전히 증발했다.
+   * 되돌릴 방법이 "이름을 다시 타이핑"뿐이라 실수 한 번이 복구 불가였다.
+   * 그래서 뺀 이름을 이 화면이 기억해 왼쪽 목록에 남긴다 — 다시 누르면 그대로 복구된다.
+   * 저장하지 않는 세션 상태다(새로고침하면 사라진다). 서버가 태그를 계속 갖고 있는 관심사는
+   * 어차피 후보로 다시 올라오므로 중복은 이름 기준으로 합친다.
+   */
+  const [removedNames, setRemovedNames] = useState<readonly string[]>([]);
 
   const wikiTags = interests.status === "success" ? interests.data : null;
   const myInterests = my.status === "success" ? my.data : null;
+
+  /** 뺀 관심사를 기억하고 목록을 다시 읽는다. */
+  const handleRemoved = useCallback(
+    (name: string) => {
+      setRemovedNames((current) =>
+        current.some((n) => n.trim().toLowerCase() === name.trim().toLowerCase())
+          ? current
+          : [...current, name],
+      );
+      my.refetch();
+    },
+    [my],
+  );
+
+  /**
+   * 숨김 성공 — 서버(V27)에 저장됐으므로 위키 태그를 다시 읽으면 목록에서 빠진다.
+   * 세션 기억(removedNames)에도 남아 있으면 계속 후보로 뜨므로 함께 지운다.
+   */
+  const handleHidden = useCallback(
+    (name: string) => {
+      setRemovedNames((current) =>
+        current.filter((n) => n.trim().toLowerCase() !== name.trim().toLowerCase()),
+      );
+      interests.refetch();
+    },
+    [interests],
+  );
+
+  /** 되돌리기(재추가) 성공 — 기억에서 지우고 목록을 다시 읽는다. */
+  const handleAdded = useCallback(
+    (name: string) => {
+      setRemovedNames((current) =>
+        current.filter((n) => n.trim().toLowerCase() !== name.trim().toLowerCase()),
+      );
+      my.refetch();
+    },
+    [my],
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,25 +132,27 @@ function WikiView() {
               </p>
             </header>
 
+            {/* 읽기 전용 — 추가·삭제는 아래 2열 패널이 전담한다(2026-08-11 우석). */}
+            <WikiMind taxonomy={taxonomy} tags={interests} myInterests={myInterests} />
             {/*
-              저장 확인 스트립(08-11 우석) — **본문 맨 위**다. 방금 ＋관심 자료로 저장한 사람이
-              페이지를 열자마자 "저장은 됐다"를 확인하는 게 목적이라, 관심사 목록 아래(스크롤 끝)에
-              두면 목적을 잃는다(첫 배치에서 실제로 안 보였다). 저장 이력이 없으면 스스로 숨어
-              기존 화면 상단을 어지럽히지 않는다.
+              발견 후보(왼쪽) ↔ 내 관심사(오른쪽) 2열 (2026-08-11 우석).
+              추가하면 왼쪽에서 사라지고 오른쪽에 나타나므로 두 목록의 관계가 눈으로 읽힌다.
+              좁은 화면(<900px)에서는 한 열로 쌓아 각 목록이 뭉개지지 않게 한다.
             */}
-            <WikiRecentSaves state={recentSaves} />
-            <WikiMind
-              taxonomy={taxonomy}
-              tags={interests}
-              myInterests={myInterests}
-              onChanged={my.refetch}
-            />
-            <WikiFound tags={interests} myInterests={myInterests} onAdded={my.refetch} />
-            <WikiMyInterests state={my} wikiTags={wikiTags} onChanged={my.refetch} />
+            <div className="mb-8 grid grid-cols-1 items-start gap-3 min-[900px]:grid-cols-2">
+              <WikiFound
+                tags={interests}
+                myInterests={myInterests}
+                removedNames={removedNames}
+                onAdded={handleAdded}
+                onHidden={handleHidden}
+              />
+              <WikiMyInterests state={my} wikiTags={wikiTags} onRemoved={handleRemoved} />
+            </div>
             <LlmWikiEntry />
           </main>
 
-          <WikiRail interests={interests} my={my} />
+          <WikiRail interests={interests} my={my} recentSaves={recentSaves} />
         </div>
       </div>
 
@@ -122,9 +177,11 @@ function WikiView() {
 function WikiRail({
   interests,
   my,
+  recentSaves,
 }: {
   interests: WikiInterestsState;
   my: MyInterestsState;
+  recentSaves: RecentSavesState;
 }) {
   const myCount = my.status === "success" ? my.data.length : null;
   const newThisWeek =
@@ -144,6 +201,12 @@ function WikiRail({
         <RailStat label="AI 추론 관심사" value={inferredCount} />
         <RailStat label="이번 주 신규" value={newThisWeek} />
       </div>
+      {/*
+        저장 확인(08-11 우석) — 본문 최상단에서 rail 로 옮겼다. 본문은 관심사 목록에 집중하고,
+        비어 있던 rail 이 "방금 저장한 게 들어왔나"를 곁눈으로 확인하는 자리를 맡는다.
+        저장 이력이 없으면 스스로 숨는다(rail 이 빈 박스로 남지 않는다).
+      */}
+      <WikiRecentSaves state={recentSaves} />
     </aside>
   );
 }
