@@ -33,16 +33,16 @@ export default function SignupEmailPage() {
 
       <SignupForm />
 
-      {/* .auth-terms — 약관 링크는 P1, 시각 전용 */}
+      {/* .auth-terms — 이용약관은 준비 중, 개인정보 처리방침은 공개 라우트로 연결 */}
       <p className="mt-3 text-[11.5px] leading-[1.7] text-muted-foreground">
         계속하면{" "}
         <a aria-disabled="true" className="cursor-pointer text-ink-mid underline underline-offset-2">
           이용약관
         </a>
         과{" "}
-        <a aria-disabled="true" className="cursor-pointer text-ink-mid underline underline-offset-2">
+        <Link href="/privacy" className="text-ink-mid underline underline-offset-2">
           개인정보 처리방침
-        </a>
+        </Link>
         에 동의하게 돼요.
       </p>
 
