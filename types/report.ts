@@ -27,6 +27,21 @@ export type ReportType = "MORNING_BRIEFING" | "ON_DEMAND" | "ONBOARDING";
  */
 export type TrackableReportType = Exclude<ReportType, "ONBOARDING">;
 
+/** GET /api/reports/pending이 반환하는 활성 생성 상태. 종결 상태는 이 API에 포함되지 않는다. */
+export type GenerationPendingStatus = "PENDING" | "RUNNING" | "PUBLISHING";
+
+/** Service API GenerationPendingResponse와 1:1인 활성 생성 작업 DTO. */
+export type GenerationPendingDto = {
+  id: string;
+  topic: string | null;
+  contentType: string | null;
+  reportType: TrackableReportType;
+  status: GenerationPendingStatus;
+  createdAt: string;
+  updatedAt: string;
+  errorCode: string | null;
+};
+
 /** 내 보고서 1건의 생성 상태 요약. 처리중 여부는 status 로 파생한다(status === "PREPARING"). */
 export type MyReport = {
   id: string;

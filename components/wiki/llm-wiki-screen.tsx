@@ -18,6 +18,7 @@ import { WikiDocumentPanel } from "@/components/wiki/wiki-document-panel";
 import { WikiForceGraph } from "@/components/wiki/wiki-force-graph";
 import { WikiResetConfirmModal } from "@/components/wiki/wiki-reset-confirm-modal";
 import { useWikiDocumentDetail } from "@/hooks/use-wiki-document-detail";
+import { useWikiBuildStatus, type WikiBuildStatusState } from "@/hooks/use-wiki-build-status";
 import { useWikiGraph, type WikiGraphState } from "@/hooks/use-wiki-graph";
 import { ERROR_CODES, resolveErrorMessage, type ErrorCode } from "@/constants/errors";
 import { ApiError } from "@/lib/api-client";
@@ -43,6 +44,7 @@ function LlmWikiView() {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(initialDocumentId);
   const [detailRevealRequest, setDetailRevealRequest] = useState(0);
   const graph = useWikiGraph();
+  const buildStatus = useWikiBuildStatus(graph.refetch);
   const detail = useWikiDocumentDetail(selectedDocumentId);
   const [addOpen, setAddOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
@@ -86,6 +88,7 @@ function LlmWikiView() {
         deletedSourceVersionCount: result.deletedSourceVersionCount,
       });
       graph.refetch();
+      void buildStatus.refetch();
     } catch (error) {
       setResetConfirmOpen(false);
       setResetResult({
@@ -96,6 +99,11 @@ function LlmWikiView() {
       resetLock.current = false;
       setResetting(false);
     }
+  }
+
+  function refreshAfterMaterialSaved() {
+    graph.refetch();
+    void buildStatus.refetch();
   }
 
   return (
@@ -176,6 +184,8 @@ function LlmWikiView() {
               </p>
             )}
 
+            <WikiBuildStatusBanner state={buildStatus} />
+
             <GraphContent
               state={graph}
               selectedDocumentId={selectedDocumentId}
@@ -189,7 +199,7 @@ function LlmWikiView() {
       <AddMaterialModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSaved={graph.refetch}
+        onSaved={refreshAfterMaterialSaved}
       />
       <WikiResetConfirmModal
         open={resetConfirmOpen}
@@ -199,6 +209,48 @@ function LlmWikiView() {
       />
     </div>
   );
+}
+
+function WikiBuildStatusBanner({ state }: { state: WikiBuildStatusState }) {
+  if (state.status !== "ready") return null;
+
+  if (state.data.status === "BUILDING") {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="mb-4 flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 text-foreground"
+      >
+        <Orb size={22} className="shrink-0 motion-safe:animate-spin [animation-duration:3s]" />
+        <div>
+          <p className="text-[13.5px] font-semibold">LLM Wiki를 빌드하고 있어요</p>
+          <p className="mt-0.5 text-[12px] leading-[1.55] text-muted-foreground">
+            저장한 자료를 분석해 지식 연결을 업데이트하고 있어요. 완료되면 자동으로 반영돼요.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.data.status === "FAILED") {
+    return (
+      <div
+        role="alert"
+        className="mb-4 flex items-center gap-3 rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-foreground"
+      >
+        <IconAlert className="shrink-0 text-destructive" />
+        <div>
+          <p className="text-[13.5px] font-semibold">최근 LLM Wiki 빌드를 완료하지 못했어요</p>
+          <p className="mt-0.5 text-[12px] leading-[1.55] text-muted-foreground">
+            잠시 후 자료를 다시 저장하거나 페이지를 새로고침해 주세요.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function GraphContent({

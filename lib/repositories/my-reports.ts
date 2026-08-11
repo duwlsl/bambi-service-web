@@ -1,22 +1,29 @@
-import { MOCK_MY_REPORTS } from "@/lib/mock/my-reports";
-import type { MyReport } from "@/types/report";
+import { FALLBACK_ERROR_CODE } from "@/constants/errors";
+import { ApiError, apiGet } from "@/lib/api-client";
+import { isGenerationPendingDto, REPORT_PENDING_PATH } from "@/lib/report-pending";
+import type { GenerationPendingDto } from "@/types/report";
 
 /**
  * 내 보고서 생성 상태 repository — 화면 훅과 데이터 소스 사이의 단일 seam.
  *
- * ★★ 실제 API 교체 지점 ★★
- * 지금은 mock 을 Promise 로 감싸 반환한다. service.reports 테이블/API 가 준비되면 이 본문만
- * apiGet<...>("<GET /reports/mine 확정 경로>", { signal }) 호출 + 어댑터로 교체한다(훅·컴포넌트 무변경).
- * 경로는 미확정이라 하드코딩하지 않는다.
+ * Service의 활성 생성 작업(PENDING/RUNNING/PUBLISHING) 계약만 조회한다.
  */
-
-/** mock 값을 Promise 로 감싸되 AbortSignal 을 존중한다(실 API 취소 계약 선반영). */
-function resolveAbortable<T>(value: T, signal?: AbortSignal): Promise<T> {
-  if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
-  return Promise.resolve(value);
-}
-
-/** 내 보고서 생성 상태 목록(mock). PREPARING 필터는 훅/화면 계층에서 status 로 파생한다. */
-export function fetchMyReports(signal?: AbortSignal): Promise<MyReport[]> {
-  return resolveAbortable(MOCK_MY_REPORTS, signal);
+/** 로그인 사용자의 활성 생성 작업을 조회한다. */
+export async function fetchPendingReports(signal?: AbortSignal): Promise<GenerationPendingDto[]> {
+  const data = await apiGet<unknown>(REPORT_PENDING_PATH, { signal });
+  if (!Array.isArray(data)) {
+    throw new ApiError(
+      FALLBACK_ERROR_CODE,
+      `invalid report pending payload for ${REPORT_PENDING_PATH}`,
+      200,
+    );
+  }
+  if (!data.every(isGenerationPendingDto)) {
+    throw new ApiError(
+      FALLBACK_ERROR_CODE,
+      `invalid report pending item for ${REPORT_PENDING_PATH}`,
+      200,
+    );
+  }
+  return data;
 }

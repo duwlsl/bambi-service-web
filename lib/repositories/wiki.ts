@@ -11,6 +11,7 @@ import type {
   WikiDocumentDetail,
   WikiDocumentDetailData,
   WikiDocumentsData,
+  WikiBuildStatusData,
   WikiGraph,
   WikiGraphData,
   WikiTag,
@@ -34,6 +35,27 @@ function requireContainer<T>(data: T | null | undefined, path: string): T {
     throw new ApiError(FALLBACK_ERROR_CODE, `missing data container for ${path}`, 200);
   }
   return data;
+}
+
+/** 빌드 상태 응답은 화면 polling 분기를 결정하므로 enum과 필수 필드를 런타임에서 검증한다. */
+function requireWikiBuildStatus(data: unknown, path: string): WikiBuildStatusData {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid build status payload for ${path}`, 200);
+  }
+
+  const payload = data as Record<string, unknown>;
+  const validStatus = ["BUILDING", "FAILED", "IDLE"].includes(String(payload.status));
+  const validActiveCount =
+    typeof payload.activeCount === "number" &&
+    Number.isInteger(payload.activeCount) &&
+    payload.activeCount >= 0;
+  const validUpdatedAt = payload.updatedAt === null || typeof payload.updatedAt === "string";
+  const validErrorCode = payload.errorCode === null || typeof payload.errorCode === "string";
+  if (!validStatus || !validActiveCount || !validUpdatedAt || !validErrorCode) {
+    throw new ApiError(FALLBACK_ERROR_CODE, `invalid build status payload for ${path}`, 200);
+  }
+
+  return payload as WikiBuildStatusData;
 }
 
 const WIKI_RESET_COUNT_FIELDS = [
@@ -96,6 +118,12 @@ export async function fetchWikiGraph(signal?: AbortSignal): Promise<WikiGraph> {
   const path = "/api/wiki/graph";
   const data = requireContainer(await apiGet<WikiGraphData | null>(path, { signal }), path);
   return toWikiGraph(data);
+}
+
+/** 사용자별 Wiki 빌드 집계 상태. 브라우저는 Agent Job을 직접 조회하지 않는다. */
+export async function fetchWikiBuildStatus(signal?: AbortSignal): Promise<WikiBuildStatusData> {
+  const path = "/api/wiki/build-status";
+  return requireWikiBuildStatus(await apiGet<unknown>(path, { signal }), path);
 }
 
 /** 사용자 원본을 영구 삭제하고 현재 개인 LLM Wiki 상태를 초기화한다. */
