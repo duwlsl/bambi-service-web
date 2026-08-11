@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test:report-pending": "node --test tests/report-pending.test.mjs",
     "test:report-cover-image": "node --test tests/report-cover-image.test.mjs",
-    "test:feed-mix": "node --test tests/feed-mix.test.mjs"
+    "test:feed-mix": "node --test tests/feed-mix.test.mjs",
+    "test:notification-target": "node --test tests/notification-target.test.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
