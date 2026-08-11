@@ -9,14 +9,16 @@ import { toMyReportsSummary } from "@/lib/adapters/home-rail";
 /**
  * 홈 우측 rail (member).
  *
- * 패널 2개:
+ * 패널 3개:
  * - 내 보고서 현황 — 전체/공개/비공개 건수 · 최근 작성일 · `/reports` 진입.
  *   데이터는 **[내 보고서]가 이미 조회한 `GET /api/feed` 결과**다. `HomeView` 가 소유한
  *   `memberFeed` 상태를 그대로 받아 쓰므로 rail 때문에 API 를 다시 부르지 않는다.
  * - 온디맨드 보고서 만들기(`onDemandPanel`) — 별도 API(`GET /api/interests`)를 쓰는 영역이라
  *   상위가 만들어 넘긴 노드를 그대로 렌더한다. 여기서 관심사를 조회하지 않는다.
+ * - 개발용 리포트 테스트(`developmentReportPanel`) — 개발 배포에서 아침·Wiki 생성 경로를
+ *   각각 즉시 실행한다. 활성 Wiki 관심사와 mutation 상태는 상위가 한 번만 소유한다.
  *
- * **두 패널의 상태는 독립이다.** 온디맨드 패널을 feed 분기 **밖**에 두는 이유가 그것이다 —
+ * **각 패널의 상태는 독립이다.** 생성 패널을 feed 분기 **밖**에 두는 이유가 그것이다 —
  * 피드가 실패해도 생성 패널은 남고, 관심사가 실패해도 현황 패널은 남는다. 서로 다른 API 의
  * 실패가 상대 영역을 지우면 사용자는 멀쩡한 기능을 잃는다.
  *
@@ -32,9 +34,11 @@ import { toMyReportsSummary } from "@/lib/adapters/home-rail";
 export function SideRight({
   feed,
   onDemandPanel,
+  developmentReportPanel,
 }: {
   feed: MemberFeedState & { refetch: () => void };
   onDemandPanel?: ReactNode;
+  developmentReportPanel?: ReactNode;
 }) {
   return (
     <aside
@@ -46,6 +50,7 @@ export function SideRight({
       {feed.status === "empty" && <RailEmpty />}
       {feed.status === "success" && <RailContent cards={feed.data} />}
       {onDemandPanel}
+      {developmentReportPanel}
     </aside>
   );
 }

@@ -16,6 +16,7 @@ const REPORT_TYPE_LABEL: Record<ReportType, string> = {
   ON_DEMAND: "온디맨드",
   // API 식별값은 ONBOARDING 이지만 사용자에게는 "첫 리포트"로만 보인다(원문 노출 금지).
   ONBOARDING: "첫 리포트",
+  WIKI_INTEREST: "Wiki 관심사",
 };
 
 /** 알려진 reportType 이면 그 값을, 아니면 null. 모르는 값을 한쪽으로 단정하지 않는다. */

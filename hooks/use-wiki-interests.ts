@@ -13,6 +13,7 @@ import type { WikiTag } from "@/types/wiki";
  * repository seam(fetchWikiTags)만 소비한다.
  * authenticated 에서만 요청하고, loading / success / empty / error + refetch 로 정규화한다.
  * tags 가 0건인 정상 응답은 오류가 아니라 empty 다.
+ * {@code requested=false}이면 개발용 홈 패널이 숨겨진 배포에서 불필요한 조회를 하지 않는다.
  */
 export type WikiInterestsState =
   | { status: "loading" }
@@ -20,9 +21,9 @@ export type WikiInterestsState =
   | { status: "empty" }
   | { status: "error" };
 
-export function useWikiInterests(): WikiInterestsState & { refetch: () => void } {
+export function useWikiInterests(requested = true): WikiInterestsState & { refetch: () => void } {
   const { status } = useAuth();
-  const enabled = status === "authenticated";
+  const enabled = requested && status === "authenticated";
   const fetcher = useCallback((signal: AbortSignal) => fetchWikiTags(signal), []);
   const state = useAsyncData<WikiTag[]>(fetcher, enabled);
 

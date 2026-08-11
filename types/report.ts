@@ -7,7 +7,7 @@
 export type ReportStatus = "PREPARING" | "READY" | "ERROR";
 
 /**
- * 보고서가 어떤 방식으로 생성됐는지 — 아침 브리핑(정기)·온디맨드(요청)·온보딩(가입 직후 첫 리포트).
+ * 보고서가 어떤 방식으로 생성됐는지 — 아침 브리핑·온디맨드·온보딩·Wiki 관심사 묶음.
  *
  * 백엔드 `reportType` 필드와 값이 1:1인 **단일 어휘**다. 화면 문구 매핑은 `lib/report-type.ts`
  * (`getReportTypeLabel`) 한 곳에서만 하고, 여기에 프론트 전용 값을 새로 만들지 않는다.
@@ -16,11 +16,11 @@ export type ReportStatus = "PREPARING" | "READY" | "ERROR";
  * ⚠ `ONBOARDING` 은 **API 식별값**이다. 사용자에게는 항상 "첫 리포트"로만 보이며, 이 문자열
  * 자체를 화면에 노출하지 않는다(다른 두 값도 마찬가지 — 노출은 라벨 매핑을 반드시 거친다).
  */
-export type ReportType = "MORNING_BRIEFING" | "ON_DEMAND" | "ONBOARDING";
+export type ReportType = "MORNING_BRIEFING" | "ON_DEMAND" | "ONBOARDING" | "WIKI_INTEREST";
 
 /**
  * Service Pending으로 생성 진행 상태를 추적할 수 있는 종류. 온보딩 생성 소유권이 Service로
- * 이동하면서 세 종류 모두 PREPARING 슬롯에서 동일하게 추적한다.
+ * 이동하면서 모든 종류를 PREPARING 슬롯에서 동일하게 추적한다.
  */
 export type TrackableReportType = ReportType;
 

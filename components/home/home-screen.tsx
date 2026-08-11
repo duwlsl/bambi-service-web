@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
 import { AddMaterialModal } from "@/components/home/add-material-modal";
+import { DevelopmentReportPanel } from "@/components/home/development-report-panel";
 import { EmptyMyReports } from "@/components/home/empty-my-reports";
 import { FailedReports } from "@/components/home/failed-reports";
 import { FeedRec } from "@/components/home/feed-rec";
@@ -17,12 +18,18 @@ import { PreparingReports } from "@/components/home/preparing-reports";
 import { SideLeft } from "@/components/home/side-left";
 import { SideRight } from "@/components/home/side-right";
 import { useMemberFeed } from "@/hooks/use-member-feed";
+import { useDevelopmentReportGeneration } from "@/hooks/use-development-report-generation";
 import { useMyInterests } from "@/hooks/use-my-interests";
 import { useMyReportJobs } from "@/hooks/use-my-report-jobs";
 import { useOnDemandGeneration } from "@/hooks/use-on-demand-generation";
+import { useWikiInterests } from "@/hooks/use-wiki-interests";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 
 type HomeTab = "mine" | "rec";
+
+/** 개발 서버에서는 기본 노출하고, 운영 빌드에서 명시적으로 false를 주면 제거한다. */
+const DEVELOPMENT_REPORT_TRIGGERS_ENABLED =
+  process.env.NEXT_PUBLIC_DEV_REPORT_TRIGGER_ENABLED !== "false";
 
 /**
  * 홈 화면 — 인증 상태별로 명확히 분기(§15). 상세(report-screen)와 동일한 4분기.
@@ -58,6 +65,8 @@ function HomeView({ isMember }: { isMember: boolean }) {
   // guest 는 useMyInterests 내부 enabled=false 라 API 를 호출하지 않는다(다른 member 훅과 동일).
   const myInterests = useMyInterests();
   const onDemand = useOnDemandGeneration(myInterests, reportJobs.refetch);
+  const wikiInterests = useWikiInterests(DEVELOPMENT_REPORT_TRIGGERS_ENABLED);
+  const developmentReports = useDevelopmentReportGeneration(wikiInterests, reportJobs.refetch);
   const preparing = reportJobs.status === "ready" ? reportJobs.preparing : [];
   const failed = reportJobs.status === "ready" ? reportJobs.failed : [];
   // READY 목록이 비었을 때 그 자리에 무엇을 넣을지(READY 가 0건인지는 MemberFeed 가 자신의 status==="empty" 로 판단):
@@ -132,6 +141,14 @@ function HomeView({ isMember }: { isMember: boolean }) {
                   generation={onDemand}
                   className="mb-4 min-[1240px]:hidden"
                 />
+                {DEVELOPMENT_REPORT_TRIGGERS_ENABLED && (
+                  <DevelopmentReportPanel
+                    instanceId="mobile"
+                    wikiInterests={wikiInterests}
+                    generation={developmentReports}
+                    className="mb-4 min-[1240px]:hidden"
+                  />
+                )}
                 {/* 내 보고서 = PREPARING(처리중) → ERROR(생성 실패) → READY(완료 카드) 순. 각 섹션은 해당 상태가 있을 때만 렌더. */}
                 <PreparingReports reports={preparing} />
                 <FailedReports reports={failed} />
@@ -155,6 +172,15 @@ function HomeView({ isMember }: { isMember: boolean }) {
               feed={memberFeed}
               onDemandPanel={
                 <OnDemandPanel instanceId="desktop" interests={myInterests} generation={onDemand} />
+              }
+              developmentReportPanel={
+                DEVELOPMENT_REPORT_TRIGGERS_ENABLED ? (
+                  <DevelopmentReportPanel
+                    instanceId="desktop"
+                    wikiInterests={wikiInterests}
+                    generation={developmentReports}
+                  />
+                ) : null
               }
             />
           ) : (
