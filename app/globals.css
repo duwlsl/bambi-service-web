@@ -272,3 +272,35 @@
   .md-viewer td .up{color:var(--ok);font-weight:600;}
   .md-viewer td .dn{color:var(--destructive);font-weight:600;}
   .md-viewer .tnote{font-size:11.5px;color:var(--muted-foreground);margin:0 0 16px;}
+
+  /* ─────────────────────────────────────────────────────────────
+     변경점(Delta) 본문 — .md-delta 스코프에서만 적용된다.
+     리포트 응답의 changeHistoryEnabled=true 인 본문에만 이 클래스가 붙으므로
+     기존(자유 형식) 보고서의 렌더링·여백은 위 규칙 그대로다.
+
+     색 출처: changed/fresh 는 agent 참고 화면(bambi-agent-api
+     app/routers/development/change_history_views.py)의 실제 정의값,
+     취소선은 저장소 테마 변수(--destructive: light #DC2626 / dark #F87171)를 재사용한다.
+     다크는 참고 구현과 같은 방식으로 **글자색만** 덮고 배경 rgba 는 그대로 둔다.
+     ───────────────────────────────────────────────────────────── */
+  /* Delta 섹션 헤더 — 태그명이 아니라 heading 계층 구조로 판정된 것에만 붙는다(md-delta-section). */
+  .md-delta .md-delta-section{background:rgba(99,102,241,.12);color:#4f46e5;border-radius:6px;padding:.25rem .6rem;display:inline-flex;}
+  .md-delta h2.md-delta-section::before{display:none;}
+  /* 최심 소제목 — 문구가 정확히 일치할 때만 붙는다(부분 일치·기본값 없음). */
+  .md-delta .md-delta-changed{background:rgba(214,64,44,.12);color:#b3400f;border-radius:6px;padding:.25rem .6rem;display:inline-block;}
+  .md-delta .md-delta-fresh{background:rgba(30,125,52,.12);color:#1e7d34;border-radius:6px;padding:.25rem .6rem;display:inline-block;}
+  /* GFM 취소선 — 파서가 <del> 로 만든다(CSS·문자열 치환이 아니다). */
+  .md-delta del{text-decoration:line-through;background:rgba(239,68,68,.12);color:var(--destructive);border-radius:4px;padding:.05rem .35rem;}
+  /* 백틱 값 — 확정된 상위 소제목 문맥에서만 색이 갈린다. 문맥 밖 인라인 코드는 기존 스타일 유지. */
+  .md-delta code.md-delta-value-changed{background:rgba(239,68,68,.18);color:#b3400f;font-weight:700;}
+  .md-delta code.md-delta-value-fresh{background:rgba(30,125,52,.15);color:#1e7d34;font-weight:700;}
+  /* 들여쓴 연속 행 — 같은 목록 항목 안에서 줄만 바꾼다(별도 문단이 아니다). */
+  .md-delta li .md-cont{display:block;margin-top:3px;}
+
+  /* 다크 — 글자색만 교체(배경 rgba 는 라이트와 공유). changed/fresh 는 참고 구현 실측값. */
+  .dark .md-delta .md-delta-changed{color:#ff9d6b;}
+  .dark .md-delta .md-delta-fresh{color:#7bd694;}
+  .dark .md-delta code.md-delta-value-changed{color:#ff9d6b;}
+  .dark .md-delta code.md-delta-value-fresh{color:#7bd694;}
+  /* 인디고는 참고 구현에 다크 정의가 없어 팔레트 단계값(indigo-400)을 쓴다 — 라이트에서 밝기 계산한 값이 아니다. */
+  .dark .md-delta .md-delta-section{color:#818cf8;}
