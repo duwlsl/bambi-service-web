@@ -107,9 +107,8 @@ function SettingsView() {
               />
             </SettingsSection>
 
-            {/* .set-sec — 보고서 (기본 공개 범위 · 완료 알림). 아침 브리핑 주제 선택은 후보가
-                AI 추론 관심사 + 직접 설정 관심사라 관심사를 실제로 관리하는 `/wiki` 에 있다
-                (components/wiki/wiki-briefing-topics.tsx) — 여기로 다시 가져오지 않는다. */}
+            {/* .set-sec — 보고서 (기본 공개 범위 · 완료 알림). 아침 브리핑은 사용자 관심사 선택 없이
+                LLM Wiki 가 분석한 상위 관심사로 자동 생성되므로 여기서 다루지 않는다. */}
             <ReportSettings settings={userSettings} />
 
             <McpApiKeySettings

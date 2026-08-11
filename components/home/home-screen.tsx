@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { Orb } from "@/components/brand/orb";
 import { AddMaterialModal } from "@/components/home/add-material-modal";
-import { BriefingTopicsPanel } from "@/components/home/briefing-topics-panel";
 import { EmptyMyReports } from "@/components/home/empty-my-reports";
 import { FailedReports } from "@/components/home/failed-reports";
 import { FeedRec } from "@/components/home/feed-rec";
@@ -18,12 +16,10 @@ import { OnDemandPanel } from "@/components/home/on-demand-panel";
 import { PreparingReports } from "@/components/home/preparing-reports";
 import { SideLeft } from "@/components/home/side-left";
 import { SideRight } from "@/components/home/side-right";
-import { useBriefingTopics } from "@/hooks/use-briefing-topics";
 import { useMemberFeed } from "@/hooks/use-member-feed";
 import { useMyInterests } from "@/hooks/use-my-interests";
 import { useMyReportJobs } from "@/hooks/use-my-report-jobs";
 import { useOnDemandGeneration } from "@/hooks/use-on-demand-generation";
-import { useWikiInterests } from "@/hooks/use-wiki-interests";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 
 type HomeTab = "mine" | "rec";
@@ -62,12 +58,6 @@ function HomeView({ isMember }: { isMember: boolean }) {
   // guest 는 useMyInterests 내부 enabled=false 라 API 를 호출하지 않는다(다른 member 훅과 동일).
   const myInterests = useMyInterests();
   const onDemand = useOnDemandGeneration(myInterests);
-  // 아침 브리핑 주제 — 후보는 AI 추론 태그(위키) ∪ 직접 설정 관심사(myInterests, 위에서 이미 소유)다.
-  // `/wiki` rail 의 "주제 변경"이 `/?briefing=edit` 로 보내므로, 그 경우 편집을 펼친 채로 연다.
-  const wikiInterests = useWikiInterests();
-  const briefingTopics = useBriefingTopics();
-  const searchParams = useSearchParams();
-  const openBriefingEditor = searchParams.get("briefing") === "edit";
   const preparing = reportJobs.status === "ready" ? reportJobs.preparing : [];
   const failed = reportJobs.status === "ready" ? reportJobs.failed : [];
   // READY 목록이 비었을 때 그 자리에 무엇을 넣을지(READY 가 0건인지는 MemberFeed 가 자신의 status==="empty" 로 판단):
@@ -118,15 +108,6 @@ function HomeView({ isMember }: { isMember: boolean }) {
             {/* [내 보고서] — 개인 데이터(GET /api/feed)라 member 에서만 렌더. tab 순서(내 보고서→피드)와 DOM 순서 일치. */}
             {isMember && (
               <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine" hidden={effectiveTab !== "mine"}>
-                {/* 아침 브리핑 주제 — 이 탭에 쌓일 보고서를 정하는 값이라 목록 바로 위에 둔다.
-                    저장값이 있으면 한 줄 요약으로 접혀 목록을 밀지 않는다(펼침은 패널이 판단). */}
-                <BriefingTopicsPanel
-                  tags={wikiInterests}
-                  myInterests={myInterests}
-                  briefing={briefingTopics}
-                  openOnMount={openBriefingEditor}
-                  className="mb-4"
-                />
                 {/* 전체 보기(/reports) 진입 헤더 — READY 목록이 있을 때만 노출한다.
                     완전 Empty 는 온보딩 카드(EmptyMyReports)가 CTA 를 이미 제공하므로 빈 아카이브로
                     보내는 링크를 겹치지 않고, loading 은 스켈레톤이 콘텐츠 전체를 대체해 시프트가 없다. */}

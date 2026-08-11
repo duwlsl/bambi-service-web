@@ -14,9 +14,6 @@ export const metadata: Metadata = {
  * 라우트 가드 없음(확정): 공개 화면 — 토큰 유무와 무관하게 열람 가능 (CLAUDE.md §5·§15 2026-07-21).
  * guest 최소 UI(비로그인 헤더·피드 단일 탭·가입 유도 모달 #guest-modal)는 P0 —
  * 인증 상태 계층(AuthProvider)과 함께 구현 예정. 목업: variants/home-feed-guest.html.
- *
- * `?briefing=edit`(Wiki rail 의 "주제 변경" 진입)을 읽으므로 다른 검색 파라미터 화면
- * (`/login`·`/wiki/graph`)과 같이 Suspense 경계 안에서 렌더한다.
  */
 export default function HomePage() {
   return (
