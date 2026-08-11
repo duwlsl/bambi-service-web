@@ -14,7 +14,7 @@
  * - 게스트 단건 상세는 liked=false(서버가 viewerId 없음 → false, null 아님).
  */
 
-import type { ReportType } from "@/types/report";
+import type { ReportCoverImage, ReportType } from "@/types/report";
 
 /**
  * 카드 출처 1건(API DTO) — title·url 이 각각 독립적으로 null 일 수 있고,
@@ -64,6 +64,8 @@ export type CardResponse = {
    * 리포트가 없는 카드(동기 즉시 카드 등)는 "본문 없음"이며, 그 외 의미를 추측하지 않는다.
    */
   reportId?: string | null;
+  /** 단건 상세에서 연결된 리포트의 대표 이미지. 목록·구버전 응답에서는 null 또는 누락이다. */
+  coverImage?: ReportCoverImage | null;
   title: string;
   summary: string;
   whyForYou: string;
@@ -144,6 +146,20 @@ export type BookmarkCreateData = {
 };
 
 /**
+ * GET /api/bookmarks 목록 항목 — 저장한 관심 자료 **원본**(BookmarkResponse, 2026-08-11 확인).
+ * 위키 반영 전에도 "저장 자체가 됐는지"를 보여주기 위한 것(우석 지적 — 저장 확인 UX 구멍).
+ * status 는 서버 enum 문자열을 해석하지 않고 담아만 둔다(화면 배지로 쓰지 않음 — 미검증 어휘).
+ */
+export type SavedBookmark = {
+  id: number;
+  url: string | null;
+  title: string | null;
+  summary: string | null;
+  status: string;
+  createdAt: string;
+};
+
+/**
  * 화면 카드 모델 — DTO에서 화면이 필요한 값만 옮긴 것. 어댑터(lib/adapters/card.ts)가 변환한다.
  * createdAt 은 표시용 문자열(createdAtLabel) + 정렬·집계용 ms 두 형태로 가진다.
  */
@@ -185,6 +201,24 @@ export type FeedCardVM = {
    공개 피드 — GET /api/feed/public
    (bambi-service-api 실측 · 검증일 2026-08-04: FeedController·FeedService·PublicCardResponse)
    ───────────────────────────────────────────────────────────── */
+
+/**
+ * 추천 매칭 — 뷰어 관심 topic(taxonomy topic_key)과 카드 topic 의 교집합(service-api #81, 계약 A안).
+ * `topicId`/`name` 은 taxonomy 값 그대로다(예: `{ topicId: "ai_ml", name: "AI·머신러닝" }`).
+ */
+export type MatchedTopic = {
+  topicId: string;
+  name: string;
+};
+
+/**
+ * 추천 매칭(넓은 매칭) — topic 이 안 겹쳐도 같은 category 면 recall 안전망으로 채워진다(service-api #81).
+ * `categoryId`/`name` 은 taxonomy 값 그대로다(예: `{ categoryId: "tech", name: "테크·IT" }`).
+ */
+export type MatchedCategory = {
+  categoryId: string;
+  name: string;
+};
 
 /**
  * 공개 피드 카드 응답 DTO — `GET /api/feed/public` 배열 항목.
@@ -242,6 +276,20 @@ export type PublicFeedCardResponse = {
    * 값 판별은 어댑터(`toScrapped`)가 하고 없으면 null → 그 카드만 보관 버튼을 렌더하지 않는다.
    */
   scrapped?: boolean | null;
+  /**
+   * 추천 후보 판정용 — 뷰어 관심 topic 과 겹치는 카드 topic(정밀 매칭). service-api #81(계약 A안)에서
+   * 추가됐다. **서버가 뷰어 기준으로 이미 계산해 내려주므로 프론트는 이름 문자열 비교를 하지 않는다.**
+   * 게스트·비매칭·롤아웃 전 카드(taxonomy topic 미부여)는 빈 배열이다.
+   *
+   * optional 인 이유: 이 필드가 없는 배포본이 존재할 수 있다(#81 머지 전, 또는 머지 후에도 단계적
+   * 롤아웃). 없거나 배열이 아니면 어댑터(`toMatchedTopics`)가 빈 배열로 정규화한다.
+   */
+  matchedTopics?: MatchedTopic[] | null;
+  /**
+   * 추천 후보 판정용(넓은 매칭) — `matchedTopics` 가 비어 있을 때만 보는 recall 안전망. 카드 topic 의
+   * 상위 category 가 뷰어 관심 category 와 겹치면 채워진다. `matchedTopics` 와 같은 이유로 optional.
+   */
+  matchedCategories?: MatchedCategory[] | null;
   sources: CardSource[];
   createdAt: string; // ISO-8601 (서버 OffsetDateTime)
 };
@@ -309,11 +357,19 @@ export type PublicFeedCardVM = {
   /** 파싱 실패 시 빈 문자열(임의 날짜 생성 금지) — 화면은 빈 값이면 줄을 생략한다. */
   createdAtLabel: string;
   /**
-   * 정규화된 관심사 태그(공백 제거·빈 값 제외). 두 곳에서 쓴다:
-   * 추천 후보 판정(내 관심사와 하나 이상 일치)과, 카드의 관심사 메타 표시(첫 태그 + `+N`).
+   * 정규화된 관심사 태그(공백 제거·빈 값 제외) — 카드의 관심사 메타 표시(첫 태그 + `+N`) 전용이다.
    * 서버가 tags 를 안 주는 배포본에서는 빈 배열이고, 그때 화면은 관심사 줄을 렌더하지 않는다.
+   * (추천 후보 판정은 더 이상 이 필드를 보지 않는다 — 아래 matchedTopics/matchedCategories 참조.)
    */
   tags: string[];
+  /**
+   * 정규화된 추천 매칭 topic — `lib/feed-mix.ts` 의 추천 후보 판정에만 쓴다(화면에 노출하지 않는다,
+   * §feed-rec.tsx "추천 사유·관심사 일치 문구를 붙이지 않는다" 결정 유지). 필드 미배포·비정상 항목은
+   * 어댑터가 걸러 빈 배열로 남긴다 — 가짜 매칭을 만들지 않는다.
+   */
+  matchedTopics: MatchedTopic[];
+  /** 정규화된 추천 매칭 category(넓은 매칭) — matchedTopics 와 같은 용도·같은 규율. */
+  matchedCategories: MatchedCategory[];
 };
 
 /* ─────────────────────────────────────────────────────────────

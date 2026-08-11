@@ -14,6 +14,7 @@ import { LlmWikiEntry } from "@/components/wiki/llm-wiki-entry";
 import { WikiFound } from "@/components/wiki/wiki-found";
 import { WikiMind } from "@/components/wiki/wiki-mind";
 import { WikiMyInterests } from "@/components/wiki/wiki-my-interests";
+import { WikiRecentSaves, useRecentSaves } from "@/components/wiki/wiki-recent-saves";
 import { useInterestTaxonomy } from "@/hooks/use-interest-taxonomy";
 import { useMyInterests, type MyInterestsState } from "@/hooks/use-my-interests";
 import { useWikiInterests, type WikiInterestsState } from "@/hooks/use-wiki-interests";
@@ -54,6 +55,7 @@ function WikiView() {
   const taxonomy = useInterestTaxonomy();
   const interests = useWikiInterests();
   const my = useMyInterests();
+  const recentSaves = useRecentSaves();
   const [amOpen, setAmOpen] = useState(false);
 
   const wikiTags = interests.status === "success" ? interests.data : null;
@@ -77,6 +79,13 @@ function WikiView() {
               </p>
             </header>
 
+            {/*
+              저장 확인 스트립(08-11 우석) — **본문 맨 위**다. 방금 ＋관심 자료로 저장한 사람이
+              페이지를 열자마자 "저장은 됐다"를 확인하는 게 목적이라, 관심사 목록 아래(스크롤 끝)에
+              두면 목적을 잃는다(첫 배치에서 실제로 안 보였다). 저장 이력이 없으면 스스로 숨어
+              기존 화면 상단을 어지럽히지 않는다.
+            */}
+            <WikiRecentSaves state={recentSaves} />
             <WikiMind
               taxonomy={taxonomy}
               tags={interests}
@@ -92,12 +101,13 @@ function WikiView() {
         </div>
       </div>
 
-      {/* 저장 성공 시 위키 관심사를 재조회한다. Agent 직접 호출은 하지 않는다. */}
+      {/* 저장 성공 시 위키 관심사 + 최근 저장 스트립을 재조회한다 — 방금 넣은 자료가 즉시 보인다. */}
       <AddMaterialModal
         open={amOpen}
         onClose={() => setAmOpen(false)}
         onSaved={() => {
           interests.refetch();
+          recentSaves.refetch();
         }}
       />
     </div>
