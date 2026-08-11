@@ -1,10 +1,6 @@
 import { ERROR_CODES, FALLBACK_ERROR_CODE } from "@/constants/errors";
 import { ApiError, apiPost } from "@/lib/api-client";
-import type {
-  GenerateDeepDiveRequest,
-  GenerateReportRequest,
-  GenerateReportResponse,
-} from "@/types/generation";
+import type { GenerateReportRequest, GenerateReportResponse } from "@/types/generation";
 
 /**
  * 온디맨드 보고서 생성 repository — 화면 훅과 Service API 사이의 단일 seam.
@@ -37,29 +33,6 @@ export async function generateReport(
   }
 
   const data = await apiPost<GenerateReportResponse | null>(GENERATE_PATH, { topic }, { signal });
-  return requireAccepted(data);
-}
-
-/**
- * 깊게 파기(관심사 범주 리포트) 요청 — 같은 엔드포인트, body 는 `{ interestTagId }` 만
- * (2026-08-10 계약, service-api #72). topic 경로와 배타라 두 값을 섞어 보내지 않는다.
- *
- * 응답 의미·검증은 {@link generateReport} 와 동일하다(접수 확인일 뿐, id 필수).
- */
-export async function generateDeepDiveReport(
-  request: GenerateDeepDiveRequest,
-  signal?: AbortSignal,
-): Promise<GenerateReportResponse> {
-  const interestTagId = request.interestTagId.trim();
-  if (interestTagId === "") {
-    throw new ApiError(ERROR_CODES.VALIDATION_ERROR, `blank interestTagId for ${GENERATE_PATH}`, 0);
-  }
-
-  const data = await apiPost<GenerateReportResponse | null>(
-    GENERATE_PATH,
-    { interestTagId },
-    { signal },
-  );
   return requireAccepted(data);
 }
 
