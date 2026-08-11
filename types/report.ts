@@ -101,4 +101,19 @@ export type ReportResponse = {
    * (판정은 lib/report-type.ts 가 런타임에서 한다).
    */
   reportType?: ReportType | null;
+  /**
+   * 이 **본문(body)이 변경점(Delta) 폼인지** — 렌더링 규칙을 고르는 유일한 기준이다
+   * (service-api #92 `ReportResponse.changeHistoryEnabled`, V26 `reports.change_history_enabled`,
+   *  머지·운영 배포 2026-08-11).
+   *
+   * 서버는 primitive boolean 이라 정상 응답에서는 항상 true/false 지만, 이 필드가 없던
+   * 배포본·기존 리포트가 남아 있어 optional 로 둔다 — **없으면 false(기존 자유 형식)** 다
+   * (백엔드도 미도착 스냅샷을 false 로 저장한다). 판정은 `isDeltaReport` 한 곳에서만 한다.
+   *
+   * ⚠️ **계정 설정(`GET /api/auth/me` 의 `changeHistoryEnabled`, types/auth.ts)과 다른 값이다.**
+   * 저쪽은 "앞으로 생성할 때 델타 경로를 쓸지"이고 이쪽은 "이미 저장된 이 본문이 어떤 폼인지"다.
+   * 계정 설정으로 렌더링을 판단하면 사용자가 설정을 끈 순간 과거 델타 리포트가 전부 깨지고,
+   * 게스트에게는 설정 자체가 없어 같은 보고서가 다르게 보인다. 렌더링은 이 필드로만 분기한다.
+   */
+  changeHistoryEnabled?: boolean;
 };

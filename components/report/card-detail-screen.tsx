@@ -33,6 +33,7 @@ import {
   type ReportCoverImageVM,
 } from "@/lib/adapters/report";
 import { ReportMarkdown } from "@/components/report/report-markdown";
+import { isDeltaReport } from "@/lib/report-delta";
 import type { CardResponse, CardVisibility } from "@/types/feed";
 
 /**
@@ -458,7 +459,8 @@ function CardReportBody({ body }: { body: ReportBodyState & { refetch: () => voi
 
   return (
     <div className="mt-4 border-t border-border pt-1.5">
-      <ReportMarkdown markdown={markdown} />
+      {/* 폼 판정은 이 보고서 응답값 하나로만 한다(계정 설정 아님) — lib/report-delta.ts */}
+      <ReportMarkdown markdown={markdown} delta={isDeltaReport(body.report)} />
     </div>
   );
 }
