@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
 import { reportTypeLabel } from "@/lib/adapters/notifications";
 import type { NotificationVM } from "@/lib/adapters/notifications";
+import { FOLLOW_TYPE, REPORT_READY_TYPE } from "@/lib/notifications/notification-type";
 
-const REPORT_READY_TYPE = "REPORT_READY";
 const REPORT_READY_FALLBACK_LABEL = "새 보고서";
+const FOLLOW_LABEL = "팔로우";
 
 /**
  * 알림 행 — 헤더 드롭다운·독립 /notifications 화면이 공유한다.
@@ -12,12 +13,13 @@ const REPORT_READY_FALLBACK_LABEL = "새 보고서";
  *
  * 제목은 항상 서버 값 그대로(§7 — 가짜 한국어 타입명 금지). REPORT_READY는 reportType(아침
  * 브리핑/온디맨드)이 있으면 그 라벨을, 없거나 모르는 값이면 일반 "새 보고서"로 표시한다(추측 금지).
- * REPORT_READY 이외의 타입(좋아요·댓글·팔로우 등 소셜 알림 포함)은 현재 백엔드가 내려주지 않으므로
- * 특정 타입 문자열을 임의로 만들지 않고, 아이콘·라벨·화살표 모두 중립 fallback으로 자연스럽게
- * 수용한다 — 백엔드가 실제 타입을 추가하면 이 fallback 경로가 그대로 대응한다.
+ * FOLLOW는 고정 라벨 "팔로우"를 쓴다(하위 종류가 없는 단일 이벤트라 reportType 같은 분기가 필요 없다).
+ * 그 외 알려지지 않은 타입은 여전히 백엔드가 내려주지 않으므로 특정 타입 문자열을 임의로 만들지
+ * 않고, 아이콘·라벨·화살표 모두 중립 fallback으로 자연스럽게 수용한다 — 백엔드가 새 타입을
+ * 추가하면 이 fallback 경로가 그대로 대응한다.
  *
- * 화살표는 이동 가능한 것으로 확인된 타입(현재는 REPORT_READY 하나)에만 보이는 장식이고, 실제
- * 이동 가능 여부는 클릭 시 resolver(lib/notifications/resolve-notification-target.ts)가 최종 판정한다.
+ * 화살표는 이동 가능한 것으로 확인된 타입(REPORT_READY·FOLLOW)에만 보이는 장식이고, 실제 이동
+ * 가능 여부·목적지는 클릭 시 훅(hooks/use-notification-navigation.ts)이 타입별로 최종 판정한다.
  *
  * variant: "list"(기본) — 헤더 드롭다운의 연속 목록(구분선). "card" — /notifications 목업의
  * 개별 카드형(둥근 모서리·자체 테두리·hover 시 화살표 노출). 두 표면이 같은 행 컴포넌트를
@@ -34,10 +36,15 @@ export function NotificationRow({
   onOpen: (notification: NotificationVM) => void;
   variant?: "list" | "card";
 }) {
-  const navigable = notification.type === REPORT_READY_TYPE;
+  const navigable = notification.type === REPORT_READY_TYPE || notification.type === FOLLOW_TYPE;
   const unread = !notification.read;
   const isCard = variant === "card";
-  const typeLabel = navigable ? reportTypeLabel(notification.reportType) ?? REPORT_READY_FALLBACK_LABEL : null;
+  const typeLabel =
+    notification.type === REPORT_READY_TYPE
+      ? reportTypeLabel(notification.reportType) ?? REPORT_READY_FALLBACK_LABEL
+      : notification.type === FOLLOW_TYPE
+        ? FOLLOW_LABEL
+        : null;
 
   return (
     <li className="list-none">
@@ -103,6 +110,19 @@ function NotificationTypeIcon({ type }: { type: string }) {
           <rect x="2.2" y="1.8" width="11.6" height="12.4" rx="1.8" />
           <path d="M5 6.4h6M5 9h4" strokeLinecap="round" />
           <path d="M5.4 11.6l1.3 1.3 2.6-2.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    );
+  }
+  if (type === FOLLOW_TYPE) {
+    return (
+      <span
+        aria-hidden="true"
+        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-wash-strong bg-wash text-signal-ink"
+      >
+        <svg viewBox="0 0 16 16" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.5}>
+          <circle cx="8" cy="5.4" r="2.6" />
+          <path d="M2.6 13.4c0-2.9 2.4-4.6 5.4-4.6s5.4 1.7 5.4 4.6" strokeLinecap="round" />
         </svg>
       </span>
     );

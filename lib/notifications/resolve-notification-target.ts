@@ -3,6 +3,7 @@ import { normalizeReportId } from "@/lib/repositories/report";
 import { isUuid } from "@/lib/utils";
 
 const REPORT_PATH_PREFIX = "/report/";
+const USER_PROFILE_PATH_PREFIX = "/users/";
 
 /**
  * 알림 targetPath 해석 실패 원인 — 사용자 문구 매핑이 케이스별로 달라
@@ -62,4 +63,20 @@ export async function resolveNotificationTarget(
   if (legacy) return { ok: true, cardPublicId: legacy.publicId };
 
   return { ok: false, error: "not-found" };
+}
+
+/**
+ * FOLLOW 알림의 targetPath 가 정확히 `/users/{UUID}`(공개 프로필, app/users/[publicId])
+ * 형태일 때만 그 경로를 그대로 반환한다.
+ *
+ * REPORT_READY 와 달리 백엔드가 이미 올바른 프로필 경로를 내려주므로(§ 확정 계약: "targetPath는
+ * 팔로우한 사용자의 프로필 경로로 제공") 피드 조회로 재해석할 필요가 없다 — 형식만 검증한다.
+ * query·hash·추가 세그먼트·외부 URL·protocol-relative·`javascript:` 등은 전부 null 이며, 호출부는
+ * targetPath 를 직접 조합하지 않고 이 함수가 승인한 값만 라우팅에 쓴다.
+ */
+export function parseFollowTargetPath(targetPath: string): string | null {
+  if (!targetPath.startsWith(USER_PROFILE_PATH_PREFIX)) return null;
+  const rest = targetPath.slice(USER_PROFILE_PATH_PREFIX.length);
+  if (rest === "" || rest.includes("/") || rest.includes("?") || rest.includes("#")) return null;
+  return isUuid(rest) ? targetPath : null;
 }

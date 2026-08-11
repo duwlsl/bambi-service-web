@@ -15,6 +15,11 @@ export type GenerateReportRequest = {
   topic: string;
 };
 
+/** 개발용 Wiki 관심사 리포트 즉시 생성 요청. 현재 활성 Wiki tagId만 허용된다. */
+export type GenerateWikiInterestReportRequest = {
+  tagId: string;
+};
+
 /**
  * 성공(HTTP 202) data — **"생성 요청이 서버에 접수됨"만** 의미한다.
  * 생성 진행·완료 여부는 이 응답으로 알 수 없다(Pending 조회는 별도 범위).
