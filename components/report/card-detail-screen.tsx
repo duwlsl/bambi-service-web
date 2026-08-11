@@ -320,6 +320,12 @@ function CardDetailView({
           publicId={shown.publicId}
           title={vm.title}
           visibility={visibility}
+          /*
+            아침 브리핑 공개 전환 차단의 판정 입력. 서버 응답의 원본값(`shown.reportType`)을
+            그대로 넘긴다 — 어댑터가 좁힌 `vm.reportType` 도 같은 값이지만, 판정은
+            lib/report-type.ts 한 곳에서만 하도록 원본을 넘겨 경로를 하나로 유지한다.
+          */
+          reportType={shown.reportType}
           onVisibilityChanged={applyVisibility}
         />
       )}
