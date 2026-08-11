@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 
+import { useRequireAuth } from "@/components/auth/use-require-auth";
 import { PostMoreMenu } from "@/components/home/post-more-menu";
 import { CardScrapButton } from "@/components/report/card-scrap-button";
-import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
+import { useCardLike } from "@/hooks/use-card-like";
+import type { PublicFeedAuthorVM, PublicFeedCardVM, PublicFeedSocialVM } from "@/types/feed";
 
 /**
  * 공개 피드 카드 — GET /api/feed/public(PublicCardResponse) 실데이터 전용.
@@ -41,10 +43,10 @@ import type { PublicFeedAuthorVM, PublicFeedCardVM } from "@/types/feed";
  * 이 아니라 "본문 미리보기"처럼 보이던 주된 원인이라 접었을 뿐, 데이터는 그대로 두었고 전체 목록은
  * 기존 카드 상세(`/report/{publicId}`)에서 그대로 확인할 수 있다.
  *
- * 좋아요는 **읽기 전용 표시**다. 서버에 토글 API(POST/DELETE /api/cards/{publicId}/like)가 있고
- * 카드 상세에는 연결돼 있지만, 피드 좋아요 연결은 이번 범위가 아니다 → 버튼이 아니라 수치로만
- * 보여주고, 가짜 로컬 토글을 만들지 않는다. `liked` 는 조회자 기준 실제 값이라 그대로 반영한다.
- * 값이 검증을 통과하지 못하면(`social === null`) 좋아요 영역만 빼고 카드는 정상 렌더한다.
+ * 좋아요는 카드 상세·프로필 카드와 **같은 훅**(`useCardLike`)으로 토글된다(2026-08-11). 낙관적
+ * 증감 없이 서버 확정값만 반영하고, 인증 게이트·연타 방어·실패 처리는 모두 훅·`useRequireAuth` 가
+ * 담당한다 — 이 파일은 새 API·상태를 만들지 않는다. 값이 검증을 통과하지 못하면(`social === null`)
+ * 좋아요 영역만 빼고 카드는 정상 렌더한다.
  *
  * 링크는 서로 중첩되지 않게 **형제로만** 둔다: 작성자 프로필 · 제목(상세) · 더 보기(상세) · `⋯`
  * 메뉴. 카드 전체를 링크로 감싸지 않는다.
@@ -166,20 +168,20 @@ export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
 }
 
 /**
- * .pacts — 이번 범위에서 **실제로 동작하는 것만** 둔다: 보관 토글 + 읽기 전용 좋아요 표시.
+ * .pacts — 이번 범위에서 **실제로 동작하는 것만** 둔다: 보관 토글 + 좋아요 토글.
  * 공유는 카드 우상단으로 옮겼고(`ShareAction`), 댓글 수·⋯ 메뉴는 대응 값이나 동작이 없어 두지 않는다.
  *
  * 두 액션의 노출 조건이 **서로 독립**이다 — 값이 없는 것만 빠지고 나머지는 그대로 남는다:
  * - 보관: `card.scrapped` 가 검증된 boolean 일 때만(어댑터 `toScrapped`). null 이면 담긴 상태를
  *   알 수 없다는 뜻이라 버튼을 두지 않는다 — 항상 `보관` 으로 보이는 버튼은 이미 담아둔 카드를
  *   클릭 한 번에 해제시킨다.
- * - 좋아요: `social` 이 검증됐을 때만(여전히 읽기 전용 표시 — 피드 좋아요 토글은 범위 밖).
+ * - 좋아요: `social` 이 검증됐을 때만(어댑터가 liked·likeCount 를 함께 검증한 값만 넘긴다).
  *
  * 둘 다 없으면 호출부가 이 바를 렌더하지 않는다(빈 구분선 금지).
  *
- * 게스트에게도 보관 버튼을 **숨기지 않는다.** 클릭하면 기존 `useRequireAuth` 게이트가 가입 유도
- * 모달로 받아 요청이 나가지 않는다(카드 상세 좋아요와 같은 패턴) — 담을 수 있다는 사실 자체는
- * 로그인 전에도 보여 주는 편이 낫다.
+ * 게스트에게도 두 버튼을 **숨기지 않는다.** 클릭하면 기존 `useRequireAuth` 게이트가 가입 유도
+ * 모달로 받아 요청이 나가지 않는다(카드 상세와 같은 패턴) — 할 수 있다는 사실 자체는 로그인 전에도
+ * 보여 주는 편이 낫다.
  */
 function CardActions({ card }: { card: PublicFeedCardVM }) {
   return (
@@ -192,27 +194,61 @@ function CardActions({ card }: { card: PublicFeedCardVM }) {
         />
       )}
       {card.social !== null && (
-        <span className="inline-flex items-center gap-1.5 rounded-lg px-[11px] py-[9px] text-[12.5px]">
-          <span
-            aria-hidden="true"
-            className={card.social.liked ? "text-signal-ink" : "text-muted-foreground"}
-          >
-            {card.social.liked ? "♥" : "♡"}
-          </span>
-          <span
-            className={
-              card.social.liked ? "font-semibold text-signal-ink" : "text-muted-foreground"
-            }
-          >
-            {card.social.likeCount}
-          </span>
-          {/* 상태를 색으로만 전달하지 않는다 — 스크린리더에는 문구로 알린다. */}
-          <span className="sr-only">
-            좋아요 {card.social.likeCount}개{card.social.liked ? " · 내가 좋아요한 브리핑" : ""}
-          </span>
-        </span>
+        <CardLikeChip publicId={card.publicId} social={card.social} title={card.title} />
       )}
     </div>
+  );
+}
+
+/**
+ * 액션바 좋아요 토글 — 카드 상세·프로필 카드(`author-card.tsx`)와 **같은 훅**을 쓰는 목록용 칩.
+ * `PublicFeedCard` 가 `AuthorCardItem` 을 직접 가져오지 않는 것과 같은 이유로(파일 docstring
+ * 참조) 이 파일 로컬로 둔다 — 동작은 훅에서 공유하고 마크업만 화면별로 최소 중복한다.
+ *
+ * 아이콘·수치·간격은 기존 읽기 전용 표시를 그대로 유지하고 버튼으로만 바꾼다. 카드 전체가 상세
+ * 링크로 감싸여 있지 않으므로(형제 링크 구조 — 파일 상단 docstring) preventDefault·stopPropagation
+ * 없이도 클릭이 상세로 새지 않는다.
+ */
+function CardLikeChip({
+  publicId,
+  social,
+  title,
+}: {
+  publicId: string;
+  social: PublicFeedSocialVM;
+  title: string;
+}) {
+  const { requireAuth } = useRequireAuth();
+  const { liked, likeCount, busy, failed, toggle } = useCardLike(publicId, social);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => requireAuth(toggle)}
+        disabled={busy}
+        aria-pressed={liked}
+        aria-busy={busy}
+        aria-label={`${liked ? "좋아요 취소" : "좋아요"} — ${title}`}
+        className={`focus-ring inline-flex items-center gap-1.5 rounded-lg px-[11px] py-[9px] text-[12.5px] disabled:opacity-50 ${
+          liked ? "text-signal-ink" : "text-muted-foreground hover:bg-background hover:text-ink-mid"
+        }`}
+      >
+        <span aria-hidden="true">{liked ? "♥" : "♡"}</span>
+        <span className={liked ? "font-semibold text-signal-ink" : "text-muted-foreground"}>
+          {likeCount}
+        </span>
+      </button>
+
+      {/* 진행·실패를 한 live region 으로 합친다. 서버 error.message 원문은 노출하지 않는다. */}
+      <span
+        role="status"
+        aria-live="polite"
+        className={`text-[11.5px] ${failed ? "text-ink-mid" : "sr-only"}`}
+      >
+        {busy ? "처리 중…" : failed ? "잠시 후 다시 시도해 주세요" : ""}
+      </span>
+    </>
   );
 }
 

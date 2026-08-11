@@ -24,6 +24,9 @@ import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 
 type HomeTab = "mine" | "rec";
 
+/** HomeView 의 `tab` 최초 진입값과 동일 — 로고 재클릭 시 되돌아갈 기본 탭. */
+const HOME_INITIAL_TAB: HomeTab = "mine";
+
 /**
  * 홈 화면 — 인증 상태별로 명확히 분기(§15). 상세(report-screen)와 동일한 4분기.
  *
@@ -46,8 +49,10 @@ function HomeView({ isMember }: { isMember: boolean }) {
   // 원시 tab 은 member 의 선택만 담는다(기본 = 내 보고서). guest 는 [내 보고서] 탭이 없으므로
   // 유효 탭을 항상 "rec"(공개 피드)로 강제한다 → effectiveTab 하나를 aria-selected·hidden·렌더 분기에
   // 공통 사용해 "선택된 탭 = 표시되는 패널"이 항상 일치한다. member↔guest 전환 동기화 effect 불필요.
-  const [tab, setTab] = useState<HomeTab>("mine");
+  const [tab, setTab] = useState<HomeTab>(HOME_INITIAL_TAB);
   const [amOpen, setAmOpen] = useState(false);
+  // 로고 재클릭 시 홈을 최초 진입 상태로 되돌린다 — 현재 구조에서 탭에 종속된 로컬 상태는 tab 뿐이다.
+  const resetHome = () => setTab(HOME_INITIAL_TAB);
   // member [내 보고서] 탭 데이터를 HomeView 가 소유한다 → 저장 성공 시 refetch 를 저장 모달과 공유(§4).
   // guest 는 useMemberFeed / useMyReportJobs 내부 enabled=false 라 API 를 호출하지 않는다.
   const memberFeed = useMemberFeed();
@@ -79,7 +84,7 @@ function HomeView({ isMember }: { isMember: boolean }) {
   return (
     <div className="min-h-screen bg-background">
       {/* nav — 풀블리드(배경·보더 전체 폭), 내부는 1440 정렬 */}
-      <HomeNav onAddOpen={() => setAmOpen(true)} />
+      <HomeNav onAddOpen={() => setAmOpen(true)} onLogoReset={resetHome} />
 
       {/* .app — 콘텐츠 영역만 1440 중앙 정렬 */}
       <div className="mx-auto max-w-[1440px]">

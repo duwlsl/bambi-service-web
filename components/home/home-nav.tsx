@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/components/auth/use-auth";
 import { useRequireAuth } from "@/components/auth/use-require-auth";
 import { Orb } from "@/components/brand/orb";
 import { MobileNavDrawer } from "@/components/home/mobile-navigation";
 import { NotificationMenu } from "@/components/home/notification-menu";
+import { shouldResetHomeOnLogoClick } from "@/lib/home-logo-click";
 import { MOCK_NAV } from "@/lib/mock/feed";
 
 /**
@@ -19,15 +21,34 @@ import { MOCK_NAV } from "@/lib/mock/feed";
  *
  * onAddOpen: authenticated 에서 관심 자료 추가 모달을 여는 콜백. guest 는 requireAuth 가
  * 가로채 GuestGateModal 을 띄우므로 실행되지 않는다.
+ *
+ * onLogoReset: 이미 `/`에 있을 때 로고를 다시 클릭하면 호출되는 선택적 콜백(홈 탭 등 로컬 상태를
+ * 최초 진입 상태로 되돌린다). `/`가 아닌 다른 경로에서는 Link 가 정상적으로 `/`로 이동하므로
+ * 호출하지 않는다 — 같은 URL로 다시 push 하면 뒤로가기 기록만 불필요하게 늘어난다. 넘기지 않는
+ * 호출부(로딩·에러 스켈레톤 등 탭 상태가 없는 화면)는 기존과 동일하게 동작한다.
  */
-export function HomeNav({ onAddOpen }: { onAddOpen: () => void }) {
+export function HomeNav({
+  onAddOpen,
+  onLogoReset,
+}: {
+  onAddOpen: () => void;
+  onLogoReset?: () => void;
+}) {
   const { status } = useAuth();
   const { requireAuth } = useRequireAuth();
+  const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
   const isMember = status === "authenticated";
   const isGuest = status === "guest";
   // loading·error 에는 내비 트리거를 노출하지 않는다(로고만) — SideLeft 도 그 상태에선 렌더되지 않는 맥락.
   const showNav = isMember || isGuest;
+
+  function handleLogoClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    if (shouldResetHomeOnLogoClick(pathname ?? "", !!onLogoReset)) {
+      e.preventDefault(); // 같은 URL push 로 뒤로가기 기록을 늘리지 않고 로컬 상태만 초기화한다.
+      onLogoReset?.();
+    }
+  }
 
   return (
     <nav className="border-b border-border bg-card">
@@ -52,6 +73,7 @@ export function HomeNav({ onAddOpen }: { onAddOpen: () => void }) {
         <Link
           href="/"
           aria-label="홈"
+          onClick={handleLogoClick}
           className="focus-ring flex shrink-0 items-center gap-[9px] rounded-lg"
         >
           <Orb size={26} />
