@@ -58,12 +58,6 @@ function HomeView({ isMember }: { isMember: boolean }) {
   // guest 는 useMyInterests 내부 enabled=false 라 API 를 호출하지 않는다(다른 member 훅과 동일).
   const myInterests = useMyInterests();
   const onDemand = useOnDemandGeneration(myInterests, reportJobs.refetch);
-  // 아침 브리핑 주제 — 후보는 AI 추론 태그(위키) ∪ 직접 설정 관심사(myInterests, 위에서 이미 소유)다.
-  // `/wiki` rail 의 "주제 변경"이 `/?briefing=edit` 로 보내므로, 그 경우 편집을 펼친 채로 연다.
-  const wikiInterests = useWikiInterests();
-  const briefingTopics = useBriefingTopics();
-  const searchParams = useSearchParams();
-  const openBriefingEditor = searchParams.get("briefing") === "edit";
   const preparing = reportJobs.status === "ready" ? reportJobs.preparing : [];
   const failed = reportJobs.status === "ready" ? reportJobs.failed : [];
   // READY 목록이 비었을 때 그 자리에 무엇을 넣을지(READY 가 0건인지는 MemberFeed 가 자신의 status==="empty" 로 판단):
