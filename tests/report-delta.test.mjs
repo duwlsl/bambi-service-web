@@ -210,8 +210,11 @@ test("취소선이 링크·강조·백틱 등 기존 인라인 파싱을 깨지 
 
 test("들여쓴 (변경) 줄이 직전 (기존) 목록 항목에 결합된다", () => {
   const html = render("## s\n### 달라진 사실\n- (기존) 기존 내용\n  (변경) 변경된 내용", true);
-  // 같은 <li> 안에 두 줄이 모두 있어야 한다(별도 <p> 문단으로 떨어지면 실패).
-  assert.match(html, /<li>\(기존\) 기존 내용<span class="md-cont">\(변경\) 변경된 내용<\/span><\/li>/);
+  // 같은 비교 <li> 안에 두 줄이 있고, 기존/변경의 읽기 위계 클래스가 각각 붙어야 한다.
+  assert.match(
+    html,
+    /<li class="md-delta-comparison"><span class="md-delta-line md-delta-before-line">\(기존\) 기존 내용<\/span><span class="md-cont md-delta-line md-delta-after-line">\(변경\) 변경된 내용<\/span><\/li>/,
+  );
   assert.equal(html.includes("<p>(변경)"), false);
 });
 
@@ -367,10 +370,10 @@ test("운영 형태: 건수가 붙은 신규 소제목도 배지를 받는다 (`
 
 test("운영 형태: 불릿 없는 (기존)/(변경) 두 줄이 한 항목으로 묶인다", () => {
   const html = render(PRODUCTION_DELTA, true);
-  // (기존) 이 항목 본문, (변경) 이 같은 <li> 안의 다음 줄(.md-cont = display:block)이어야 한다.
+  // (기존)/(변경)이 같은 비교 항목 안에서 전/후 읽기 위계를 받아야 한다.
   assert.match(
     html,
-    /<li>\(기존\) <del>오는 18일부터[^<]*<\/del><span class="md-cont">\(변경\) <code[^>]*>로또 당첨금 자동 입금 시스템이 오는 18일부터 시행된다\.<\/code> \[L1\]<\/span><\/li>/,
+    /<li class="md-delta-comparison"><span class="md-delta-line md-delta-before-line">\(기존\) <del>오는 18일부터[^<]*<\/del><\/span><span class="md-cont md-delta-line md-delta-after-line">\(변경\) <code[^>]*>로또 당첨금 자동 입금 시스템이 오는 18일부터 시행된다\.<\/code> \[L1\]<\/span><\/li>/,
   );
   // 한 줄로 이어붙인 문단으로 떨어지면 안 된다(회귀 시 여기서 걸린다).
   assert.equal(html.includes("<p>(기존)"), false);
@@ -378,9 +381,10 @@ test("운영 형태: 불릿 없는 (기존)/(변경) 두 줄이 한 항목으로
 
 test("운영 형태: 빈 줄로 나뉜 변경 항목이 각각 별도 <li> 가 된다", () => {
   const html = render(PRODUCTION_DELTA, true);
-  const items = html.match(/<li>\(기존\)/g) ?? [];
+  const items = html.match(/<li class="md-delta-comparison">/g) ?? [];
   assert.equal(items.length, 2);
-  assert.equal((html.match(/md-cont/g) ?? []).length, 2);
+  assert.equal((html.match(/md-delta-after-line/g) ?? []).length, 2);
+  assert.match(html, /<ul class="md-delta-list md-delta-list-changed">/);
 });
 
 test("운영 형태: (변경) 백틱 값이 changed 문맥 색을 받는다", () => {
@@ -399,7 +403,7 @@ test("운영 형태: 최초 실행 안내 문장은 문단으로 남고 목록�
 test("운영 형태: 빈 줄로 나뉜 신규 팩트가 하나의 <ul> 로 이어진다", () => {
   const html = render(PRODUCTION_FIRST_RUN, true);
   // <ul> 이 쪼개지면 항목 간격이 8px → 24px 로 벌어져 [달라진 사실] 묶음과 리듬이 어긋난다.
-  assert.equal((html.match(/<ul>/g) ?? []).length, 1);
+  assert.equal((html.match(/<ul class="md-delta-list md-delta-list-fresh">/g) ?? []).length, 1);
   assert.equal((html.match(/<li>/g) ?? []).length, 2);
 });
 

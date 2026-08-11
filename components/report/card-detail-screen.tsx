@@ -208,7 +208,7 @@ function CardDetailView({
             </div>
 
             {/* .dcard */}
-            <article className="mb-4 rounded-2xl border border-border bg-card px-[30px] py-[26px]">
+            <article className="mb-4 rounded-2xl border border-border bg-card px-5 py-6 sm:px-[30px] sm:py-[26px]">
               <ReportCoverHero coverImage={coverImage} />
               {/*
                 생성 종류 + 작성 시각 한 줄. 종류 배지는 **내 보고서에만** 의미가 있으므로

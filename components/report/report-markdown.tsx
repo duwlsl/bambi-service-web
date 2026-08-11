@@ -453,27 +453,53 @@ function renderBlock(entry: Annotated, index: number, delta: boolean): ReactNode
       );
     case "ul":
       return (
-        <ul key={key}>
-          {block.items.map((item, i) => (
-            <li key={`${key}-li${i}`}>
-              {renderInline(item.text, `${key}-li${i}`, delta, context)}
-              {/* 들여쓴 연속 행 — 같은 항목 안에서 줄만 바꾼다(별도 문단·하위 불릿이 아니다). */}
-              {item.continuation.map((line, j) => (
-                <span key={`${key}-li${i}-n${j}`} className="md-cont">
-                  {renderInline(line, `${key}-li${i}-n${j}`, delta, context)}
-                </span>
-              ))}
-              {item.children.length > 0 && (
-                <ul>
-                  {item.children.map((child, j) => (
-                    <li key={`${key}-li${i}-c${j}`}>
-                      {renderInline(child, `${key}-li${i}-c${j}`, delta, context)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
+        <ul
+          key={key}
+          className={
+            context === "changed"
+              ? "md-delta-list md-delta-list-changed"
+              : context === "fresh"
+                ? "md-delta-list md-delta-list-fresh"
+                : undefined
+          }
+        >
+          {block.items.map((item, i) => {
+            const comparison = context === "changed" && item.continuation.length > 0;
+            return (
+              <li
+                key={`${key}-li${i}`}
+                className={comparison ? "md-delta-comparison" : undefined}
+              >
+                {comparison ? (
+                  <span className="md-delta-line md-delta-before-line">
+                    {renderInline(item.text, `${key}-li${i}`, delta, context)}
+                  </span>
+                ) : (
+                  renderInline(item.text, `${key}-li${i}`, delta, context)
+                )}
+                {/* 들여쓴 연속 행 — 같은 항목 안에서 줄만 바꾼다(별도 문단·하위 불릿이 아니다). */}
+                {item.continuation.map((line, j) => (
+                  <span
+                    key={`${key}-li${i}-n${j}`}
+                    className={
+                      comparison ? "md-cont md-delta-line md-delta-after-line" : "md-cont"
+                    }
+                  >
+                    {renderInline(line, `${key}-li${i}-n${j}`, delta, context)}
+                  </span>
+                ))}
+                {item.children.length > 0 && (
+                  <ul>
+                    {item.children.map((child, j) => (
+                      <li key={`${key}-li${i}-c${j}`}>
+                        {renderInline(child, `${key}-li${i}-c${j}`, delta, context)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       );
     case "ol":
