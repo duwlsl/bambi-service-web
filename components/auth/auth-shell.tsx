@@ -85,9 +85,14 @@ export function AuthShell({
         </div>
 
         {/* .auth-footer */}
-        <div className="flex justify-between gap-3 pt-4 text-[11.5px] text-muted-foreground">
+        <div className="flex flex-wrap justify-between gap-3 pt-4 text-[11.5px] text-muted-foreground">
           <span>매일 아침, 나에게 중요한 것만.</span>
-          <span>© 2026 AlphaCatcher</span>
+          <span className="flex items-center gap-3">
+            <Link href="/privacy" className="underline-offset-2 hover:text-foreground hover:underline">
+              개인정보 처리방침
+            </Link>
+            <span>© 2026 AlphaCatcher</span>
+          </span>
         </div>
       </div>
     </main>
