@@ -38,6 +38,10 @@ const ERROR_COPY: Record<TrackableReportType, { heading: string; subtext: string
     heading: "첫 리포트를 만들지 못했어요",
     subtext: "잠시 후 다시 확인해 주세요.",
   },
+  WIKI_INTEREST: {
+    heading: "Wiki 관심사 리포트를 만들지 못했어요",
+    subtext: "관심사를 확인한 뒤 다시 시도해 주세요.",
+  },
 };
 
 /**

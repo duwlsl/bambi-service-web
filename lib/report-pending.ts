@@ -26,6 +26,7 @@ export type PendingFailureObservation = {
 export function getPreparingReportTitle(title: string, reportType: TrackableReportType): string {
   if (reportType === "MORNING_BRIEFING") return "오늘의 아침 브리핑을 생성하고 있어요";
   if (reportType === "ONBOARDING") return "첫 리포트를 생성하고 있어요";
+  if (reportType === "WIKI_INTEREST") return `${title} Wiki 관심사 보고서`;
   return `${title} 보고서`;
 }
 
@@ -78,7 +79,12 @@ function isNullableString(value: unknown): value is string | null {
 }
 
 function isTrackableReportType(value: unknown): value is TrackableReportType {
-  return value === "MORNING_BRIEFING" || value === "ON_DEMAND" || value === "ONBOARDING";
+  return (
+    value === "MORNING_BRIEFING" ||
+    value === "ON_DEMAND" ||
+    value === "ONBOARDING" ||
+    value === "WIKI_INTEREST"
+  );
 }
 
 function isGenerationPendingStatus(value: unknown): value is GenerationPendingStatus {

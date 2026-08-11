@@ -47,6 +47,7 @@ test("실제 pending 경로와 DTO의 활성 상태만 허용한다", () => {
   }
   assert.equal(isGenerationPendingDto({ ...pending("job-a"), contentType: null }), true);
   assert.equal(isGenerationPendingDto(pending("job-onboarding", "PENDING", "ONBOARDING")), true);
+  assert.equal(isGenerationPendingDto(pending("job-wiki", "PENDING", "WIKI_INTEREST")), true);
   assert.equal(isGenerationPendingDto(pending("job-a", "COMPLETED")), false);
   assert.equal(isGenerationPendingDto(pending("job-a", "READY")), false);
   const missingUpdatedAt = { ...pending("job-a") };
@@ -54,7 +55,7 @@ test("실제 pending 경로와 DTO의 활성 상태만 허용한다", () => {
   assert.equal(isGenerationPendingDto(missingUpdatedAt), false);
 });
 
-test("처리중 UI는 아침·온보딩·온디맨드 유형별 문구를 사용한다", () => {
+test("처리중 UI는 아침·온보딩·온디맨드·Wiki 유형별 문구를 사용한다", () => {
   assert.equal(
     getPreparingReportTitle("서버 placeholder", "MORNING_BRIEFING"),
     "오늘의 아침 브리핑을 생성하고 있어요",
@@ -64,6 +65,10 @@ test("처리중 UI는 아침·온보딩·온디맨드 유형별 문구를 사용
     "첫 리포트를 생성하고 있어요",
   );
   assert.equal(getPreparingReportTitle("AI", "ON_DEMAND"), "AI 보고서");
+  assert.equal(
+    getPreparingReportTitle("반도체", "WIKI_INTEREST"),
+    "반도체 Wiki 관심사 보고서",
+  );
 });
 
 test("활성 pending은 5초, 빈 목록은 30초 polling한다", () => {
