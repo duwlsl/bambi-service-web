@@ -73,6 +73,14 @@ export type ReportCitation = {
   url: string | null;
 };
 
+/** Agent가 실제 인용 출처에서 고른 리포트 상단 대표 이미지 계약. */
+export type ReportCoverImage = {
+  url: string | null;
+  sourceUrl: string | null;
+  sourceTitle: string | null;
+  reference: string | null;
+};
+
 /**
  * GET /api/reports/{publicId} 성공 data — 서버 ReportResponse 와 1:1.
  * citations 는 서버 계약상 배열이지만 배열 아님/항목 null 까지 adapter 가 방어한다
@@ -83,6 +91,8 @@ export type ReportResponse = {
   title: string;
   summary: string | null;
   body: string | null;
+  /** 적합한 출처 이미지가 없거나 구버전 응답이면 null 또는 필드 누락이다. */
+  coverImage?: ReportCoverImage | null;
   citations: ReportCitation[];
   createdAt: string; // ISO-8601 (서버 OffsetDateTime)
   /**
