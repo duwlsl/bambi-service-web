@@ -210,8 +210,11 @@ test("취소선이 링크·강조·백틱 등 기존 인라인 파싱을 깨지 
 
 test("들여쓴 (변경) 줄이 직전 (기존) 목록 항목에 결합된다", () => {
   const html = render("## s\n### 달라진 사실\n- (기존) 기존 내용\n  (변경) 변경된 내용", true);
-  // 같은 <li> 안에 두 줄이 모두 있어야 한다(별도 <p> 문단으로 떨어지면 실패).
-  assert.match(html, /<li>\(기존\) 기존 내용<span class="md-cont">\(변경\) 변경된 내용<\/span><\/li>/);
+  // 같은 비교 <li> 안에 두 줄이 있고, 기존/변경의 읽기 위계 클래스가 각각 붙어야 한다.
+  assert.match(
+    html,
+    /<li class="md-delta-comparison"><span class="md-delta-line md-delta-before-line">\(기존\) 기존 내용<\/span><span class="md-cont md-delta-line md-delta-after-line">\(변경\) 변경된 내용<\/span><\/li>/,
+  );
   assert.equal(html.includes("<p>(변경)"), false);
 });
 
@@ -311,4 +314,128 @@ test("본문 HTML 태그는 실행되지 않고 문자 그대로 이스케이프
     assert.equal(html.includes("<script>"), false);
     assert.match(html, /&lt;script&gt;/);
   }
+});
+
+/* ── 8. 운영 실제 본문 형태 ──────────────────────────────────────────
+   위 1~7 의 픽스처는 계약 **문서 예시**(`### 달라진 사실`, `- (기존) …`)를 옮긴 것이라
+   운영에서 실제로 오는 두 가지 차이를 잡지 못했다. 아래는 2026-08-11 운영
+   (GET /api/reports/{publicId}, changeHistoryEnabled=true) 응답 body 를 그대로 옮긴 것이다.
+
+     1) 소제목에 건수가 붙는다      → `### 달라진 사실 (2건)`
+     2) (기존)/(변경) 에 불릿이 없다 → `  (기존) …` / `  (변경) …` (2칸 들여쓰기만)
+
+   근거: bambi-agent-api `agent/change_history/features/assembly.py`
+         (`f"{CHANGED_SUBHEADING} ({len(changed)}건)"` · `_changed_line()`).
+   ────────────────────────────────────────────────────────────────── */
+
+/** 운영 리포트 ee9a22dc-… 의 body 발췌(변경 항목 2건 + 다음 섹션). */
+const PRODUCTION_DELTA = `## 이번에 달라진 점
+
+### 달라진 사실 (2건)
+
+  (기존) ~~오는 18일부터 판매점에서 구매한 종이 로또복권을 등록하면 당첨금을 받을 수 있게 된다.~~
+  (변경) \`로또 당첨금 자동 입금 시스템이 오는 18일부터 시행된다.\` [L1]
+
+  (기존) ~~모번 다이아와 가3 가5가 주요 당번으로 언급되었다.~~
+  (변경) \`로또 제1237회에서 주요 당번으로 모번 다이아와 가3 가5가 언급되었다.\` [L3]
+
+## 보고서 내용
+
+로또 미수령 당첨금 자동 지급 시스템이 시행됩니다.`;
+
+/** 운영 리포트 ceaf0c23-… 의 body 발췌(최초 실행 안내 + 신규 팩트). */
+const PRODUCTION_FIRST_RUN = `## 이번에 달라진 점
+
+이 주제의 최초 실행이라 비교 대상이 없습니다. 오늘 확인된 내용을 전부 정리했습니다.
+
+### 새로 확인된 사실 (4건)
+
+- 삼성전자가 '폴더블 헤리티지' 전시 공간을 상시 운영하기 시작했다. [G1]
+
+- 삼성전자의 목표 주가가 \`60만 원\` 에 도달할 것으로 예상된다. [L3]
+
+## 보고서 내용
+
+본문입니다.`;
+
+test("운영 형태: 건수가 붙은 소제목도 배지를 받는다 (`### 달라진 사실 (2건)`)", () => {
+  const html = render(PRODUCTION_DELTA, true);
+  assert.match(html, /<h3 class="md-delta-changed">달라진 사실 \(2건\)<\/h3>/);
+});
+
+test("운영 형태: 건수가 붙은 신규 소제목도 배지를 받는다 (`### 새로 확인된 사실 (4건)`)", () => {
+  const html = render(PRODUCTION_FIRST_RUN, true);
+  assert.match(html, /<h3 class="md-delta-fresh">새로 확인된 사실 \(4건\)<\/h3>/);
+});
+
+test("운영 형태: 불릿 없는 (기존)/(변경) 두 줄이 한 항목으로 묶인다", () => {
+  const html = render(PRODUCTION_DELTA, true);
+  // (기존)/(변경)이 같은 비교 항목 안에서 전/후 읽기 위계를 받아야 한다.
+  assert.match(
+    html,
+    /<li class="md-delta-comparison"><span class="md-delta-line md-delta-before-line">\(기존\) <del>오는 18일부터[^<]*<\/del><\/span><span class="md-cont md-delta-line md-delta-after-line">\(변경\) <code[^>]*>로또 당첨금 자동 입금 시스템이 오는 18일부터 시행된다\.<\/code> \[L1\]<\/span><\/li>/,
+  );
+  // 한 줄로 이어붙인 문단으로 떨어지면 안 된다(회귀 시 여기서 걸린다).
+  assert.equal(html.includes("<p>(기존)"), false);
+});
+
+test("운영 형태: 빈 줄로 나뉜 변경 항목이 각각 별도 <li> 가 된다", () => {
+  const html = render(PRODUCTION_DELTA, true);
+  const items = html.match(/<li class="md-delta-comparison">/g) ?? [];
+  assert.equal(items.length, 2);
+  assert.equal((html.match(/md-delta-after-line/g) ?? []).length, 2);
+  assert.match(html, /<ul class="md-delta-list md-delta-list-changed">/);
+});
+
+test("운영 형태: (변경) 백틱 값이 changed 문맥 색을 받는다", () => {
+  const html = render(PRODUCTION_DELTA, true);
+  assert.match(html, /<code class="md-delta-value-changed">로또 당첨금 자동 입금 시스템/);
+});
+
+test("운영 형태: 최초 실행 안내 문장은 문단으로 남고 목록으로 삼켜지지 않는다", () => {
+  const html = render(PRODUCTION_FIRST_RUN, true);
+  assert.match(html, /<p>이 주제의 최초 실행이라 비교 대상이 없습니다\./);
+  // 신규 팩트는 원래대로 `- ` 불릿 목록이다(작은따옴표는 React 가 &#x27; 로 이스케이프한다).
+  assert.match(html, /<li>삼성전자가 &#x27;폴더블 헤리티지&#x27;/);
+  assert.match(html, /<code class="md-delta-value-fresh">60만 원<\/code>/);
+});
+
+test("운영 형태: 빈 줄로 나뉜 신규 팩트가 하나의 <ul> 로 이어진다", () => {
+  const html = render(PRODUCTION_FIRST_RUN, true);
+  // <ul> 이 쪼개지면 항목 간격이 8px → 24px 로 벌어져 [달라진 사실] 묶음과 리듬이 어긋난다.
+  assert.equal((html.match(/<ul class="md-delta-list md-delta-list-fresh">/g) ?? []).length, 1);
+  assert.equal((html.match(/<li>/g) ?? []).length, 2);
+});
+
+test("빈 줄 뒤가 목록이 아니면 목록은 그대로 끊긴다(다음 블록 보존)", () => {
+  const html = render("## s\n### 달라진 사실 (1건)\n- 항목\n\n## 다음 섹션\n\n문단", true);
+  assert.match(html, /<li>항목<\/li><\/ul>/);
+  assert.match(html, /<h2 class="md-delta-section">다음 섹션<\/h2>/);
+  assert.match(html, /<p>문단<\/p>/);
+});
+
+test("빈 줄 이어붙이기는 delta 에서만 — 기존 본문은 예전처럼 <ul> 가 나뉜다", () => {
+  const html = render("- 첫 항목\n\n- 둘째 항목", false);
+  assert.equal((html.match(/<ul>/g) ?? []).length, 2);
+});
+
+test("운영 형태: 다음 섹션(## 보고서 내용)을 변경 항목 묶음이 삼키지 않는다", () => {
+  const html = render(PRODUCTION_DELTA, true);
+  assert.match(html, /<h2 class="md-delta-section">보고서 내용<\/h2>/);
+  assert.match(html, /<p>로또 미수령 당첨금 자동 지급 시스템이 시행됩니다\.<\/p>/);
+});
+
+test("운영 형태: delta=false 면 예전 그대로 — 목록화·배지·취소선이 생기지 않는다", () => {
+  const html = render(PRODUCTION_DELTA, false);
+  assert.equal(html.includes("md-cont"), false);
+  assert.equal(html.includes("md-delta"), false);
+  assert.equal(html.includes("<del>"), false);
+  // 들여쓴 두 줄은 기존처럼 한 문단으로 합쳐진다(기존 동작 보존 확인).
+  assert.match(html, /<p>\(기존\) ~~오는 18일부터/);
+});
+
+test("건수 표기가 있어도 문구가 다르면 여전히 배지가 없다(부분 일치 금지 유지)", () => {
+  const html = render("## 이번에 달라진 점\n### 달라진 사실 안내 (2건)\n### 기타 (3건)\n- x", true);
+  assert.match(html, /<h3>달라진 사실 안내 \(2건\)<\/h3>/);
+  assert.match(html, /<h3>기타 \(3건\)<\/h3>/);
 });

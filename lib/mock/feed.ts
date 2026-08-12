@@ -7,7 +7,7 @@
  * 데이터 로드는 lib/repositories/feed.ts(단일 seam) → 훅 → 어댑터(lib/adapters/card.ts) 경로만
  * 쓴다. 화면은 데이터 mock 을 import 하지 않는다.
  *
- * 남은 것은 **아직 API 가 없는 화면 크롬·문구**뿐이다(상단 nav placeholder · 좌측 메뉴 · 사이드
+ * 남은 것은 **아직 API 가 없는 화면 크롬·문구**뿐이다(상단 nav 아바타 이니셜 · 좌측 메뉴 · 사이드
  * 푸터 · 피드 끝 문구 · 우측 레일 샘플). 각 항목이 어느 API 를 기다리는지는 아래 주석에 적는다.
  */
 
@@ -16,8 +16,11 @@ export type TextSegment = { text: string; bold?: boolean };
 
 /* ── 상단 nav / 좌측 메뉴 ── */
 
+/**
+ * 검색 placeholder 는 두지 않는다 — 백엔드에 검색 엔드포인트가 없어 상단 nav 검색 UI 는 입력도
+ * 클릭도 되지 않는 시각 전용 목업이었다(2026-08-12 제거, 「동작하지 않는 UI 금지」 원칙).
+ */
 export const MOCK_NAV = {
-  searchPlaceholder: "브리핑, 토픽, 사용자 검색",
   avatarInitial: "나",
 };
 

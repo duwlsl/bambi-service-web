@@ -243,10 +243,10 @@
    무관하게 항상 이긴다. @layer components 안에 넣으면 번들 환경에 따라 리셋에 밀린다.
    (md 요소들엔 Tailwind 유틸리티를 쓰지 않으므로 유틸리티와의 충돌 없음)
    ───────────────────────────────────────────────────────────── */
-  .md-viewer{font-size:15px;line-height:1.85;color:var(--ink-mid);padding-top:6px;}
-  .md-viewer h2{font-size:18.5px;font-weight:700;color:var(--foreground);margin:26px 0 12px;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;}
+  .md-viewer{font-size:15px;line-height:1.78;color:var(--ink-mid);padding-top:6px;word-break:keep-all;overflow-wrap:anywhere;}
+  .md-viewer h2{font-size:18.5px;font-weight:700;color:var(--foreground);margin:30px 0 12px;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;text-wrap:balance;}
   .md-viewer h2::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--primary);display:inline-block;}
-  .md-viewer h3{font-size:15.5px;font-weight:700;color:var(--foreground);margin:20px 0 8px;}
+  .md-viewer h3,.md-viewer h4,.md-viewer h5,.md-viewer h6{font-size:15.5px;font-weight:700;color:var(--foreground);margin:22px 0 8px;letter-spacing:-.005em;text-wrap:balance;}
   .md-viewer p{margin-bottom:15px;}
   .md-viewer p b,.md-viewer li b{color:var(--foreground);font-weight:700;}
   .md-viewer a{color:var(--signal-ink);font-weight:600;text-decoration:none;border-bottom:1px solid var(--wash-strong);}
@@ -278,20 +278,53 @@
      리포트 응답의 changeHistoryEnabled=true 인 본문에만 이 클래스가 붙으므로
      기존(자유 형식) 보고서의 렌더링·여백은 위 규칙 그대로다.
 
-     색 출처: changed/fresh 는 agent 참고 화면(bambi-agent-api
-     app/routers/development/change_history_views.py)의 실제 정의값,
-     취소선은 저장소 테마 변수(--destructive: light #DC2626 / dark #F87171)를 재사용한다.
-     다크는 참고 구현과 같은 방식으로 **글자색만** 덮고 배경 rgba 는 그대로 둔다.
+     색 출처: agent 참고 화면(bambi-agent-api
+     app/routers/development/change_history_views.py)의 실제 정의값을 그대로 쓴다 —
+     섹션 rgba(99,102,241,.12)/#4f46e5 · 갱신 rgba(214,64,44,.12)/#b3400f ·
+     신규 rgba(30,125,52,.12)/#1e7d34 · before rgba(239,68,68,.12)/#dc2626 ·
+     after rgba(239,68,68,.18)/#b3400f · value rgba(30,125,52,.15)/#1e7d34.
+     "무엇이 달라졌나"가 이 보고서의 존재 이유라 갱신·신규를 색으로 먼저 가른다.
+     다크는 참고 구현에 정의가 없어 글자색만 덮고 배경 rgba 는 라이트와 공유한다.
+
+     ⚠️ 참고 구현의 **페이지 크롬(section 테두리 박스·가운데 정렬 제목 카드)은 옮기지 않는다.**
+     저쪽은 단독 개발 페이지라 바깥 카드가 없지만, 이 본문은 이미 상세의 .dcard(article)
+     안에 있어 박스를 또 두르면 카드 안에 카드가 겹친다.
      ───────────────────────────────────────────────────────────── */
   /* Delta 섹션 헤더 — 태그명이 아니라 heading 계층 구조로 판정된 것에만 붙는다(md-delta-section). */
-  .md-delta .md-delta-section{background:rgba(99,102,241,.12);color:#4f46e5;border-radius:6px;padding:.25rem .6rem;display:inline-flex;}
-  .md-delta h2.md-delta-section::before{display:none;}
+  .md-delta .md-delta-section{display:block;width:100%;background:rgba(99,102,241,.12);color:#4f46e5;border:0;border-radius:6px;padding:7px 14px;margin:26px 0 14px;}
+  /* 기본 h2 의 주황 세로 막대는 배지 배경과 겹쳐 보이므로 섹션 헤더에서만 끈다. */
+  .md-delta .md-delta-section::before{display:none;}
   /* 최심 소제목 — 문구가 정확히 일치할 때만 붙는다(부분 일치·기본값 없음). */
-  .md-delta .md-delta-changed{background:rgba(214,64,44,.12);color:#b3400f;border-radius:6px;padding:.25rem .6rem;display:inline-block;}
-  .md-delta .md-delta-fresh{background:rgba(30,125,52,.12);color:#1e7d34;border-radius:6px;padding:.25rem .6rem;display:inline-block;}
-  /* GFM 취소선 — 파서가 <del> 로 만든다(CSS·문자열 치환이 아니다). */
-  .md-delta del{text-decoration:line-through;background:rgba(239,68,68,.12);color:var(--destructive);border-radius:4px;padding:.05rem .35rem;}
+  .md-delta .md-delta-changed,.md-delta .md-delta-fresh{display:inline-block;width:auto;font-size:14px;border-radius:6px;padding:4px 10px;margin:18px 0 10px;}
+  .md-delta .md-delta-changed{background:rgba(214,64,44,.12);color:#b3400f;}
+  .md-delta .md-delta-fresh{background:rgba(30,125,52,.12);color:#1e7d34;}
+  /*
+     변경·신규 묶음 — 들여쓰기를 **더 만들지 않는다.**
+     왼쪽 기준선(border-left)이나 비교 박스를 두면 제목과 본문 좌변이 어긋나 계단처럼 밀린다
+     (실측: 제목 373px 인데 내용 394px). 목록은 섹션 제목과 **같은 좌변**에서 시작하고,
+     항목 구분은 들여쓰기가 아니라 얇은 구분선이 맡는다.
+  */
+  .md-delta .md-delta-list{margin:0 0 22px;padding:0;border:0;}
+  .md-delta .md-delta-list > li{padding-left:0;margin:0;color:var(--ink-mid);}
+  .md-delta .md-delta-list > li::before{display:none;}
+  .md-delta .md-delta-list > li + li{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  /* 신규 사실은 참고 구현처럼 간결한 불릿 목록이다(비교 쌍이 아니라 한 줄짜리 사실). */
+  .md-delta .md-delta-list-fresh > li{padding-left:16px;}
+  .md-delta .md-delta-list-fresh > li::before{display:block;content:"";left:2px;top:.7em;width:5px;height:5px;border-radius:999px;background:#1e7d34;}
+  .md-delta .md-delta-list-fresh > li + li{margin-top:9px;padding-top:0;border-top:0;}
+  /* (기존)/(변경) 두 줄은 하나의 비교 단위다 — 박스 없이 줄 위계와 색으로만 묶는다. */
+  .md-delta .md-delta-comparison{border:0;border-radius:0;background:transparent;padding:0;}
+  .md-delta .md-delta-line{display:block;}
+  .md-delta .md-delta-before-line{color:var(--muted-foreground);font-size:13.5px;}
+  .md-delta .md-delta-after-line{margin-top:5px;color:var(--foreground);}
+  /*
+     GFM 취소선 — 파서가 <del> 로 만든다(CSS·문자열 치환이 아니다). 참고 구현 .before 와 동일.
+     `box-decoration-break:clone` 은 폭과 무관하게 필요하다 — 운영 (기존) 값은 desktop 760px
+     본문에서도 두 줄로 넘어가는데, 없으면 배경·라운드가 줄마다 끊겨 조각처럼 보인다.
+  */
+  .md-delta del{text-decoration:line-through;background:rgba(239,68,68,.12);color:#dc2626;opacity:.85;border-radius:4px;padding:.05rem .35rem;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
   /* 백틱 값 — 확정된 상위 소제목 문맥에서만 색이 갈린다. 문맥 밖 인라인 코드는 기존 스타일 유지. */
+  .md-delta code.md-delta-value-changed,.md-delta code.md-delta-value-fresh{border-color:transparent;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
   .md-delta code.md-delta-value-changed{background:rgba(239,68,68,.18);color:#b3400f;font-weight:700;}
   .md-delta code.md-delta-value-fresh{background:rgba(30,125,52,.15);color:#1e7d34;font-weight:700;}
   /* 들여쓴 연속 행 — 같은 목록 항목 안에서 줄만 바꾼다(별도 문단이 아니다). */
@@ -300,7 +333,16 @@
   /* 다크 — 글자색만 교체(배경 rgba 는 라이트와 공유). changed/fresh 는 참고 구현 실측값. */
   .dark .md-delta .md-delta-changed{color:#ff9d6b;}
   .dark .md-delta .md-delta-fresh{color:#7bd694;}
+  .dark .md-delta .md-delta-list-fresh > li::before{background:#7bd694;}
+  .dark .md-delta del{color:#f87171;}
   .dark .md-delta code.md-delta-value-changed{color:#ff9d6b;}
   .dark .md-delta code.md-delta-value-fresh{color:#7bd694;}
   /* 인디고는 참고 구현에 다크 정의가 없어 팔레트 단계값(indigo-400)을 쓴다 — 라이트에서 밝기 계산한 값이 아니다. */
   .dark .md-delta .md-delta-section{color:#818cf8;}
+
+  @media (max-width:640px){
+    .md-viewer{font-size:14.5px;line-height:1.75;}
+    .md-viewer h2{font-size:18px;margin-top:26px;}
+    .md-delta .md-delta-section{padding:6px 11px;margin:22px 0 12px;}
+    .md-delta .md-delta-changed,.md-delta .md-delta-fresh{margin-top:16px;}
+  }

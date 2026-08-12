@@ -45,6 +45,15 @@ export type MyReport = {
   title: string;
   reportType: TrackableReportType;
   status: ReportStatus;
+  /**
+   * 생성을 접수한 시각(ISO-8601) — `GenerationPendingDto.createdAt` 을 그대로 옮긴 값이다.
+   *
+   * **optional 인 이유**: 이 값을 실제로 주는 곳은 `GET /api/reports/pending` 하나뿐이다.
+   * mock 샘플(`lib/mock/my-reports.ts`)처럼 서버 시각이 없는 경로도 같은 타입을 쓰므로
+   * 필수로 만들지 않는다. 없으면 화면이 생성 시각 줄을 그리지 않는다 —
+   * 현재 시각·정렬 순서 같은 값으로 대신 채우지 않는다.
+   */
+  createdAt?: string;
 };
 
 /* ============================================================================

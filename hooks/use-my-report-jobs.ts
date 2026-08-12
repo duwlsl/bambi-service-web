@@ -151,5 +151,7 @@ function toPreparingReport(pending: GenerationPendingDto): MyReport {
     title: pending.topic?.trim() || "관심사 보고서",
     reportType: pending.reportType,
     status: "PREPARING",
+    // 접수 시각은 서버 값을 그대로 옮긴다(표시 포맷은 화면이 formatPendingCreatedAt 으로 정한다).
+    createdAt: pending.createdAt,
   };
 }

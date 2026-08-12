@@ -20,6 +20,7 @@ vm.runInNewContext(
 const {
   ACTIVE_PENDING_POLL_MS,
   IDLE_PENDING_POLL_MS,
+  formatPendingCreatedAt,
   getPreparingReportTitle,
   isGenerationPendingDto,
   observePendingFailure,
@@ -110,4 +111,74 @@ test("활성 작업을 아직 발견하지 못한 API 실패도 30초 뒤 재시
   assert.equal(failed.shouldRefreshFeed, false);
   assert.equal(failed.snapshot, null);
   assert.equal(failed.nextIntervalMs, IDLE_PENDING_POLL_MS);
+});
+
+/* ── 처리중 슬롯 생성 시각 표기 ────────────────────────────────────
+   `GET /api/reports/pending` 의 createdAt(서버 OffsetDateTime → ISO 문자열)을
+   `8월 11일 18:30 요청` 절대 표기로 바꾼다. 상대 시간(3분 전)은 렌더 시점에 의존해
+   SSR·클라이언트 결과가 갈리고 polling 마다 값이 흔들리므로 쓰지 않는다.
+   ────────────────────────────────────────────────────────────── */
+
+test("서버 UTC 시각을 서비스 기준(KST) 절대 표기로 바꾼다", () => {
+  // 2026-08-11T09:30:00Z = KST 18:30
+  assert.equal(formatPendingCreatedAt("2026-08-11T09:30:00Z"), "8월 11일 18:30 요청");
+});
+
+test("오프셋이 붙은 표기도 같은 순간이면 같은 문자열이다", () => {
+  // 세 값은 모두 같은 순간(KST 18:30)이다 — 표기 형식이 달라도 결과가 흔들리면 안 된다.
+  const expected = "8월 11일 18:30 요청";
+  assert.equal(formatPendingCreatedAt("2026-08-11T18:30:00+09:00"), expected);
+  assert.equal(formatPendingCreatedAt("2026-08-11T09:30:00.123456Z"), expected);
+  assert.equal(formatPendingCreatedAt("2026-08-11T05:30:00-04:00"), expected);
+});
+
+test("타임존을 고정해 실행 환경 기본 시간대와 무관하게 같은 값을 만든다", () => {
+  // hydration 불일치 방지의 핵심 — 서버(UTC 컨테이너)와 브라우저(KST)가 같은 문자열을 내야 한다.
+  const original = process.env.TZ;
+  const seen = new Set();
+  for (const tz of ["UTC", "America/New_York", "Asia/Seoul", "Europe/Berlin"]) {
+    process.env.TZ = tz;
+    seen.add(formatPendingCreatedAt("2026-08-11T09:30:00Z"));
+  }
+  if (original === undefined) delete process.env.TZ;
+  else process.env.TZ = original;
+  assert.deepEqual([...seen], ["8월 11일 18:30 요청"]);
+});
+
+test("자정 직전·직후도 KST 날짜로 끊는다", () => {
+  // 2026-08-11T15:00:00Z = KST 2026-08-12 00:00 → 날짜가 하루 넘어가야 한다.
+  assert.equal(formatPendingCreatedAt("2026-08-11T15:00:00Z"), "8월 12일 00:00 요청");
+  assert.equal(formatPendingCreatedAt("2026-08-11T14:59:00Z"), "8월 11일 23:59 요청");
+});
+
+test("24시간 표기를 쓴다(ko-KR 기본값 '오후 06:30' 이 아니다)", () => {
+  const label = formatPendingCreatedAt("2026-08-11T09:30:00Z");
+  assert.equal(label.includes("오후"), false);
+  assert.equal(label.includes("오전"), false);
+  assert.match(label, /\d{2}:\d{2} 요청$/);
+});
+
+test("값이 없으면 빈 문자열 — 호출부가 줄 자체를 그리지 않는다", () => {
+  for (const value of [undefined, null, "", "   "]) {
+    assert.equal(formatPendingCreatedAt(value), "", JSON.stringify(value));
+  }
+});
+
+test("파싱할 수 없는 값도 빈 문자열 — Invalid Date·현재 시각 대체 금지", () => {
+  for (const value of ["not-a-date", "2026-13-45T99:99:99Z", "어제", 0, 1754900000000, {}, []]) {
+    assert.equal(formatPendingCreatedAt(value), "", JSON.stringify(value));
+  }
+});
+
+test("빈 문자열 결과에는 '요청' 접미사조차 남지 않는다", () => {
+  // "  요청" 처럼 값 없이 접미사만 남으면 화면에 의미 없는 꼬리가 붙는다.
+  assert.equal(formatPendingCreatedAt(null).includes("요청"), false);
+  assert.equal(formatPendingCreatedAt("not-a-date").includes("요청"), false);
+});
+
+test("Pending DTO 의 createdAt 을 그대로 넣으면 표기가 만들어진다", () => {
+  // 훅(toPreparingReport)이 옮기는 값이 실제로 이 함수와 맞물리는지 확인한다.
+  const dto = pending("job-a");
+  assert.equal(isGenerationPendingDto(dto), true);
+  assert.equal(formatPendingCreatedAt(dto.createdAt), "8월 10일 09:00 요청");
 });

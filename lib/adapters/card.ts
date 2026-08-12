@@ -1,3 +1,4 @@
+import { toReportCoverImage } from "@/lib/adapters/report";
 import { normalizeHttpUrl, normalizeText } from "@/lib/normalize";
 import { toReportType } from "@/lib/report-type";
 import { isUuid } from "@/lib/utils";
@@ -167,6 +168,8 @@ export function toFeedCardVM(card: CardResponse): FeedCardVM {
     createdAtLabel: formatCreatedAt(card.createdAt),
     createdAtTimeLabel: formatCreatedTime(card.createdAt),
     createdAtMs: typeof card.createdAt === "string" ? parseCreatedAtMs(card.createdAt) : null,
+    // 목록 응답에는 2026-08-11 배포 전까지 없던 필드다 — 없으면 null 이고 썸네일 자체가 안 생긴다.
+    coverImage: toReportCoverImage(card.coverImage),
   };
 }
 
@@ -244,6 +247,9 @@ export function toPublicFeedCardVM(
     title,
     summary: normalizeText(card.summary) ?? "",
     author: toPublicFeedAuthor(card.author),
+    // 내 피드와 **같은 검증**을 통과한 값만 담는다(같은 서버 필드다).
+    // 필드가 없는 배포본·리포트 없는 카드에서는 null → 카드는 기존 텍스트형 그대로.
+    coverImage: toReportCoverImage(card.coverImage),
     social: toPublicFeedSocial(card),
     // 좋아요와 **독립적으로** 검증한다 — 한쪽이 깨져도 다른 쪽 UI 는 살린다.
     scrapped: toScrapped(card.scrapped),

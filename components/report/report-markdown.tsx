@@ -20,8 +20,9 @@ import type { ReactNode } from "react";
  * 문자열("이번에 달라진 점" 등)을 파싱해 폼을 추측하지 않는다(계약이 금지한다). 켜지면 변경점
  * 본문이 실제로 쓰는 두 문법을 **추가로** 해석한다:
  *   1. GFM 취소선 `~~2026-2Q~~` → <del>
- *   2. 목록 항목에 이어지는 들여쓴 비-불릿 행(lazy continuation) → 같은 <li> 안의 다음 줄
- *      (`- (기존) …` / `  (변경) …` 가 하나의 비교 항목으로 묶인다)
+ *   2. 들여쓴 비-불릿 행 → 같은 <li> 안의 다음 줄. 앞에 `- ` 항목이 있으면 그 항목의 연속 줄로,
+ *      **없으면(agent 실제 출력) 들여쓴 줄 묶음 자체가 목록**이 되고 빈 줄이 항목을 가른다
+ *      (`  (기존) …` / `  (변경) …` 가 하나의 비교 항목으로 묶인다)
  *
  * 두 규칙 모두 delta 일 때만 적용한다. 기존(자유 형식) 본문은 `changeHistoryEnabled=false`·
  * 필드 누락이라 **파싱·출력이 이전과 완전히 동일**하다 — 렌더링 회귀를 원천 차단하려는 의도다.
@@ -121,6 +122,26 @@ function parseBlocks(markdown: string, delta: boolean): Block[] {
             continue;
           }
         }
+        /*
+          delta 전용 — 항목 사이 빈 줄은 목록을 끊지 않는다.
+
+          agent 는 신규 팩트 불릿을 "\n\n" 로 이어붙여(assembly.py: `"\n\n".join(_new_line(...))`)
+          한 항목마다 빈 줄이 들어간다. 기존 규칙대로 끊으면 [새로 확인된 사실] 4건이 <ul> 4개로
+          쪼개져 항목 간격이 8px(li) 대신 24px(li 8 + ul 16)이 된다 — 같은 섹션의 [달라진 사실]
+          묶음과 리듬이 어긋난다(2026-08-11 운영 본문 실측).
+
+          **뒤에 또 목록 항목이 있을 때만** 이어붙인다 — 빈 줄 다음이 제목·문단이면 그대로 끊어
+          다음 블록이 정상적으로 열린다.
+        */
+        if (delta && items.length > 0 && current.trim() === "") {
+          let next = i + 1;
+          while (next < lines.length && (lines[next] ?? "").trim() === "") next += 1;
+          if (next < lines.length && UL_ITEM.test(lines[next] ?? "")) {
+            i = next;
+            continue;
+          }
+          break;
+        }
         const item = UL_ITEM.exec(current);
         if (!item) break;
         items.push({ text: item[1] ?? "", children: [], continuation: [] });
@@ -160,6 +181,53 @@ function parseBlocks(markdown: string, delta: boolean): Block[] {
       continue;
     }
 
+    /*
+      delta 전용 — **불릿 없이 들여쓴 행만으로** 이루어진 변경 항목 묶음((기존)/(변경) 쌍).
+
+      agent 는 이 두 줄을 `- ` 없이 2칸 들여쓰기로만 내보내고, 항목 사이는 빈 줄로 나눈다
+      (bambi-agent-api `assembly.py` `_changed_line()`:
+         "  (기존) ~~{before}~~\n  (변경) `{today}`[L1]" 를 "\n\n" 로 이어붙임).
+      계약 문서 예시에는 앞줄에 `- ` 가 있지만 **실제 출력에는 없다**(2026-08-11 운영 실측).
+
+      그래서 위 `ul` 분기(UL_ITEM = 들여쓰기 없는 `- `)에 걸리지 않고, 그 안에서만 도는
+      UL_CONTINUATION 도 발동하지 않아 **아래 문단 수집기가 두 줄을 " " 로 이어붙여 한 줄로
+      만들어 버렸다** — (기존)과 (변경) 사이 줄바꿈이 사라지는 원인이다.
+
+      여기서 같은 `ul` 블록으로 묶어 첫 줄을 항목 본문, 빈 줄 없이 이어지는 들여쓴 줄을
+      continuation 으로 넣는다 → 기존 `.md-cont`(display:block) 렌더를 그대로 재사용해
+      한 항목이 두 줄로 읽힌다. 새 블록 종류·새 스타일을 만들지 않는다.
+
+      delta 일 때만 도는 분기라 기존(자유 형식) 본문의 파싱·출력은 이전과 완전히 동일하다.
+    */
+    if (delta && UL_CONTINUATION.test(line)) {
+      const items: { text: string; children: string[]; continuation: string[] }[] = [];
+      let startsNewItem = true;
+      while (i < lines.length) {
+        const current = lines[i] ?? "";
+        if (current.trim() === "") {
+          // 빈 줄은 항목 구분자다 — 뒤에 들여쓴 행이 또 나올 때만 묶음을 계속한다.
+          let next = i + 1;
+          while (next < lines.length && (lines[next] ?? "").trim() === "") next += 1;
+          if (next >= lines.length || !UL_CONTINUATION.test(lines[next] ?? "")) break;
+          startsNewItem = true;
+          i = next;
+          continue;
+        }
+        const continuation = UL_CONTINUATION.exec(current);
+        if (!continuation) break;
+        const text = continuation[1] ?? "";
+        if (startsNewItem || items.length === 0) {
+          items.push({ text, children: [], continuation: [] });
+          startsNewItem = false;
+        } else {
+          items[items.length - 1]!.continuation.push(text);
+        }
+        i += 1;
+      }
+      blocks.push({ kind: "ul", items });
+      continue;
+    }
+
     // 문단 — 다른 블록 시작 전까지의 연속 줄을 하나로 합친다.
     const buf: string[] = [];
     while (i < lines.length) {
@@ -191,6 +259,25 @@ function parseBlocks(markdown: string, delta: boolean): Block[] {
 /** 변경점 배지가 붙는 소제목 문구 — **정확히 일치**할 때만. 부분 포함 매칭·else 기본값 없음. */
 const CHANGED_HEADING = "달라진 사실";
 const FRESH_HEADING = "새로 확인된 사실";
+
+/**
+ * 소제목 끝의 건수 표기(` (2건)`) — agent 가 **항상** 붙인다
+ * (bambi-agent-api `agent/change_history/features/assembly.py`:
+ *  `f"{CHANGED_SUBHEADING} ({len(changed)}건)"`, 계약 문서 `### 달라진 사실 (N건)`).
+ *
+ * 이걸 떼지 않으면 운영 본문의 `### 달라진 사실 (2건)` 이 완전일치에서 탈락해 **배지도 백틱 값
+ * 색상도 전혀 붙지 않는다** — 2026-08-11 운영 실측에서 델타 보고서 3건 전부 미적용이었다.
+ * (#86 테스트는 계약 문서 예시 대신 건수 없는 픽스처를 써서 이 차이를 잡지 못했다.)
+ *
+ * 떼는 대상은 **끝에 붙은 건수 표기 하나**뿐이라 완전일치 규율은 그대로다: `달라진 사실 안내`
+ * 처럼 문구 자체가 다른 제목은 접미사가 없어 그대로 탈락한다(부분 포함 매칭이 아니다).
+ */
+const HEADING_COUNT_SUFFIX = /\s*\(\d+건\)$/;
+
+/** 배지 판정용 소제목 문구 — 끝의 건수 표기만 떼고 나머지는 원문 그대로 비교한다. */
+function headingBaseText(text: string): string {
+  return text.replace(HEADING_COUNT_SUFFIX, "").trimEnd();
+}
 
 /**
  * heading 역할.
@@ -251,9 +338,10 @@ function annotate(blocks: Block[], delta: boolean): Annotated[] {
     const text = block.text.trim();
     let role: HeadingRole = null;
     if (badgeLevel !== null && block.level === badgeLevel) {
-      // 최심 소제목 — 정확히 일치하는 두 문구만 배지를 받는다(부분 일치 금지).
-      if (text === CHANGED_HEADING) role = "changed";
-      else if (text === FRESH_HEADING) role = "fresh";
+      // 최심 소제목 — 건수 표기만 뗀 문구가 정확히 일치하는 둘만 배지를 받는다(부분 일치 금지).
+      const base = headingBaseText(text);
+      if (base === CHANGED_HEADING) role = "changed";
+      else if (base === FRESH_HEADING) role = "fresh";
     }
     if (role === null && sectionLevel !== null && block.level === sectionLevel) {
       role = "section";
@@ -365,27 +453,53 @@ function renderBlock(entry: Annotated, index: number, delta: boolean): ReactNode
       );
     case "ul":
       return (
-        <ul key={key}>
-          {block.items.map((item, i) => (
-            <li key={`${key}-li${i}`}>
-              {renderInline(item.text, `${key}-li${i}`, delta, context)}
-              {/* 들여쓴 연속 행 — 같은 항목 안에서 줄만 바꾼다(별도 문단·하위 불릿이 아니다). */}
-              {item.continuation.map((line, j) => (
-                <span key={`${key}-li${i}-n${j}`} className="md-cont">
-                  {renderInline(line, `${key}-li${i}-n${j}`, delta, context)}
-                </span>
-              ))}
-              {item.children.length > 0 && (
-                <ul>
-                  {item.children.map((child, j) => (
-                    <li key={`${key}-li${i}-c${j}`}>
-                      {renderInline(child, `${key}-li${i}-c${j}`, delta, context)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
+        <ul
+          key={key}
+          className={
+            context === "changed"
+              ? "md-delta-list md-delta-list-changed"
+              : context === "fresh"
+                ? "md-delta-list md-delta-list-fresh"
+                : undefined
+          }
+        >
+          {block.items.map((item, i) => {
+            const comparison = context === "changed" && item.continuation.length > 0;
+            return (
+              <li
+                key={`${key}-li${i}`}
+                className={comparison ? "md-delta-comparison" : undefined}
+              >
+                {comparison ? (
+                  <span className="md-delta-line md-delta-before-line">
+                    {renderInline(item.text, `${key}-li${i}`, delta, context)}
+                  </span>
+                ) : (
+                  renderInline(item.text, `${key}-li${i}`, delta, context)
+                )}
+                {/* 들여쓴 연속 행 — 같은 항목 안에서 줄만 바꾼다(별도 문단·하위 불릿이 아니다). */}
+                {item.continuation.map((line, j) => (
+                  <span
+                    key={`${key}-li${i}-n${j}`}
+                    className={
+                      comparison ? "md-cont md-delta-line md-delta-after-line" : "md-cont"
+                    }
+                  >
+                    {renderInline(line, `${key}-li${i}-n${j}`, delta, context)}
+                  </span>
+                ))}
+                {item.children.length > 0 && (
+                  <ul>
+                    {item.children.map((child, j) => (
+                      <li key={`${key}-li${i}-c${j}`}>
+                        {renderInline(child, `${key}-li${i}-c${j}`, delta, context)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       );
     case "ol":

@@ -30,6 +30,12 @@ const VISIBLE_TAG_LIMIT = 2;
  * **이 카드는 [내 보고서] 전용이다.** 공개 피드는 별도 컴포넌트(`public-feed-card.tsx`)를 쓰므로
  * 여기 있는 생성 종류·공개 상태 배지가 남의 카드에 노출될 경로가 없다. 이 컴포넌트를 공개 목록에
  * 재사용하려 한다면 두 배지를 먼저 분리해야 한다(내 보고서에만 의미 있는 정보다).
+ *
+ * **대표 이미지 썸네일을 두지 않는다**(2026-08-12). 잠깐 우측 썸네일(104×78 / 160×100)이 있었지만
+ * [내 보고서]는 "내가 만든 보고서를 훑는" 목록이라 제목·요약이 폭을 다 쓰는 편이 낫고, 보유율이
+ * 낮아(실측 6건 중 1건) 있는 카드와 없는 카드의 리듬이 갈렸다. 이미지는 카드 상세
+ * (`ReportCoverHero`)와 공개 피드(`public-feed-card.tsx`)에서 크게 보여준다.
+ * 데이터(`FeedCardVM.coverImage`)는 그대로 둔다 — 이 카드가 렌더하지 않을 뿐이다.
  */
 export function FeedCard({ card }: { card: FeedCardVM }) {
   const visibleTags = card.tags.slice(0, VISIBLE_TAG_LIMIT);

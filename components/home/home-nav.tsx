@@ -14,8 +14,8 @@ import { MOCK_NAV } from "@/lib/mock/feed";
 
 /**
  * 상단 nav — 인증 상태(§15)에 따라 분기.
- * - authenticated: 기존 로그인 헤더(검색 P1·＋관심자료·알림 P1·아바타 드롭다운[이름·이메일·로그아웃])
- * - guest: 검색·알림·아바타 숨김 · ＋관심자료(중립·hover 주황·클릭 시 GuestGateModal) · 로그인 · 가입하기(Primary)
+ * - authenticated: 기존 로그인 헤더(＋관심자료·알림·아바타 드롭다운[이름·이메일·로그아웃])
+ * - guest: 알림·아바타 숨김 · ＋관심자료(중립·hover 주황·클릭 시 GuestGateModal) · 로그인 · 가입하기(Primary)
  * - loading·error: 로그인 전용 정보(아바타·내 보고서)와 guest CTA 를 모두 숨긴 중립 헤더(로고만).
  *   인증 확정 전(loading)·확인 실패(error)에 잘못된 상태의 헤더를 노출하지 않는다.
  *
@@ -53,7 +53,7 @@ export function HomeNav({
   return (
     <nav className="border-b border-border bg-card">
       {/* 데스크톱(≥1101px) gap-[18px]·px-6 그대로, SideLeft 가 숨는 ≤1100px 구간에서만 gap·padding 축소로 겹침 완화 */}
-      <div className="relative mx-auto flex h-[58px] max-w-[1440px] items-center gap-2 px-4 min-[1101px]:gap-[18px] min-[1101px]:px-6">
+      <div className="mx-auto flex h-[58px] max-w-[1440px] items-center gap-2 px-4 min-[1101px]:gap-[18px] min-[1101px]:px-6">
         {/* 모바일·태블릿 메뉴 버튼 — SideLeft 가 숨는 ≤1100px 에서만 노출(데스크톱 숨김). drawer 트리거 */}
         {showNav && (
           <button
@@ -129,21 +129,10 @@ function GuestNavRight({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-/** 로그인 사용자 우측: 검색(P1) · ＋관심자료 · 알림(P1) · 아바타 드롭다운. */
+/** 로그인 사용자 우측: ＋관심자료 · 알림 · 아바타 드롭다운. */
 function MemberNavRight({ onAddOpen }: { onAddOpen: () => void }) {
   return (
     <>
-      {/* .nav-search — P1(검색), 시각 전용. 기능 미구현 placeholder 라 ≤1100px 에서는 숨겨 헤더 겹침을 없앤다
-          (absolute 중앙 배치가 좁은 폭에서 우측 CTA·알림·아바타와 겹치던 원인). 데스크톱에서만 노출. */}
-      <div
-        aria-disabled="true"
-        className="absolute top-1/2 left-1/2 flex h-[38px] w-[596px] max-w-[calc(100%-380px)] -translate-x-1/2 -translate-y-1/2 items-center gap-[9px] rounded-[19px] border border-border bg-background px-[15px] text-[13px] text-muted-foreground max-[1100px]:hidden"
-      >
-        {/* .sico */}
-        <span className="relative h-[13px] w-[13px] shrink-0 rounded-full border-[1.5px] border-low after:absolute after:-right-1 after:-bottom-0.5 after:h-[1.5px] after:w-[5px] after:rotate-45 after:bg-low after:content-['']" />
-        {MOCK_NAV.searchPlaceholder}
-      </div>
-
       {/* .btn.signal.sm — 관심 자료 추가 모달 (실동작). 좁은 폭에서는 텍스트를 접고 ＋ 아이콘만(접근 이름은 aria-label 로 유지) */}
       <button
         type="button"
