@@ -52,8 +52,9 @@ import type { CardResponse, CardVisibility } from "@/types/feed";
  * 좋아요(2026-08-04, service-api PR #35 소셜 필드): PUBLIC 카드에서만 토글을 렌더하고,
  * 작성자 본인 여부로는 숨기거나 막지 않는다(정책 확정 — 서버도 소유자를 차단하지 않는다).
  * 소셜 값이 검증되지 않으면(미배포 응답·비정상 null) 좋아요 UI 자체를 두지 않는다.
- * 보관(2026-08-07, service-api #53 `CardResponse.scrapped`)도 같은 규율이다 — PUBLIC + 값 검증
- * 통과일 때만 readbar 에 토글을 렌더하고, 좋아요 값과 **독립적으로** 판정한다.
+ * 보관(2026-08-07, service-api #53 `CardResponse.scrapped`)은 좋아요보다 범위가 한 겹 넓다 —
+ * service-api #85 이후 **본인 소유 PRIVATE 도 담을 수 있다**. PUBLIC 이거나 내 카드이고 값 검증을
+ * 통과하면 readbar 에 토글을 렌더하며, 좋아요 값과 **독립적으로** 판정한다.
  * 인증(복구) 상태 우선 → 데이터 상태(두 loading 분리). 백엔드가 주는 값만 렌더한다.
  * 리포트의 title·summary·citations 는 카드의 title·summary·sources 와 같은 발행 payload 라
  * 다시 렌더하지 않는다(중복 방지, PublishProcessingService 실측) — 본문(body)만 추가한다.
@@ -210,16 +211,24 @@ function CardDetailView({
                 {back.label}
               </Link>
               {/*
-                보관 — readbar 의 공유 왼쪽. PUBLIC 이고 `scrapped` 가 검증됐을 때만 렌더한다
-                (PRIVATE 카드는 서버가 스크랩을 404 로 막으므로 버튼 자체를 두지 않는다).
-                소유자 여부는 보지 않는다 — 좋아요와 같은 정책으로 본인 PUBLIC 카드도 담을 수 있다.
+                보관 — readbar 의 공유 왼쪽. `PUBLIC 이거나 내 카드` + `scrapped` 검증 통과일 때 렌더한다.
+
+                `|| owner` 가 붙은 이유(2026-08-12, service-api #85): 서버가 **본인 소유 PRIVATE 의
+                스크랩 생성·해제를 허용**하고 `GET /api/scraps` 에도 포함해 내려준다. 그전까지는
+                스크랩 대상이 PUBLIC 뿐이라 `isPublic` 하나로 막아 뒀는데, 그 조건이 그대로 남아
+                내 비공개 보고서만 담기 버튼이 사라져 있었다(서버는 되는데 화면이 막던 자리).
+
+                **남의 PRIVATE 는 이 조건으로도 열리지 않는다**: `isPublic` 이 false 이고 `owner` 는
+                `isCardOwner`(양쪽 publicId 의 UUID 일치)가 false 라 둘 다 걸리지 않는다. 애초에
+                서버가 남의 PRIVATE 를 404 로 감춰 이 화면까지 오지도 않는다(DetailNotFound).
+                author 가 없는 응답에서도 `isCardOwner` 는 false 라 안전한 쪽으로 닫힌다.
 
                 좋아요(카드 article 하단)와 같은 줄에 두지 않은 이유: 두 액션의 노출 조건이 서로
                 달라(`social !== null` vs `scrapped !== null`) 한 줄로 묶으면 한쪽이 없을 때 빈
                 구분선만 남는다. readbar 는 이미 `공유` 를 담은 액션 자리이고 스크롤과 무관하게
                 고정돼 있어, 상세 레이아웃을 건드리지 않고 들어갈 수 있는 가장 자연스러운 위치다.
               */}
-              {isPublic && scrapped !== null && (
+              {(isPublic || owner) && scrapped !== null && (
                 <CardScrapButton
                   publicId={shown.publicId}
                   initialScrapped={scrapped}

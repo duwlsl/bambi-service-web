@@ -5,7 +5,8 @@ import type { ScrapCard, ScrapData } from "@/types/scrap";
 /**
  * 스크랩 repository — 화면 훅과 Service API 사이의 단일 seam.
  * 전부 인증 필요(호출부가 authenticated 에서만 부른다).
- * 목록은 "아직 PUBLIC 인 카드만" 온다(비공개 전환/삭제는 백엔드가 자동 숨김) —
+ * 목록은 "아직 열람 가능한 카드만" 온다 — PUBLIC 카드와 **내 소유 PRIVATE 카드**(service-api #85)다.
+ * 남의 카드가 비공개로 바뀌거나 삭제되면 백엔드가 자동으로 숨긴다.
  * 빈 배열은 정상이며 훅이 empty 로 정규화한다.
  */
 
