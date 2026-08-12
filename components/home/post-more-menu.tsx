@@ -94,7 +94,7 @@ export function PostMoreMenu({ publicId, title }: { publicId: string; title: str
    *
    * `다른 앱으로 공유` 는 OS 공유 시트를 띄운다. 사용자가 시트를 닫으면 `AbortError` 가 나는데
    * **실패가 아니므로 아무것도 알리지 않는다.** 시트를 아예 열지 못한 경우에만 링크 복사로
-   * 물러난다 — 조용히 아무 일도 일어나지 않는 것보다 낫고, 그때 뜨는 문구("링크를 복사했어요")는
+   * 물러난다 — 조용히 아무 일도 일어나지 않는 것보다 낫고, 그때 뜨는 문구("링크를 복사했습니다.")는
    * 실제로 일어난 일과 일치한다.
    */
   function onSelect(key: MenuItemKey) {

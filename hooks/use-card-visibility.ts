@@ -7,6 +7,18 @@ import { isMorningBriefing } from "@/lib/report-type";
 import type { CardVisibility } from "@/types/feed";
 
 /**
+ * `change` 한 번의 결과 — 호출부가 **그 클릭의 결과만** 보고 안내를 고를 수 있게 promise 로 돌려준다.
+ *
+ * 상태 플래그(`pending`·`failed`·`blocked`·`confirmed`)는 그대로 남는다. "지금 이 요청이 어떻게
+ * 됐나"(토스트·되돌리기)는 결과값이, "지금 화면이 어떤 상태인가"(버튼 비활성 등)는 플래그가 맡는다.
+ * `busy` 는 실패가 아니라 **중복 클릭이 락에 막힌 것**이라 요청 자체가 나가지 않은 경우다 —
+ * 호출부는 아무것도 알리지 않는다(이미 진행 중인 요청의 결과가 곧 온다).
+ */
+export type VisibilityChangeResult =
+  | { ok: true; visibility: CardVisibility }
+  | { ok: false; reason: "blocked" | "failed" | "busy" };
+
+/**
  * 카드 공개 범위 변경 훅 — **카드 상세의 공유 모달**에서 쓴다(카드 소유자 전용).
  *
  * 목록에는 이 훅을 쓰지 않는다. 공개 전환은 다른 사용자 피드 노출·댓글·좋아요로 이어지는 행동이라
@@ -55,7 +67,8 @@ export function useCardVisibility({
   blocked: boolean;
   /** 서버가 확정해 준 마지막 값. 아직 성공한 변경이 없으면 null — 성공 안내 문구의 근거다. */
   confirmed: CardVisibility | null;
-  change: (next: CardVisibility) => void;
+  /** 이 호출의 결과로 resolve 한다(reject 하지 않는다) — 호출부가 안내·되돌리기를 그 자리에서 고른다. */
+  change: (next: CardVisibility) => Promise<VisibilityChangeResult>;
 } {
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -65,26 +78,28 @@ export function useCardVisibility({
   const publishBlocked = isMorningBriefing(reportType);
 
   const change = useCallback(
-    (next: CardVisibility) => {
-      if (lock.current) return; // pending 중 중복 요청 차단
+    (next: CardVisibility): Promise<VisibilityChangeResult> => {
+      if (lock.current) return Promise.resolve({ ok: false, reason: "busy" }); // pending 중 중복 요청 차단
       // 아침 브리핑 → 공개: 요청을 보내지 않고 여기서 끝낸다(UI 가 CTA 를 감추는 것과 이중 방어).
       if (next === "PUBLIC" && publishBlocked) {
         setBlocked(true);
         setFailed(false);
-        return;
+        return Promise.resolve({ ok: false, reason: "blocked" });
       }
       setBlocked(false);
       lock.current = true;
       setPending(true);
       setFailed(false);
-      void changeCardVisibility(publicId, next)
-        .then((card) => {
+      return changeCardVisibility(publicId, next)
+        .then((card): VisibilityChangeResult => {
           // 서버가 확정한 값만 반영한다(요청값이 아니라 응답값).
           setConfirmed(card.visibility);
           onChanged(card.visibility);
+          return { ok: true, visibility: card.visibility };
         })
-        .catch(() => {
+        .catch((): VisibilityChangeResult => {
           setFailed(true); // 기존 visibility 유지 — 화면을 오류 화면으로 바꾸지 않는다
+          return { ok: false, reason: "failed" };
         })
         .finally(() => {
           lock.current = false;
