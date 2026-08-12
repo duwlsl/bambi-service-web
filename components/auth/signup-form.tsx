@@ -109,7 +109,7 @@ export function SignupForm() {
         <Input
           id="signup-name"
           type="text"
-          autoComplete="nickname"
+          autoComplete="name"
           placeholder="이름 입력"
           value={displayName}
           onChange={(e) => {
