@@ -193,9 +193,10 @@ function CardDetailView({
               같은 두께(32 + 9·2 + 보더 2 = 52px)를 유지한다. sticky·border·bg-card·rounded·
               shadow·focus-ring 은 기존 그대로이고 새 강조색을 만들지 않는다.
 
-              공유 버튼이 들어오면서 바 전체를 Link 로 감쌀 수 없게 됐다(링크 안에 button 중첩
-              금지) → 링크가 남은 가로 공간(flex-1)을 차지해 빈 영역을 눌러도 돌아가는 동작은
-              유지한다.
+              클릭 영역은 `←` + 문구가 실제로 차지하는 만큼이다. 예전에는 링크가 flex-1 로 남은
+              가로 공간까지 차지해 바의 빈 자리를 눌러도 돌아갔는데, 누른 줄도 모르고 화면이
+              바뀌는 오작동이라 걷어냈다. 지금은 inline-flex + w-fit 으로 콘텐츠 폭만 쓰고 우측
+              액션은 링크의 mr-auto 가 민다 — hover·focus·pointer 도 링크 영역에만 걸린다.
 
               문구·목적지는 진입 출처 하나에서 같이 나온다(`reportBackTarget`) — 둘이 어긋날 수
               없다. `←` 는 장식이라 aria-hidden 이고, 링크의 접근 가능한 이름 = 화면 문구다.
@@ -203,7 +204,7 @@ function CardDetailView({
             <div className="sticky top-4 z-20 mb-4 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-[9px] shadow-[var(--shadow)]">
               <Link
                 href={back.href}
-                className="focus-ring flex min-h-8 flex-1 items-center gap-2 rounded-lg text-[13.5px] font-semibold whitespace-nowrap text-ink-mid hover:text-signal-ink"
+                className="focus-ring mr-auto inline-flex min-h-8 w-fit items-center gap-2 rounded-lg text-[13.5px] font-semibold whitespace-nowrap text-ink-mid hover:text-signal-ink"
               >
                 <span aria-hidden="true" className="text-muted-foreground">
                   ←
@@ -243,7 +244,7 @@ function CardDetailView({
                   공개/비공개 문구도 노출하지 않는다(권한 없는 기능을 보여주지 않는다).
 
                 버튼이 빠져도 바 높이·정렬은 그대로다 — 두께는 좌측 링크의 min-h-8 이 만들고
-                링크가 flex-1 로 남은 폭을 채운다(우측 액션은 shrink-0 부가 요소).
+                링크의 mr-auto 가 우측 액션을 민다(우측 액션은 shrink-0 부가 요소).
               */}
               {owner && !morningBriefingPrivate ? (
                 <button
