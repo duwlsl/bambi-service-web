@@ -45,11 +45,16 @@ export const INTEREST_LEVEL_LABEL: Record<InterestLevel, string> = {
  * 새 색 토큰을 만들지 않고 기존 토큰의 알파만 달리한다(목업 .mrow .mbar 도 --signal 의 opacity 로 구분한다).
  * 가장 옅은 `low` 도 막대 트랙(`bg-background`) 위에서 색이 구분되도록 25% 이상을 유지한다 —
  * 라이트(#F5F6F8 트랙)에서는 살구색, 다크(#20242C 트랙)에서는 갈빛으로 트랙과 갈린다.
+ *
+ * 최상단을 원색 `bg-primary`(#FF5A00) 로 두니 목록에서 형광색처럼 튀었다(2026-08-13 검수).
+ * 계열은 그대로 두고 **알파만 한 단계씩 낮춰** 가장 높은 단계도 차분한 코랄 오렌지로 앉힌다:
+ * 75% → 코랄, 55% → 연한 살구, 40% → 더 옅은 살구, 25% → 가장 옅은 살구.
+ * (알파는 기존처럼 5 단위로만 쓴다 — 목업 토큰 표기와 맞춘다.)
  */
 export const INTEREST_LEVEL_BAR_CLASS: Record<InterestLevel, string> = {
-  veryHigh: "bg-primary",
-  high: "bg-primary/70",
-  medium: "bg-primary/45",
+  veryHigh: "bg-primary/75",
+  high: "bg-primary/55",
+  medium: "bg-primary/40",
   low: "bg-primary/25",
 };
 

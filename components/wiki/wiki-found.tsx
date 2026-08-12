@@ -142,7 +142,8 @@ function FoundPanel({
   return (
     <FoundSection count={candidates.length}>
       <p className="mt-1 mb-2 text-[12.5px] leading-[1.6] text-muted-foreground">
-        저장한 자료에서 AI가 찾은 주제예요. 추가하면 브리핑 주제로 쓰고, 숨기면 이 목록에서 빼요.
+        저장한 자료에서 AI가 찾은 주제예요. 관심사에 추가하면 브리핑 주제에 반영되고, 숨기면
+        목록에서 제외돼요.
       </p>
 
       <ul ref={listRef} tabIndex={-1} className="divide-y divide-border outline-none">

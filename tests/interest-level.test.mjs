@@ -127,6 +127,8 @@ test("막대 색은 새 색을 만들지 않고 주황 한 계열(--primary)의 
   for (const className of classes) {
     assert.match(className, /^bg-primary(\/\d+)?$/);
   }
+  // 최상단도 원색(alpha 없는 bg-primary)이 아니다 — 형광색처럼 튀지 않는 코랄 농도까지만 올린다.
+  assert.doesNotMatch(classes.join(" "), /(^|\s)bg-primary(\s|$)/);
   // 회색(비활성)은 API 가 비활성 상태를 줄 때만 — 지금 계약엔 없다.
   assert.doesNotMatch(classes.join(" "), /gray|slate|muted|low/);
   // 원색 하드코딩·무지개 팔레트 금지.
@@ -216,15 +218,21 @@ const html = renderToStaticMarkup(
       ],
       refetch: () => {},
     },
-    // "AI" 는 태그와 겹치는 직접 등록 항목(점수 유지 + 배지), "등산" 은 점수 없는 직접 등록 항목.
+    // "AI" 는 태그와 겹치는 직접 등록 항목(점수 유지), "등산" 은 점수 없는 직접 등록 항목.
     myInterests: [interest(1, "AI"), interest(2, "등산")],
   }),
 );
 
-test("점수 크기에 따라 라벨과 막대 색이 함께 갈린다", () => {
-  for (const label of ["매우 높음", "높음", "보통", "낮음"]) {
-    assert.ok(html.includes(label), `${label} 라벨이 없다`);
-  }
+/** 같은 데이터에서 내 관심사만 뺀 렌더 — `직접 추가` 구역이 비는 경우를 본다. */
+const htmlNoUser = renderToStaticMarkup(
+  WikiMind({
+    taxonomy: { status: "success", data: taxonomy(), refetch: () => {} },
+    tags: { status: "success", data: [tag("AI", 1), tag("환율", 0.6)], refetch: () => {} },
+    myInterests: [],
+  }),
+);
+
+test("점수 크기에 따라 막대 색과 길이가 갈린다", () => {
   for (const className of Object.values(INTEREST_LEVEL_BAR_CLASS)) {
     assert.ok(html.includes(className), `${className} 막대가 없다`);
   }
@@ -234,43 +242,133 @@ test("점수 크기에 따라 라벨과 막대 색이 함께 갈린다", () => {
   }
 });
 
-test("점수 0 은 막대와 최하 라벨을 갖고, 점수 없음은 막대 없이 안내 문구를 갖는다", () => {
-  // 0 → 최소 폭 막대 + "낮음". (막대가 아예 없으면 값이 없는 항목과 구별되지 않는다)
-  assert.ok(html.includes("width:8%"));
-  assert.ok(html.includes("낮음"));
-  // 점수 없음 → 막대·색·등급 없음 + 직접 추가 사실 + 관심도 정보 없음.
-  assert.ok(html.includes("직접 추가한 관심사"));
-  assert.ok(html.includes("관심도 정보 없음"));
-  // 점수 없는 행이 라벨 칸을 비워 정렬을 무너뜨리지 않는다(같은 폭의 자리에 — 를 남긴다).
-  assert.ok(html.includes("—"));
+test("관심도 등급은 눈에 보이는 글자로 두지 않고 막대 길이로만 보여준다", () => {
+  /*
+    등급 글자(매우 높음·높음·…)와 점수 없음의 "—" 는 막대와 같은 자리에서 같은 정보를 반복해
+    행을 빽빽하게 만들었다(2026-08-13). 화면에서는 걷어내되, 막대가 aria-hidden 이라
+    **스크린리더용 sr-only 로는 남긴다** — 낭독까지 비면 관심도가 통째로 사라진다.
+  */
+  for (const label of Object.values(INTEREST_LEVEL_LABEL)) {
+    assert.match(html, new RegExp(`sr-only[^>]*>관심도 ${label}<`), `${label} 이 sr-only 밖에 있다`);
+  }
+  // 점수 없음 자리를 채우던 "—" 칸도 없앴다(관심사 이름 안의 — 는 그대로다 → 단독 노드만 본다).
+  assert.doesNotMatch(html, />\s*—\s*</);
+  assert.doesNotMatch(html, /관심도 정보 없음/);
 });
 
-test("직접 등록한 항목에만 출처 배지가 붙고, AI 추정 문구는 반복하지 않는다", () => {
-  // 내 관심사 2건(AI·등산) → 배지 2개. 나머지 AI 추정 항목에는 붙지 않는다.
-  assert.equal(html.split("내 관심사").length - 1, 2);
-  // "AI 추정"은 섹션 안내 한 줄에서만 말한다 — 행마다 반복하던 표기는 남기지 않는다.
-  assert.equal(html.split("AI 추정").length - 1, 1);
-  assert.doesNotMatch(mindCode, /item\.source === "USER" \? "내 관심사" : "AI 추정"/);
+test("점수 0 은 막대를 갖고, 점수 없음은 막대 자체를 만들지 않는다", () => {
+  // 0 → 최소 폭 막대. (막대가 아예 없으면 값이 없는 항목과 구별되지 않는다)
+  assert.ok(html.includes("width:8%"));
+  // 막대 개수 = 점수가 있는 5건. 점수 없는 "등산" 행에는 빈 트랙조차 그리지 않는다.
+  assert.equal(html.split("rounded-full bg-background").length - 1, 5);
+  assert.doesNotMatch(mindCode, /width: `\$\{interestBarWidthPercent\(0\)/);
+});
+
+test("출처는 주황 점이 아니라 구역 제목으로 나눈다", () => {
+  // 칩([내 관심사])도, 그 뒤에 썼던 이름 앞 주황 점도 남아 있지 않다.
+  assert.doesNotMatch(html, /내 관심사/);
+  assert.doesNotMatch(html, /h-1\.5 w-1\.5/);
+  assert.doesNotMatch(mindCode, /bg-transparent/);
+  // 점을 설명하던 sr-only 문구도 함께 걷었다 — 이제 구역 제목이 그 일을 한다.
+  assert.doesNotMatch(html, />직접 추가한 관심사</);
+  // 구역 제목 2개, `직접 추가` 가 먼저다. (안내 문구의 "직접 추가한…" 은 `<` 가 안 붙어 걸리지 않는다)
+  const userAt = html.indexOf(">직접 추가<");
+  const inferredAt = html.indexOf(">AI 발견<");
+  assert.ok(userAt > -1, "직접 추가 구역 제목이 없다");
+  assert.ok(inferredAt > -1, "AI 발견 구역 제목이 없다");
+  assert.ok(userAt < inferredAt, "직접 추가 구역이 먼저 와야 한다");
+  // 제목은 글자만 — 이모지·개수 배지를 붙이지 않는다.
+  assert.match(html, /<h3[^>]*>직접 추가<\/h3>/);
+});
+
+test("항목이 없는 구역은 헤더째 렌더하지 않는다", () => {
+  assert.doesNotMatch(htmlNoUser, />직접 추가</);
+  assert.match(htmlNoUser, />AI 발견</);
 });
 
 test("긴 이름은 말줄임으로 처리해 다른 칸을 밀어내지 않는다", () => {
   assert.ok(html.includes(LONG_NAME.slice(0, 12)));
   assert.match(mindSource, /min-w-0 truncate text-\[13px\]/);
-  // 관심도 라벨 칸은 고정폭 + 줄바꿈 금지 → 이름 길이와 무관하게 오른쪽 정렬이 유지된다.
-  assert.match(mindSource, /w-14 shrink-0 text-right text-\[11\.5px\] whitespace-nowrap/);
+  // 대분류 칩은 열 폭을 넘지 못하고 넘치면 말줄임 → 긴 분류명이 행을 밀어내지 않는다.
+  assert.match(mindSource, /max-w-full justify-self-end truncate/);
 });
 
-test("좁은 화면에서는 막대를 아래 줄 전체 폭으로 내린다", () => {
-  // 이름 옆 배지가 1줄 고정폭 합을 늘리므로 한 줄 배치 분기점이 480px 이다(그 아래는 2줄).
-  assert.match(mindSource, /order-last w-full/);
-  assert.match(mindSource, /min-\[480px\]:order-none/);
+/* ────────────────────────── 열 정렬 · 간격 ────────────────────────── */
+
+test("열 너비를 템플릿이 정해 칩 유무와 무관하게 트랙 시작·끝이 같다", () => {
+  // <480px = 2열 2행, ≥480px = 3열 1행. 폭이 내용에 따라 늘거나 줄지 않는다.
+  assert.match(mindSource, /grid-cols-\[minmax\(0,1fr\)_6\.5rem\]/);
+  assert.match(mindSource, /min-\[480px\]:grid-cols-\[10\.5rem_minmax\(0,1fr\)_6\.5rem\]/);
+  /*
+    flex 시절 막대가 `flex-1` 로 남는 폭을 먹어서, 칩이 없는 행은 트랙이 오른쪽 끝까지 늘고
+    칩이 있는 행은 짧아졌다(2026-08-13 브라우저 검수). 폭을 내용에서 떼어 낸 뒤로 이 클래스들은
+    **행 안에** 다시 들어오면 안 된다(구역 제목의 구분선은 flex-1 로 남는 폭을 채우는 게 맞다 —
+    그래서 파일 전체가 아니라 MindRow 본문만 본다).
+  */
+  const rowCode = code(mindSource.slice(mindSource.indexOf("function MindRow(")));
+  assert.doesNotMatch(rowCode, /flex-1|ml-auto|order-last/);
+  // 셀마다 명시적 열 지정 → 앞 셀(막대)이 없어도 칩이 2열로 당겨지지 않는다.
+  assert.match(mindSource, /col-start-2 row-start-1[^"]*min-\[480px\]:col-start-3/);
+  // 모바일에서 막대는 두 열을 모두 덮는다 → 칩이 있든 없든 트랙 폭이 같다.
+  assert.match(mindSource, /col-span-2 col-start-1 row-start-2/);
   assert.doesNotMatch(mindCode, /min-\[360px\]/);
 });
 
-test("그룹 구조와 정렬은 그대로 둔다", () => {
-  // 대분류 묶기·빈 대분류 감추기·강도 내림차순은 이번 변경 대상이 아니다.
-  assert.match(mindSource, /const SHOW_EMPTY_CATEGORIES = false;/);
+test("구역 사이 여백이 행 사이보다 확실히 크다", () => {
+  assert.match(mindSource, /<ul className="flex flex-col gap-3">/);
+  assert.match(mindSource, /<div className="flex flex-col gap-6">/);
+});
+
+/* ────────────────────────── 구역 분리 · 정렬 ────────────────────────── */
+
+test("대분류 묶음은 되살리지 않는다", () => {
+  // 그룹 헤더·개수·이모지가 없다. 분류 자체는 lib 규칙 그대로 쓰고 표시만 바꾼다.
   assert.match(mindSource, /groupInterestsByCategory\(taxonomy\.data, wikiTags, myInterests\)/);
-  assert.ok(html.includes("테크·IT"));
-  assert.ok(html.includes("기타"));
+  assert.doesNotMatch(mindCode, /SHOW_EMPTY_CATEGORIES|group\.emoji|아직 없어요/);
+  assert.doesNotMatch(html, /💻|🧩/);
+});
+
+test("대분류는 행 오른쪽 중립 칩으로 남고, 매칭이 없으면 표시 전용 [기타] 를 쓴다", () => {
+  // "AI" 는 topic 이름과 정확히 맞아 테크·IT → 실제 분류명이 붙는다.
+  assert.match(html, /bg-secondary[^>]*>테크·IT</);
+  /*
+    나머지 5건은 어디에도 안 걸린 가상 [기타] 버킷이다. 칩을 생략했더니 빈 자리가 줄줄이 남아
+    열이 비뚤어 보여(2026-08-13) fallback 문구를 표시한다 — **모든 행에 칩이 있다.**
+  */
+  assert.equal(html.split(/bg-secondary[^>]*>기타</).length - 1, 5);
+  assert.equal(html.split("bg-secondary").length - 1, 6);
+  // 표시 전용이라는 근거: 컴포넌트에서만 만들고 분류 lib 는 이 문구를 모른다.
+  assert.match(mindSource, /const ETC_FALLBACK_LABEL = "기타";/);
+  assert.doesNotMatch(
+    code(readFileSync(new URL("../lib/interest-category.ts", import.meta.url), "utf8")),
+    /ETC_FALLBACK_LABEL/,
+  );
+  // 오렌지 강조 칩이 아니다(중립 배경 + 흐린 글자).
+  assert.match(mindSource, /bg-secondary px-1\.5 py-px[^"]*text-muted-foreground/);
+});
+
+test("구역 제목은 보조 문구가 아니라 제목으로 읽히고, 오른쪽을 선으로 채운다", () => {
+  // 관심사 이름(13px)보다 크고 진하다 — 흐린 muted 보조 문구로 두지 않는다.
+  assert.match(mindSource, /text-\[13\.5px\] font-bold[^"]*text-foreground/);
+  assert.doesNotMatch(mindSource, /text-\[11\.5px\][^"]*text-muted-foreground/);
+  // 구분선은 하이픈 문자가 아니라 border 다. 남는 폭만 채우고 카드 밖으로 넘치지 않는다.
+  assert.match(mindSource, /min-w-0 flex-1 border-t border-border/);
+  assert.doesNotMatch(html, /─|-{3,}/);
+  // 접근성 구조(h3 + section aria-label)는 그대로다.
+  assert.match(html, /<h3[^>]*>직접 추가<\/h3>/);
+  assert.match(html, /<section aria-label="AI 발견"/);
+});
+
+test("직접 추가한 관심사가 먼저, 그다음 AI 추정이 점수 내림차순으로 놓인다", () => {
+  const order = [...html.matchAll(/truncate text-\[13px\][^>]*>([^<]+)</g)].map((m) => m[1]);
+  assert.deepEqual(order, [
+    // ① USER 2건 — GET /api/interests 응답 순서 그대로(점수 1 인 AI 도 관심도로 줄 세우지 않는다).
+    "AI",
+    "등산",
+    // ② AI 추정 — 0.6 · 0.3 · 0.05 · 0 내림차순.
+    "환율",
+    "노트북",
+    LONG_NAME,
+    "반도체",
+  ]);
 });

@@ -24,6 +24,7 @@
   --color-ok: var(--ok);
   --color-wiki-entity: var(--wiki-entity);
   --color-wiki-concept: var(--wiki-concept);
+  --color-wiki-link: var(--wiki-link);
   --color-wiki-related: var(--wiki-related);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -124,9 +125,15 @@
   --avatar-bg: #FCE4D4;            /* --avatar-bg */
   --img: #EEF0F3;                  /* --img        : 이미지 영역 배경 */
   --ok: #1F8A54;                   /* --ok         : 긍정 상태(공개 배지 등) */
-  --wiki-entity: #278C78;          /* Wiki Entity : 밝은 배경용 teal */
-  --wiki-concept: #7657D6;         /* Wiki Concept: 밝은 배경용 violet */
-  --wiki-related: #8B78F6;         /* 선택 Node와 직접 연결된 Node·Edge */
+  /* Wiki Graph — Node/Edge 색. 서비스 주황 UI 와 어울리도록 teal·violet 을 걷어내고
+     Concept=코랄 오렌지 · Entity=스카이블루로 맞췄다(2026-08-13). `-soft` 는 Node radial gradient 의
+     중간~외곽 톤이며 같은 계열의 옅은 색이다 — 새 계열을 늘리지 않는다. */
+  --wiki-entity: #58A9E6;          /* Wiki Entity : 맑은 스카이블루(Node 중심) */
+  --wiki-entity-soft: #AFD8F5;     /* Wiki Entity : 옅은 하늘색(Node 중간~외곽) */
+  --wiki-concept: #F2825C;         /* Wiki Concept: 부드러운 코랄 오렌지(Node 중심) */
+  --wiki-concept-soft: #FBC9AE;    /* Wiki Concept: 연한 살구색(Node 중간~외곽) */
+  --wiki-link: #C2CCD9;            /* 기본 Edge : 밝은 블루그레이(--border 보다 한 단계 진하다) */
+  --wiki-related: #F2734A;         /* 선택 Node와 직접 연결된 Node·Edge : 코랄 오렌지 */
   /* 목업 전용 추가 토큰 — 카드 상세에서 사용 */
   --ok-dot: #34A66A;               /* --ok-dot     : 출처 신뢰도 높음 점 */
   --mid: #D89A2B;                  /* --mid        : 출처 신뢰도 중간 점 */
@@ -188,9 +195,13 @@
   --avatar-bg: #2E2318;            /* --avatar-bg (dark) */
   --img: #20242C;                  /* --img (dark) */
   --ok: #43C088;                   /* --ok (dark) */
-  --wiki-entity: #62D4BD;          /* Agent Wiki Graph --entity */
-  --wiki-concept: #A990FF;         /* Agent Wiki Graph --concept */
-  --wiki-related: #AAA0DF;         /* Agent Wiki Graph neighbor stroke */
+  /* Wiki Graph (dark) — 라이트와 같은 의미, 어두운 카드(#181B21) 위에서 뜨도록 한 단계 밝게. */
+  --wiki-entity: #6FBDF2;          /* Wiki Entity (dark) */
+  --wiki-entity-soft: #A9D8F5;     /* Wiki Entity soft (dark) */
+  --wiki-concept: #FF9E77;         /* Wiki Concept (dark) */
+  --wiki-concept-soft: #F7C3A6;    /* Wiki Concept soft (dark) */
+  --wiki-link: #48525F;            /* 기본 Edge (dark) */
+  --wiki-related: #FF9264;         /* 선택 Node·Edge (dark) */
   --ok-dot: #43C088;               /* --ok-dot (dark) */
   --mid: #E0B44E;                  /* --mid (dark) */
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.32); /* --shadow (dark) */
