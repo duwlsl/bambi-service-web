@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/components/auth/use-require-auth";
 import { PostMoreMenu } from "@/components/home/post-more-menu";
 import { CardScrapButton } from "@/components/report/card-scrap-button";
 import { useCardLike } from "@/hooks/use-card-like";
+import { reportDetailHref } from "@/lib/report-origin";
 import type { PublicFeedAuthorVM, PublicFeedCardVM, PublicFeedSocialVM } from "@/types/feed";
 
 /**
@@ -63,7 +64,11 @@ import type { PublicFeedAuthorVM, PublicFeedCardVM, PublicFeedSocialVM } from "@
  * 메뉴 항목은 `링크 복사` · `다른 앱으로 공유`(Web Share 지원 시) 둘이고 결과는 하단 토스트가 알린다.
  */
 export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
-  const detailHref = `/report/${card.publicId}`;
+  // 공개 피드(홈 [피드] 탭) 전용 카드라 진입 출처가 `feed` 로 고정이다 — 소유자가 자기 공개
+  // 보고서를 여기서 열어도 돌아갈 곳은 홈 피드다(소유 여부로 출처를 추정하지 않는다).
+  // 공유·링크 복사(PostMoreMenu·useCopyCardLink)는 `from` 없는 순수 상세 URL 을 쓴다 —
+  // 남에게 보내는 링크에 내 진입 경로를 실어 보내지 않는다(받는 쪽은 기본값 = 홈 피드).
+  const detailHref = reportDetailHref(card.publicId, { token: "feed" });
   // 관심사는 **첫 태그만** 문구로 세우고 나머지는 개수로 접는다(목업 `.reason` 한 줄 유지).
   const [primaryTag, ...restTags] = card.tags;
   const sourceCount = card.sources.length;

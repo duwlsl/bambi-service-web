@@ -26,6 +26,7 @@ import { useMyReportJobs } from "@/hooks/use-my-report-jobs";
 import { useOnDemandGeneration } from "@/hooks/use-on-demand-generation";
 import { useWikiInterests } from "@/hooks/use-wiki-interests";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
+import { HOME_FEED_TAB_VALUE, HOME_TAB_PARAM } from "@/lib/report-origin";
 
 type HomeTab = "mine" | "rec";
 
@@ -36,12 +37,12 @@ const HOME_INITIAL_TAB: HomeTab = "mine";
  * 탭을 URL 쿼리(`?tab=feed`)에 남긴다 (2026-08-11 우석 — "피드 보다 새로고침하면 내 보고서로 돌아온다").
  * 상태만 들고 있으면 새로고침·뒤로가기에서 선택이 사라지고, 피드 화면을 링크로 공유할 수도 없다.
  * 기본 탭(mine)은 쿼리를 붙이지 않는다 — 홈 주소가 `/?tab=mine` 으로 지저분해지지 않게.
+ *
+ * 쿼리 키·값은 `lib/report-origin.ts` 가 단일 소스다 — 보고서 상세의 뒤로가기가 같은 계약으로
+ * 목적지를 만들기 때문에, 여기서 따로 문자열을 들고 있으면 둘이 조용히 갈라진다.
  */
-const TAB_QUERY_KEY = "tab";
-const FEED_TAB_VALUE = "feed";
-
 function parseTab(value: string | null): HomeTab {
-  return value === FEED_TAB_VALUE ? "rec" : HOME_INITIAL_TAB;
+  return value === HOME_FEED_TAB_VALUE ? "rec" : HOME_INITIAL_TAB;
 }
 
 /**
@@ -88,7 +89,7 @@ function HomeView({ isMember }: { isMember: boolean }) {
    * 리렌더를 건너뛰기 때문이다. 상태를 먼저 바꾸면 클릭은 라우터 동작과 무관하게 항상 즉시 반영되고,
    * URL 은 새로고침·공유용 사본으로만 따라온다. 최초값만 URL 에서 읽는다.
    */
-  const [tab, setTab] = useState<HomeTab>(() => parseTab(searchParams.get(TAB_QUERY_KEY)));
+  const [tab, setTab] = useState<HomeTab>(() => parseTab(searchParams.get(HOME_TAB_PARAM)));
   const [amOpen, setAmOpen] = useState(false);
 
   /**
@@ -103,9 +104,9 @@ function HomeView({ isMember }: { isMember: boolean }) {
       if (typeof window === "undefined") return;
       const url = new URL(window.location.href);
       if (next === HOME_INITIAL_TAB) {
-        url.searchParams.delete(TAB_QUERY_KEY);
+        url.searchParams.delete(HOME_TAB_PARAM);
       } else {
-        url.searchParams.set(TAB_QUERY_KEY, FEED_TAB_VALUE);
+        url.searchParams.set(HOME_TAB_PARAM, HOME_FEED_TAB_VALUE);
       }
       window.history.replaceState(null, "", url.toString());
     },

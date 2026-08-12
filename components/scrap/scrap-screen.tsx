@@ -14,6 +14,7 @@ import { IconAlert } from "@/components/ui/state-icons";
 import { useScraps } from "@/hooks/use-scraps";
 import { unscrapCard } from "@/lib/repositories/scraps";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
+import { reportDetailHref } from "@/lib/report-origin";
 import type { ScrapCard } from "@/types/scrap";
 
 const SCRAP_MENU_LABEL = "북마크";
@@ -165,7 +166,8 @@ function ScrapItem({ card, onRemoved }: { card: ScrapCard; onRemoved: () => void
   const at = formatScrappedAt(card.createdAt);
   const authorName = card.author.displayName?.trim() || "사용자";
   // 상세 진입 — 공개 피드 카드(public-feed-card)와 같은 경로·패턴.
-  const detailHref = `/report/${card.publicId}`;
+  // 진입 출처는 `scraps` 라 상세의 뒤로가기가 `← 북마크로` 로 뜨고 이 화면으로 되돌아온다.
+  const detailHref = reportDetailHref(card.publicId, { token: "scraps" });
 
   function remove() {
     if (busy) return;

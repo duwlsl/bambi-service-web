@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { ReportTypeBadge } from "@/components/report/report-type-badge";
+import { reportDetailHref } from "@/lib/report-origin";
 import type { ArchiveItem } from "@/types/report-archive";
 
 /** 메타에 노출할 태그 최대 개수 — 나머지는 실제 남은 개수로 `+N` 표시한다(홈 [내 보고서] 카드와 동일). */
@@ -66,8 +67,9 @@ export function ReportArchiveCard({
           isGrid ? "line-clamp-2" : ""
         }`}
       >
+        {/* 아카이브(/reports) 전용 카드 — 상세의 뒤로가기가 `← 내 보고서 전체 보기로` 로 뜬다. */}
         <Link
-          href={`/report/${item.publicId}`}
+          href={reportDetailHref(item.publicId, { token: "reports" })}
           className="focus-ring rounded-[3px] break-words hover:text-signal-ink"
         >
           {item.title}
