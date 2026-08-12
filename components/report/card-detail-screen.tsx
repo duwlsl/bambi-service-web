@@ -32,6 +32,7 @@ import {
   toReportRailVM,
   type ReportCoverImageVM,
 } from "@/lib/adapters/report";
+import { homeTabHref, reportBackTarget, type ReportOrigin } from "@/lib/report-origin";
 import { ReportMarkdown } from "@/components/report/report-markdown";
 import { isDeltaReport } from "@/lib/report-delta";
 import { isMorningBriefing } from "@/lib/report-type";
@@ -57,8 +58,18 @@ import type { CardResponse, CardVisibility } from "@/types/feed";
  * 리포트의 title·summary·citations 는 카드의 title·summary·sources 와 같은 발행 payload 라
  * 다시 렌더하지 않는다(중복 방지, PublishProcessingService 실측) — 본문(body)만 추가한다.
  * id 존재검증·라우팅은 서버(app/report/[id]/page.tsx)가 하고, 여기선 등록된 UUID 의 데이터만 다룬다.
+ *
+ * 뒤로가기(2026-08-12): 문구·목적지를 **진입 출처(`origin`)** 에서 함께 파생한다(lib/report-origin.ts).
+ * 서버가 URL 의 `?from=` 을 허용 토큰으로 좁혀 넘겨주므로 새로고침·직접 진입에서도 값이 같고,
+ * 소유자 여부·`document.referrer` 로 출처를 추측하지 않는다(홈 피드에서 자기 공개 카드를 열 수 있다).
  */
-export function CardDetailScreen({ publicId }: { publicId: string }) {
+export function CardDetailScreen({
+  publicId,
+  origin,
+}: {
+  publicId: string;
+  origin: ReportOrigin;
+}) {
   const { status, user, refreshAuth } = useAuth();
   const detail = useCardDetail(publicId);
 
@@ -75,6 +86,7 @@ export function CardDetailScreen({ publicId }: { publicId: string }) {
     <CardDetailView
       card={detail.card}
       guest={status === "guest"}
+      origin={origin}
       // 소유자 판정의 좌변. guest·error·loading 에서는 user 가 null 이라 자연히 비소유자가 된다.
       // publicId 는 백엔드 UserSummary 확장(#24) 이후 값이라 optional — 없으면 판정이 false 다.
       viewerPublicId={user?.publicId ?? null}
@@ -96,10 +108,12 @@ export function CardDetailScreen({ publicId }: { publicId: string }) {
 function CardDetailView({
   card,
   guest,
+  origin,
   viewerPublicId,
 }: {
   card: CardResponse;
   guest: boolean;
+  origin: ReportOrigin;
   viewerPublicId: string | null;
 }) {
   const [amOpen, setAmOpen] = useState(false);
@@ -140,6 +154,9 @@ function CardDetailView({
   // 공개 범위 변경은 **카드 소유자에게만** 노출한다(비소유자·게스트는 링크 복사만).
   const owner = isCardOwner(shown, viewerPublicId);
   const isPublic = isPublicCard(shown);
+  // 뒤로가기 문구·목적지 — 진입 출처에서만 나온다. 소유자 여부(`owner`)와는 **무관**하다:
+  // 홈 피드에서 자기 공개 보고서를 열면 소유자여도 돌아갈 곳은 홈 피드다.
+  const back = reportBackTarget(origin);
   /*
     아침 브리핑 + PRIVATE → 공유 진입점 자체를 두지 않는다.
 
@@ -176,18 +193,21 @@ function CardDetailView({
               shadow·focus-ring 은 기존 그대로이고 새 강조색을 만들지 않는다.
 
               공유 버튼이 들어오면서 바 전체를 Link 로 감쌀 수 없게 됐다(링크 안에 button 중첩
-              금지) → 링크가 남은 가로 공간(flex-1)을 차지해 빈 영역을 눌러도 홈으로 가는 동작은
+              금지) → 링크가 남은 가로 공간(flex-1)을 차지해 빈 영역을 눌러도 돌아가는 동작은
               유지한다.
+
+              문구·목적지는 진입 출처 하나에서 같이 나온다(`reportBackTarget`) — 둘이 어긋날 수
+              없다. `←` 는 장식이라 aria-hidden 이고, 링크의 접근 가능한 이름 = 화면 문구다.
             */}
             <div className="sticky top-4 z-20 mb-4 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-[9px] shadow-[var(--shadow)]">
               <Link
-                href="/"
+                href={back.href}
                 className="focus-ring flex min-h-8 flex-1 items-center gap-2 rounded-lg text-[13.5px] font-semibold whitespace-nowrap text-ink-mid hover:text-signal-ink"
               >
                 <span aria-hidden="true" className="text-muted-foreground">
                   ←
                 </span>
-                홈 피드로
+                {back.label}
               </Link>
               {/*
                 보관 — readbar 의 공유 왼쪽. PUBLIC 이고 `scrapped` 가 검증됐을 때만 렌더한다
@@ -604,7 +624,8 @@ function DetailDataError({ onRetry }: { onRetry: () => void }) {
           description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
           actions={[
             { label: "다시 시도", onClick: onRetry, variant: "primary" },
-            { label: "홈 피드로", href: "/", variant: "ghost" },
+            // 홈 `/` 의 기본 탭은 [내 보고서]라 문구대로 피드에 닿으려면 탭을 명시해야 한다.
+            { label: "홈 피드로", href: homeTabHref("feed"), variant: "ghost" },
           ]}
         />
       </div>
@@ -632,7 +653,7 @@ function DetailNotFound() {
             홈 피드에서 다시 확인해 주세요.
           </>
         }
-        actions={[{ label: "홈 피드로", href: "/", variant: "primary" }]}
+        actions={[{ label: "홈 피드로", href: homeTabHref("feed"), variant: "primary" }]}
       />
     </div>
   );

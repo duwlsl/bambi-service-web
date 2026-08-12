@@ -35,6 +35,11 @@ const { toReportCoverImage } = reportAdapter;
 const nodeRequire = createRequire(import.meta.url);
 const reportType = compileCommonJs("../lib/report-type.ts");
 const utils = compileCommonJs("../lib/utils.ts", (id) => nodeRequire(id));
+// report-origin 은 프로필 출처의 fromId 를 검증하려고 isUuid(utils)를 쓴다.
+const reportOrigin = compileCommonJs("../lib/report-origin.ts", (id) => {
+  if (id === "@/lib/utils") return utils;
+  throw new Error(`unexpected require: ${id}`);
+});
 const cardAdapter = compileCommonJs("../lib/adapters/card.ts", (id) => {
   if (id === "@/lib/adapters/report") return reportAdapter;
   if (id === "@/lib/normalize") return normalize;
@@ -208,6 +213,8 @@ function componentRequire(extra = {}) {
     // 좋아요 UI 는 social=null 인 카드로 테스트해 호출 자체가 없다(아래 feedCardVM 참조).
     if (id === "@/components/auth/use-require-auth") return {};
     if (id === "@/hooks/use-card-like") return {};
+    // 상세 링크 생성(진입 출처 포함) — 순수 함수라 stub 이 아니라 실제 모듈을 그대로 쓴다.
+    if (id === "@/lib/report-origin") return reportOrigin;
     throw new Error(`unexpected require: ${id}`);
   };
 }
@@ -272,7 +279,9 @@ test("공개 피드 카드는 대표 이미지가 있으면 썸네일 영역을 
   const anchor = html.match(/<a[^>]*aria-label="[^"]*"[^>]*>\s*<img[^>]*>\s*<\/a>/);
   assert.ok(anchor, "썸네일이 이름 있는 링크로 감싸여 있어야 한다");
   assert.match(anchor[0], /aria-label="반도체 공급망 브리핑 보고서 보기"/);
-  assert.match(anchor[0], new RegExp(`href="/report/${CARD_ID}"`));
+  // 공개 피드 카드의 상세 링크는 진입 출처(`?from=feed`)를 함께 싣는다 — 상세의 뒤로가기가
+  // `← 홈 피드로` 로 뜨고 홈 피드로 되돌아가게 하는 값이다(tests/report-back-link.test.mjs).
+  assert.match(anchor[0], new RegExp(`href="/report/${CARD_ID}\\?from=feed"`));
   // 장식 이미지 규칙은 유지 — 이름은 링크가 갖고 이미지는 빈 alt 다.
   assert.match(anchor[0], /alt=""/);
 });

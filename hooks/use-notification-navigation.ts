@@ -7,6 +7,7 @@ import { parseFollowTargetPath, resolveNotificationTarget } from "@/lib/notifica
 import type { NotificationTargetErrorKind } from "@/lib/notifications/resolve-notification-target";
 import { FOLLOW_TYPE } from "@/lib/notifications/notification-type";
 import { markNotificationRead } from "@/lib/repositories/notifications";
+import { reportDetailHref } from "@/lib/report-origin";
 import type { NotificationDto } from "@/types/notification";
 
 const TARGET_ERROR_MESSAGE: Record<NotificationTargetErrorKind, string> = {
@@ -78,7 +79,8 @@ export function useNotificationOpen(onReadConfirmed: () => void) {
       }
 
       setPendingId(null);
-      router.push(`/report/${result.cardPublicId}`);
+      // 진입 출처는 `notifications` — 상세의 뒤로가기가 `← 알림으로` 로 뜨고 목록으로 되돌아간다.
+      router.push(reportDetailHref(result.cardPublicId, { token: "notifications" }));
 
       if (!notification.read) {
         try {

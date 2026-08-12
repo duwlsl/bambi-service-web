@@ -6,6 +6,7 @@ import { useRequireAuth } from "@/components/auth/use-require-auth";
 import { PostMoreMenu } from "@/components/home/post-more-menu";
 import { CardScrapButton } from "@/components/report/card-scrap-button";
 import { useCardLike } from "@/hooks/use-card-like";
+import { reportDetailHref, type ReportOrigin } from "@/lib/report-origin";
 import type { PublicFeedSocialVM } from "@/types/feed";
 import type { AuthorCardVM } from "@/types/profile";
 
@@ -37,8 +38,15 @@ import type { AuthorCardVM } from "@/types/profile";
  * 공유는 카드 우상단 `⋯`(`PostMoreMenu`)가 담당한다 — 홈 피드 카드가 이미 쓰는 그 메뉴 그대로다
  * (`링크 복사` · 지원 브라우저에서 `다른 앱으로 공유`). 프로필용 공유 UI 를 새로 만들지 않는다.
  */
-export function AuthorCardItem({ card }: { card: AuthorCardVM }) {
-  const detailHref = `/report/${card.publicId}`;
+export function AuthorCardItem({
+  card,
+  origin,
+}: {
+  card: AuthorCardVM;
+  /** 이 카드가 놓인 프로필 화면 = 상세의 뒤로가기 목적지(`/profile` 또는 `/users/{publicId}`). */
+  origin: ReportOrigin;
+}) {
+  const detailHref = reportDetailHref(card.publicId, origin);
   const name = card.author.displayName ?? card.author.username ?? null;
 
   return (

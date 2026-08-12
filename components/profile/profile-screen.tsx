@@ -19,6 +19,7 @@ import { IconAlert } from "@/components/ui/state-icons";
 import { useFollowToggle } from "@/hooks/use-follow-toggle";
 import { type AuthorCardsState, useAuthorCards, useProfile } from "@/hooks/use-profile";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
+import type { ReportOrigin } from "@/lib/report-origin";
 import type { FollowData, FollowListKind, Profile } from "@/types/profile";
 
 const PROFILE_MENU_LABEL = "프로필";
@@ -40,13 +41,30 @@ const JOINED_FORMAT = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month:
  *
  * 카드 목록은 여기서 한 번만 조회해 본문과 우측 rail 이 나눠 쓴다(rail 때문에 API 를 다시 부르지 않는다).
  */
-export function ProfileScreen({ publicId }: { publicId: string }) {
+export function ProfileScreen({
+  publicId,
+  selfRoute = false,
+}: {
+  publicId: string;
+  /**
+   * 이 화면이 `/profile`(내비의 정적 진입점)로 열렸는지. `/users/{publicId}` 면 false.
+   * 두 라우트가 같은 컴포넌트를 쓰므로 **URL 은 여기서만 구분된다** — 카드 상세의 뒤로가기를
+   * 온 주소 그대로 되돌리려면 이 값이 필요하다. `isSelf` 로는 알 수 없다:
+   * `/users/{내 id}` 를 직접 열어도 `isSelf` 는 true 다.
+   */
+  selfRoute?: boolean;
+}) {
   const { status, user } = useAuth();
   const profile = useProfile(publicId);
   const cards = useAuthorCards(publicId);
   const [amOpen, setAmOpen] = useState(false);
 
   const isSelf = status === "authenticated" && user?.publicId === publicId;
+  // 이 프로필의 카드에서 상세로 갈 때 실어 보낼 진입 출처 — 온 라우트를 그대로 되돌린다.
+  // `/users/{id}` 는 동적이라 UUID 를 함께 싣고, 목적지 조립은 lib/report-origin 이 한다.
+  const backOrigin: ReportOrigin = selfRoute
+    ? { token: "profile-self" }
+    : { token: "profile", profilePublicId: publicId };
   const guest = status !== "authenticated" && status !== "loading";
 
   return (
@@ -78,6 +96,7 @@ export function ProfileScreen({ publicId }: { publicId: string }) {
                 profile={profile.data}
                 cards={cards}
                 isSelf={isSelf}
+                backOrigin={backOrigin}
                 onEdited={profile.refetch}
               />
             )}
@@ -98,12 +117,14 @@ function ProfileBody({
   profile,
   cards,
   isSelf,
+  backOrigin,
   onEdited,
 }: {
   publicId: string;
   profile: Profile;
   cards: AuthorCardsState & { refetch: () => void };
   isSelf: boolean;
+  backOrigin: ReportOrigin;
   onEdited: () => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -245,7 +266,7 @@ function ProfileBody({
       {cards.status === "success" && (
         <>
           {cards.data.map((card) => (
-            <AuthorCardItem key={card.publicId} card={card} />
+            <AuthorCardItem key={card.publicId} card={card} origin={backOrigin} />
           ))}
           <FeedEnd
             name={name}

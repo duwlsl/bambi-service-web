@@ -69,5 +69,7 @@ export function MyProfileGate() {
     );
   }
 
-  return <ProfileScreen publicId={publicId} />;
+  // selfRoute — 이 화면의 주소는 `/users/{publicId}` 가 아니라 `/profile` 이다.
+  // 여기서 연 카드 상세의 뒤로가기가 `← 내 프로필로` 로 뜨고 `/profile` 로 되돌아간다.
+  return <ProfileScreen publicId={publicId} selfRoute />;
 }

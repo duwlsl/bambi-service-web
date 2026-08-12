@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { ReportTypeBadge } from "@/components/report/report-type-badge";
+import { reportDetailHref } from "@/lib/report-origin";
 import type { FeedCardVM } from "@/types/feed";
 
 /** 메타에 노출할 태그 최대 개수 — 나머지는 실제 남은 개수로 `+N` 표시한다. */
@@ -54,8 +55,10 @@ export function FeedCard({ card }: { card: FeedCardVM }) {
     <article className="mb-[9px] rounded-[14px] border border-border bg-card px-[18px] py-[15px]">
       {/* .krow1 — 제목만. 우측 인터랙티브 컨트롤은 두지 않는다(공개 전환은 상세에서). */}
       <h3 className="text-[15px] leading-[1.45] font-bold tracking-[-0.01em] text-foreground">
+        {/* 이 카드는 [내 보고서] 탭 전용이라 진입 출처가 `mine` 으로 고정이다 — 상세의
+            뒤로가기가 `← 내 보고서로` 로 뜨고 같은 탭으로 되돌아간다. */}
         <Link
-          href={`/report/${card.publicId}`}
+          href={reportDetailHref(card.publicId, { token: "mine" })}
           className="focus-ring line-clamp-2 rounded-[3px] hover:text-signal-ink"
         >
           {card.title}
