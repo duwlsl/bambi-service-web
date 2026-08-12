@@ -24,7 +24,6 @@ import { useDevelopmentReportGeneration } from "@/hooks/use-development-report-g
 import { useMyInterests } from "@/hooks/use-my-interests";
 import { useMyReportJobs } from "@/hooks/use-my-report-jobs";
 import { useOnDemandGeneration } from "@/hooks/use-on-demand-generation";
-import { useWikiInterests } from "@/hooks/use-wiki-interests";
 import { MOCK_SIDE_FOOT } from "@/lib/mock/feed";
 import { HOME_FEED_TAB_VALUE, HOME_TAB_PARAM } from "@/lib/report-origin";
 
@@ -125,8 +124,7 @@ function HomeView({ isMember }: { isMember: boolean }) {
   // guest 는 useMyInterests 내부 enabled=false 라 API 를 호출하지 않는다(다른 member 훅과 동일).
   const myInterests = useMyInterests();
   const onDemand = useOnDemandGeneration(myInterests, reportJobs.refetch);
-  const wikiInterests = useWikiInterests(DEVELOPMENT_REPORT_TRIGGERS_ENABLED);
-  const developmentReports = useDevelopmentReportGeneration(wikiInterests, reportJobs.refetch);
+  const developmentReports = useDevelopmentReportGeneration(reportJobs.refetch);
   const preparing = reportJobs.status === "ready" ? reportJobs.preparing : [];
   const failed = reportJobs.status === "ready" ? reportJobs.failed : [];
   // READY 목록이 비었을 때 그 자리에 무엇을 넣을지(READY 가 0건인지는 MemberFeed 가 자신의 status==="empty" 로 판단):
@@ -203,8 +201,6 @@ function HomeView({ isMember }: { isMember: boolean }) {
                 />
                 {DEVELOPMENT_REPORT_TRIGGERS_ENABLED && (
                   <DevelopmentReportPanel
-                    instanceId="mobile"
-                    wikiInterests={wikiInterests}
                     generation={developmentReports}
                     className="mb-4 min-[1240px]:hidden"
                   />
@@ -235,11 +231,7 @@ function HomeView({ isMember }: { isMember: boolean }) {
               }
               developmentReportPanel={
                 DEVELOPMENT_REPORT_TRIGGERS_ENABLED ? (
-                  <DevelopmentReportPanel
-                    instanceId="desktop"
-                    wikiInterests={wikiInterests}
-                    generation={developmentReports}
-                  />
+                  <DevelopmentReportPanel generation={developmentReports} />
                 ) : null
               }
             />

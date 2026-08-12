@@ -15,8 +15,8 @@ import { toMyReportsSummary } from "@/lib/adapters/home-rail";
  *   `memberFeed` 상태를 그대로 받아 쓰므로 rail 때문에 API 를 다시 부르지 않는다.
  * - 온디맨드 보고서 만들기(`onDemandPanel`) — 별도 API(`GET /api/interests`)를 쓰는 영역이라
  *   상위가 만들어 넘긴 노드를 그대로 렌더한다. 여기서 관심사를 조회하지 않는다.
- * - 개발용 리포트 테스트(`developmentReportPanel`) — 개발 배포에서 아침·Wiki 생성 경로를
- *   각각 즉시 실행한다. 활성 Wiki 관심사와 mutation 상태는 상위가 한 번만 소유한다.
+ * - 개발용 리포트 테스트(`developmentReportPanel`) — 개발 배포에서 아침 리포트 생성 경로를
+ *   즉시 실행한다. mutation 상태는 상위가 한 번만 소유한다.
  *
  * **각 패널의 상태는 독립이다.** 생성 패널을 feed 분기 **밖**에 두는 이유가 그것이다 —
  * 피드가 실패해도 생성 패널은 남고, 관심사가 실패해도 현황 패널은 남는다. 서로 다른 API 의
