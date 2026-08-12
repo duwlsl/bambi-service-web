@@ -247,6 +247,9 @@ export function toPublicFeedCardVM(
     title,
     summary: normalizeText(card.summary) ?? "",
     author: toPublicFeedAuthor(card.author),
+    // 내 피드와 **같은 검증**을 통과한 값만 담는다(같은 서버 필드다).
+    // 필드가 없는 배포본·리포트 없는 카드에서는 null → 카드는 기존 텍스트형 그대로.
+    coverImage: toReportCoverImage(card.coverImage),
     social: toPublicFeedSocial(card),
     // 좋아요와 **독립적으로** 검증한다 — 한쪽이 깨져도 다른 쪽 UI 는 살린다.
     scrapped: toScrapped(card.scrapped),
