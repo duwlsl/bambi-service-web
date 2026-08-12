@@ -73,7 +73,6 @@ function WikiView() {
    */
   const [removedNames, setRemovedNames] = useState<readonly string[]>([]);
 
-  const wikiTags = interests.status === "success" ? interests.data : null;
   const myInterests = my.status === "success" ? my.data : null;
 
   /** 뺀 관심사를 기억하고 목록을 다시 읽는다. */
@@ -138,8 +137,13 @@ function WikiView() {
               발견 후보(왼쪽) ↔ 내 관심사(오른쪽) 2열 (2026-08-11 우석).
               추가하면 왼쪽에서 사라지고 오른쪽에 나타나므로 두 목록의 관계가 눈으로 읽힌다.
               좁은 화면(<900px)에서는 한 열로 쌓아 각 목록이 뭉개지지 않게 한다.
+
+              **높이는 grid 기본 stretch 에 맡긴다(2026-08-12 검수).** 이전엔 `items-start` 라
+              두 카드가 각자 콘텐츠 높이여서 나란히 놓인 카드의 아랫변이 어긋났다. 고정 높이를
+              박지 않고 stretch 만 되돌리면 같은 행에서 더 높은 쪽에 맞춰 둘 다 늘어난다.
+              1열(<900px)에서는 각 카드가 자기 행을 쓰므로 stretch 여도 콘텐츠 높이 그대로다.
             */}
-            <div className="mb-8 grid grid-cols-1 items-start gap-3 min-[900px]:grid-cols-2">
+            <div className="mb-8 grid grid-cols-1 gap-3 min-[900px]:grid-cols-2">
               <WikiFound
                 tags={interests}
                 myInterests={myInterests}
@@ -147,7 +151,7 @@ function WikiView() {
                 onAdded={handleAdded}
                 onHidden={handleHidden}
               />
-              <WikiMyInterests state={my} wikiTags={wikiTags} onRemoved={handleRemoved} />
+              <WikiMyInterests state={my} onRemoved={handleRemoved} />
             </div>
             <LlmWikiEntry />
           </main>
