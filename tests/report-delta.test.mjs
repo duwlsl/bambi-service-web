@@ -12,7 +12,16 @@ import { renderToStaticMarkup } from "react-dom/server";
  *
  * tests/report-pending.test.mjs 의 "TS 를 직접 트랜스파일해 vm 에서 실행" 패턴을 그대로 쓰되,
  * 대상이 TSX 라 jsx 변환을 켜고 react/jsx-runtime 만 실제 모듈로 넘긴다. 프로덕션 코드를 테스트용
- * 으로 쪼개지 않고 **실제 컴포넌트가 만드는 HTML** 을 그대로 검증한다(파서·클래스·태그 동시 확인).
+ * 으로 쪼개지 않고 **실제 컴포넌트가 만드는 HTML** 을 그대로 검증한다.
+ *
+ * ## 이 파일이 지키는 계약
+ *
+ * 보고서 상세 API 의 `body` 는 **서버가 완성한 Markdown 원문**이다. 프론트는 문장·목록·헤더를
+ * 재조합하지 않고, 본문 헤더를 읽어 델타 여부·섹션 역할을 추측하지 않는다. 렌더링 분기는
+ * 최상위 응답의 `changeHistoryEnabled` 하나뿐이고, delta 일 때 하는 일은
+ *   (1) `.md-delta` variant 컨테이너를 붙이는 것
+ *   (2) GFM 취소선 `~~…~~` → `<del>` 을 인라인 문법으로 추가 해석하는 것
+ * 두 가지뿐이다. 나머지 델타 표현은 CSS(globals.css) 가 렌더된 요소에 입힌다.
  */
 const nodeRequire = createRequire(import.meta.url);
 
@@ -50,28 +59,108 @@ function render(markdown, delta) {
   return renderToStaticMarkup(ReportMarkdown({ markdown, delta }));
 }
 
-/* ── 단일 주제 / 다주제 실제 본문 형태 ─────────────────────────────── */
+/** 블록 구조만 뽑은 개요 — 여는 태그 순서열. 구조·순서 보존을 텍스트와 분리해 비교할 때 쓴다. */
+function outline(html) {
+  return html.match(/<(?:h[2-6]|p|ul|ol|li|blockquote|table|pre)\b[^>]*>/g) ?? [];
+}
 
+/** heading 텍스트를 등장 순서대로 뽑는다(원문 순서 보존 확인용). */
+function headings(html) {
+  return [...html.matchAll(/<(h[2-6])[^>]*>(.*?)<\/\1>/g)].map((m) => `${m[1]}:${m[2]}`);
+}
+
+/**
+ * delta 출력을 non-delta 와 비교 가능한 형태로 되돌린다 —
+ * variant 클래스를 떼고 `<del>x</del>` 를 원문 `~~x~~` 로 복원한다.
+ * 이 둘 말고 차이가 남으면 파서가 델타에서 내용을 손댔다는 뜻이다.
+ */
+function undeltaify(html) {
+  return html
+    .replace('<div class="md-viewer md-delta">', '<div class="md-viewer">')
+    .replace(/<del>(.*?)<\/del>/g, "~~$1~~");
+}
+
+/* ── 픽스처: 서버가 내려주는 실제 본문 형태 ──────────────────────────
+   agent 가 완성해 보내는 Markdown 이다. 프론트는 이 문자열을 그대로 렌더러에 넘긴다.
+   ────────────────────────────────────────────────────────────────── */
+
+/** 단일 주제 — `## 변경사항 → ## 내용 → ## 시사점 → ## 타임라인`. */
 const SINGLE_TOPIC = `## 변경사항
-### 변경된 사실
+
+### 변경된 사실 (2건)
+
 - 목표 시점이 ~~2026-2Q~~ 에서 \`2026-4Q\` 로 밀렸다
-### 새롭게 확인된 사실
-- 신규 파트너 \`3곳\` 이 확정됐다
+- 담당이 ~~A팀~~ 에서 \`B팀\` 으로 바뀌었다
+
+### 새롭게 확인된 사실 (1건)
+
+- 신규 파트너 \`3곳\` 이 확정됐다 [L1]
+
 ## 내용
-- 일반 항목 \`값\` 하나
+
+본문 문단이다. **핵심**은 이것이다.
+
 ## 시사점
+
+- 눈여겨볼 것
+
+## 타임라인
+
+- 2026-08-10 최초 확인
+- 2026-08-12 갱신`;
+
+/** 단일 주제 — 타임라인 섹션이 없는 본문(섹션 유무로 렌더링이 달라지지 않아야 한다). */
+const SINGLE_TOPIC_NO_TIMELINE = `## 변경사항
+
+### 변경된 사실 (1건)
+
+- 목표 시점이 ~~2026-2Q~~ 에서 \`2026-4Q\` 로 밀렸다
+
+## 내용
+
+본문 문단이다.
+
+## 시사점
+
 - 눈여겨볼 것`;
 
+/** 다중 주제 — `## 주제명 → ### 변경사항 → #### …` 3단 중첩. */
 const MULTI_TOPIC = `## 반도체
-### 변경사항
-#### 변경된 사실
-- 단가가 ~~1,200원~~ 에서 \`1,450원\` 으로 올랐다
-#### 새롭게 확인된 사실
-- 신규 라인 \`2개\` 착공
-### 내용
-- 본문 항목`;
 
-/* ── 1. 렌더링 분기 ─────────────────────────────────────────────── */
+### 변경사항
+
+#### 변경된 사실 (1건)
+
+- 단가가 ~~1,200원~~ 에서 \`1,450원\` 으로 올랐다
+
+#### 새롭게 확인된 사실 (1건)
+
+- 신규 라인 \`2개\` 착공
+
+### 내용
+
+- 본문 항목
+
+## 이차전지
+
+### 변경사항
+
+#### 변경된 사실 (1건)
+
+- 수율이 ~~82%~~ 에서 \`88%\` 로 올랐다
+
+### 타임라인
+
+- 2026-08-12 갱신`;
+
+/** 델타처럼 보이는 헤더가 하나도 없는 본문 — 분기가 헤더와 무관함을 보이는 데 쓴다. */
+const NO_DELTA_HEADERS = `## 오늘의 정리
+
+- 값이 ~~옛것~~ 에서 \`새것\` 으로 바뀌었다
+
+일반 문단이다.`;
+
+/* ── 1. 렌더링 분기 = changeHistoryEnabled 하나뿐 ────────────────── */
 
 test("판정은 보고서 응답의 changeHistoryEnabled=true 일 때만 델타다", () => {
   assert.equal(isDeltaReport({ changeHistoryEnabled: true }), true);
@@ -100,7 +189,7 @@ test("delta=false 와 필드 누락(기본값)은 완전히 같은 HTML 을 만�
   assert.equal(render(SINGLE_TOPIC, false), render(SINGLE_TOPIC, undefined));
 });
 
-test("delta=false 는 델타 클래스·<del> 을 전혀 만들지 않는다(기존 렌더링 유지)", () => {
+test("delta=false 는 델타 스코프·<del> 을 전혀 만들지 않는다(기존 렌더링 유지)", () => {
   const html = render(SINGLE_TOPIC, false);
   assert.equal(html.includes("md-delta"), false);
   assert.equal(html.includes("<del>"), false);
@@ -108,32 +197,127 @@ test("delta=false 는 델타 클래스·<del> 을 전혀 만들지 않는다(기
   assert.equal(html.startsWith('<div class="md-viewer">'), true);
 });
 
-test("delta=true 면 md-delta 스코프가 붙는다", () => {
+test("delta=true 면 md-delta variant 컨테이너가 붙는다", () => {
   assert.equal(render(SINGLE_TOPIC, true).startsWith('<div class="md-viewer md-delta">'), true);
 });
 
-/* ── 2. heading depth 보존 ──────────────────────────────────────── */
-
-test("단일 주제: h2 → h3 depth 를 보존한다", () => {
-  const html = render(SINGLE_TOPIC, true);
-  assert.match(html, /<h2[^>]*>변경사항<\/h2>/);
-  assert.match(html, /<h3[^>]*>변경된 사실<\/h3>/);
-  assert.match(html, /<h3[^>]*>새롭게 확인된 사실<\/h3>/);
+test("분기는 본문 헤더가 아니라 플래그만 본다 — 델타 헤더가 있어도 false 면 일반 렌더링", () => {
+  // `## 변경사항`·`### 변경된 사실` 이 있어도 changeHistoryEnabled=false 면 델타 처리가 없어야 한다.
+  const html = render(SINGLE_TOPIC, false);
+  assert.equal(html.includes("md-delta"), false);
+  assert.equal(html.includes("<del>"), false);
 });
 
-test("다주제: h2 → h3 → h4 depth 를 보존한다", () => {
-  const html = render(MULTI_TOPIC, true);
-  assert.match(html, /<h2[^>]*>반도체<\/h2>/);
-  assert.match(html, /<h3[^>]*>변경사항<\/h3>/);
-  assert.match(html, /<h4[^>]*>변경된 사실<\/h4>/);
-  assert.match(html, /<h4[^>]*>새롭게 확인된 사실<\/h4>/);
+test("분기는 본문 헤더가 아니라 플래그만 본다 — 델타 헤더가 없어도 true 면 델타 렌더링", () => {
+  const html = render(NO_DELTA_HEADERS, true);
+  assert.equal(html.startsWith('<div class="md-viewer md-delta">'), true);
+  assert.match(html, /<del>옛것<\/del>/);
+  assert.match(html, /<code>새것<\/code>/);
 });
 
-test("다주제의 섹션 헤더와 최심 소제목이 같은 태그로 평탄화되지 않는다", () => {
+test("헤더 문구가 바뀌어도 출력 구조는 그대로다(문구 정확일치 판정이 남아 있지 않다)", () => {
+  // agent 가 섹션 문구를 바꿔도 조용히 깨지지 않아야 한다 — 문구는 텍스트일 뿐 판정 근거가 아니다.
+  const renamed = SINGLE_TOPIC.replace("## 변경사항", "## 달라진 점")
+    .replace("### 변경된 사실 (2건)", "### 갱신된 사실 두 건")
+    .replace("### 새롭게 확인된 사실 (1건)", "### 신규 사실")
+    .replace("## 시사점", "## 주목할 점");
+  assert.deepEqual(outline(render(renamed, true)), outline(render(SINGLE_TOPIC, true)));
+});
+
+test("본문 헤더에서 유래한 역할 클래스가 어디에도 남아 있지 않다", () => {
+  for (const md of [SINGLE_TOPIC, MULTI_TOPIC, SINGLE_TOPIC_NO_TIMELINE]) {
+    const html = render(md, true);
+    // 섹션/갱신/신규 배지·목록 재구성·비교 줄·백틱 값 문맥 — 전부 제거된 판정 산물이다.
+    assert.equal(/md-delta-(section|changed|fresh|list|comparison|line|before|after|value)/.test(html), false);
+    assert.equal(html.includes("md-cont"), false);
+    // 컨테이너 말고는 클래스를 붙이지 않는다(blockquote 내부 last:mb-0 은 기존 규칙).
+    assert.equal(/<(?:h[2-6]|ul|ol|li|code|del|b)\s+class=/.test(html), false);
+  }
+});
+
+/* ── 2. body 원문 무변형 ────────────────────────────────────────── */
+
+test("delta 는 구조를 바꾸지 않는다 — variant 와 <del> 말고 non-delta 와 동일한 HTML", () => {
+  // 이 동일성이 깨지면 델타 경로가 문장·목록·헤더를 재조합했다는 뜻이다.
+  // (heading depth 2·3 만 쓰는 픽스처라 headingTag 의 non-delta 접기와도 어긋나지 않는다)
+  for (const md of [SINGLE_TOPIC, SINGLE_TOPIC_NO_TIMELINE]) {
+    assert.equal(undeltaify(render(md, true)), render(md, false));
+  }
+});
+
+test("delta 여부와 무관하게 블록 개요(구조·순서)가 같다", () => {
+  for (const md of [SINGLE_TOPIC, SINGLE_TOPIC_NO_TIMELINE, NO_DELTA_HEADERS]) {
+    assert.deepEqual(outline(render(md, true)), outline(render(md, false)));
+  }
+});
+
+test("들여쓴 비-불릿 줄을 목록으로 만들지 않는다(목록 생성 금지)", () => {
+  // 예전 델타 파서는 `  (기존) …` / `  (변경) …` 두 줄을 <ul><li> 로 합성했다.
+  const md = "## 변경사항\n\n  (기존) 옛 문장\n  (변경) 새 문장\n";
+  const html = render(md, true);
+  assert.equal(html.includes("<ul>"), false);
+  assert.equal(html.includes("<li>"), false);
+  // Markdown soft break 기본 의미대로 한 문단이다(delta·non-delta 동일).
+  assert.match(html, /<p>\(기존\) 옛 문장 \(변경\) 새 문장<\/p>/);
+  assert.deepEqual(outline(html), outline(render(md, false)));
+});
+
+test("빈 줄로 나뉜 목록은 원문대로 나뉘어 있는다(목록 병합 금지)", () => {
+  const md = "- 첫 항목\n\n- 둘째 항목";
+  for (const delta of [false, true]) {
+    const html = render(md, delta);
+    assert.equal((html.match(/<ul>/g) ?? []).length, 2);
+  }
+});
+
+test("들여쓴 연속 줄을 직전 목록 항목에 흡수하지 않는다", () => {
+  const md = "## 변경사항\n\n- 항목 하나\n  덧붙인 줄\n";
+  const html = render(md, true);
+  assert.match(html, /<ul><li>항목 하나<\/li><\/ul>/);
+  assert.match(html, /<p>덧붙인 줄<\/p>/);
+  assert.deepEqual(outline(html), outline(render(md, false)));
+});
+
+/* ── 3. 구조·순서 보존 ─────────────────────────────────────────── */
+
+test("단일 주제: 섹션 순서(변경사항 → 내용 → 시사점 → 타임라인)를 원문 그대로 유지한다", () => {
+  assert.deepEqual(headings(render(SINGLE_TOPIC, true)), [
+    "h2:변경사항",
+    "h3:변경된 사실 (2건)",
+    "h3:새롭게 확인된 사실 (1건)",
+    "h2:내용",
+    "h2:시사점",
+    "h2:타임라인",
+  ]);
+});
+
+test("타임라인 섹션이 없는 본문도 나머지 순서가 그대로다(없는 섹션을 만들지 않는다)", () => {
+  assert.deepEqual(headings(render(SINGLE_TOPIC_NO_TIMELINE, true)), [
+    "h2:변경사항",
+    "h3:변경된 사실 (1건)",
+    "h2:내용",
+    "h2:시사점",
+  ]);
+});
+
+test("다중 주제: `## 주제명` → `### 변경사항` → `#### …` 3단 깊이·순서를 보존한다", () => {
+  assert.deepEqual(headings(render(MULTI_TOPIC, true)), [
+    "h2:반도체",
+    "h3:변경사항",
+    "h4:변경된 사실 (1건)",
+    "h4:새롭게 확인된 사실 (1건)",
+    "h3:내용",
+    "h2:이차전지",
+    "h3:변경사항",
+    "h4:변경된 사실 (1건)",
+    "h3:타임라인",
+  ]);
+});
+
+test("다중 주제: 주제 헤더와 섹션 헤더가 같은 태그로 평탄화되지 않는다", () => {
   const html = render(MULTI_TOPIC, true);
-  // 섹션은 h3, 소제목은 h4 — 둘 다 h3 로 접히던 기존 동작이 재현되면 실패한다.
-  assert.equal(/<h3[^>]*>변경된 사실<\/h3>/.test(html), false);
-  assert.equal(/<h4[^>]*>변경사항<\/h4>/.test(html), false);
+  assert.equal(/<h2[^>]*>변경사항<\/h2>/.test(html), false);
+  assert.equal(/<h3[^>]*>변경된 사실/.test(html), false);
 });
 
 test("#####·###### 도 h5·h6 까지 보존하고 그 이하는 h6 으로 고정한다", () => {
@@ -142,133 +326,71 @@ test("#####·###### 도 h5·h6 까지 보존하고 그 이하는 h6 으로 고�
   assert.match(html, /<h6[^>]*>e<\/h6>/);
 });
 
-/* ── 3. 배지 판정 (구조 먼저 → 정확 일치) ───────────────────────── */
-
-test("단일 주제: 최심 소제목 '변경된 사실' → changed, '새롭게 확인된 사실' → fresh", () => {
-  const html = render(SINGLE_TOPIC, true);
-  assert.match(html, /<h3 class="md-delta-changed">변경된 사실<\/h3>/);
-  assert.match(html, /<h3 class="md-delta-fresh">새롭게 확인된 사실<\/h3>/);
+test("다중 주제에서 delta 와 non-delta 차이는 heading 깊이 접기와 <del> 뿐이다", () => {
+  // non-delta 는 예전대로 ### 이상을 h3 로 접는다(기존 화면 회귀 방지). 그 외 블록은 동일해야 한다.
+  const deltaHtml = undeltaify(render(MULTI_TOPIC, true)).replace(/<(\/?)h4>/g, "<$1h3>");
+  assert.equal(deltaHtml, render(MULTI_TOPIC, false));
 });
 
-test("다주제: 최심 소제목에서도 동일하게 changed·fresh 판정", () => {
-  const html = render(MULTI_TOPIC, true);
-  assert.match(html, /<h4 class="md-delta-changed">변경된 사실<\/h4>/);
-  assert.match(html, /<h4 class="md-delta-fresh">새롭게 확인된 사실<\/h4>/);
+test("목록의 항목 수·중첩·순서를 원문 그대로 유지한다", () => {
+  const md = "## s\n\n- 첫째\n  - 하위 1\n  - 하위 2\n- 둘째\n- 셋째\n";
+  for (const delta of [false, true]) {
+    const html = render(md, delta);
+    assert.match(
+      html,
+      /<ul><li>첫째<ul><li>하위 1<\/li><li>하위 2<\/li><\/ul><\/li><li>둘째<\/li><li>셋째<\/li><\/ul>/,
+    );
+  }
 });
 
-test("'변경사항' 은 섹션 헤더일 뿐 changed 배지를 받지 않는다", () => {
-  const single = render(SINGLE_TOPIC, true);
-  assert.match(single, /<h2 class="md-delta-section">변경사항<\/h2>/);
-  assert.equal(/class="md-delta-changed">변경사항/.test(single), false);
+/* ── 4. Markdown 표현 (취소선 · 인라인 코드 · 굵은 글씨) ─────────── */
 
-  const multi = render(MULTI_TOPIC, true);
-  assert.match(multi, /<h3 class="md-delta-section">변경사항<\/h3>/);
-  assert.equal(/class="md-delta-changed">변경사항/.test(multi), false);
-});
-
-test("'내용'·'시사점' 은 fresh 배지를 받지 않는다(else 기본값 없음)", () => {
-  const html = render(SINGLE_TOPIC, true);
-  assert.equal(/class="md-delta-fresh">내용/.test(html), false);
-  assert.equal(/class="md-delta-fresh">시사점/.test(html), false);
-  assert.equal(/class="md-delta-changed">내용/.test(html), false);
-});
-
-test("부분 일치 제목('변경된 사실 안내')과 알 수 없는 제목은 배지가 없다", () => {
-  const html = render("## 변경사항\n### 변경된 사실 안내\n### 기타 소식\n- x", true);
-  assert.match(html, /<h3>변경된 사실 안내<\/h3>/); // 클래스 없음
-  assert.match(html, /<h3>기타 소식<\/h3>/);
-  assert.equal(html.includes("md-delta-changed"), false);
-  assert.equal(html.includes("md-delta-fresh"), false);
-});
-
-test("다주제의 주제명(h2)은 섹션 스타일을 받지 않는다(태그명 기반 판정 아님)", () => {
-  const html = render(MULTI_TOPIC, true);
-  assert.match(html, /<h2>반도체<\/h2>/); // 클래스 없음
-  assert.equal(/<h2 class="md-delta-section">/.test(html), false);
-});
-
-/* ── 4. 취소선 ──────────────────────────────────────────────────── */
-
-test("delta 에서 ~~값~~ 은 <del> 로 렌더되고 화면에 ~~ 가 남지 않는다", () => {
+test("취소선: delta 에서 ~~기존 값~~ 은 <del> 로 렌더되고 화면에 ~~ 가 남지 않는다", () => {
   const html = render(SINGLE_TOPIC, true);
   assert.match(html, /<del>2026-2Q<\/del>/);
+  assert.match(html, /<del>A팀<\/del>/);
   assert.equal(html.includes("~~"), false);
 });
 
-test("취소선이 링크·강조·백틱 등 기존 인라인 파싱을 깨지 않는다", () => {
+test("인라인 코드: `변경 값` 은 <code> 로 렌더된다(문맥 클래스 없음)", () => {
+  const html = render(SINGLE_TOPIC, true);
+  assert.match(html, /<code>2026-4Q<\/code>/);
+  assert.match(html, /<code>B팀<\/code>/);
+  assert.match(html, /<code>3곳<\/code>/);
+});
+
+test("굵은 글씨: **핵심** 은 <b> 로 렌더된다", () => {
+  assert.match(render(SINGLE_TOPIC, true), /<b>핵심<\/b>/);
+});
+
+test("한 줄에 취소선·인라인 코드·굵게·링크가 섞여도 각각 그대로 렌더된다", () => {
   const html = render(
-    "## s\n### 변경된 사실\n- **굵게** ~~옛값~~ `새값` [링크](https://example.com) 끝",
+    "## s\n- **굵게** ~~옛값~~ `새값` [링크](https://example.com) 끝",
     true,
   );
   assert.match(html, /<b>굵게<\/b>/);
   assert.match(html, /<del>옛값<\/del>/);
-  assert.match(html, /<a href="https:\/\/example\.com" target="_blank" rel="noopener noreferrer">링크<\/a>/);
+  assert.match(html, /<code>새값<\/code>/);
+  assert.match(
+    html,
+    /<a href="https:\/\/example\.com" target="_blank" rel="noopener noreferrer">링크<\/a>/,
+  );
   assert.match(html, /끝/);
 });
 
-/* ── 5. (기존)/(변경) 목록 결합 ─────────────────────────────────── */
-
-test("들여쓴 (변경) 줄이 직전 (기존) 목록 항목에 결합된다", () => {
-  const html = render("## s\n### 변경된 사실\n- (기존) 기존 내용\n  (변경) 변경된 내용", true);
-  // 같은 비교 <li> 안에 두 줄이 있고, 기존/변경의 읽기 위계 클래스가 각각 붙어야 한다.
-  assert.match(
-    html,
-    /<li class="md-delta-comparison"><span class="md-delta-line md-delta-before-line">\(기존\) 기존 내용<\/span><span class="md-cont md-delta-line md-delta-after-line">\(변경\) 변경된 내용<\/span><\/li>/,
-  );
-  assert.equal(html.includes("<p>(변경)"), false);
-});
-
-test("결합은 delta 에서만 — 기존 렌더링에서는 지금처럼 별도 문단으로 남는다", () => {
-  const html = render("- (기존) 기존 내용\n  (변경) 변경된 내용", false);
-  assert.equal(html.includes("md-cont"), false);
-  assert.match(html, /<p>\(변경\) 변경된 내용<\/p>/);
-});
-
-test("일반 문단·다음 목록·하위 불릿을 잘못 삼키지 않는다", () => {
-  const html = render(
-    "## s\n### 변경된 사실\n- 첫 항목\n  - 하위 불릿\n- 둘째 항목\n\n들여쓰지 않은 문단",
-    true,
-  );
-  assert.match(html, /<ul><li>하위 불릿<\/li><\/ul>/); // 하위 불릿은 그대로 중첩 목록
-  assert.match(html, /<p>들여쓰지 않은 문단<\/p>/); // 문단은 결합되지 않음
-  assert.equal(html.includes("md-cont"), false);
-});
-
-test("들여쓴 제목·표·인용은 연속 행으로 삼키지 않는다", () => {
-  const html = render("## s\n### 변경된 사실\n- 항목\n  ## 들여쓴 제목", true);
-  assert.equal(html.includes('<span class="md-cont">## 들여쓴 제목'), false);
-});
-
-/* ── 6. 백틱 값 문맥 ────────────────────────────────────────────── */
-
-test("changed 소제목 아래 백틱 값은 changed 클래스를 받는다", () => {
+test("인용 참조([L1])는 링크가 아니라 본문 텍스트로 남는다(계약 표기 유지)", () => {
   const html = render(SINGLE_TOPIC, true);
-  assert.match(html, /<code class="md-delta-value-changed">2026-4Q<\/code>/);
+  assert.match(html, /\[L1\]/);
+  assert.equal(html.includes('href="L1"'), false);
 });
 
-test("fresh 소제목 아래 백틱 값은 fresh 클래스를 받는다", () => {
-  const html = render(SINGLE_TOPIC, true);
-  assert.match(html, /<code class="md-delta-value-fresh">3곳<\/code>/);
-});
-
-test("문맥 밖(내용 등) 백틱은 기존 스타일 그대로 클래스가 없다", () => {
-  const html = render(SINGLE_TOPIC, true);
-  assert.match(html, /<code>값<\/code>/);
-});
-
-test("다주제에서도 백틱 문맥이 동일하게 갈린다", () => {
-  const html = render(MULTI_TOPIC, true);
-  assert.match(html, /<code class="md-delta-value-changed">1,450원<\/code>/);
-  assert.match(html, /<code class="md-delta-value-fresh">2개<\/code>/);
-});
-
-test("delta=false 면 모든 백틱이 기존 스타일(클래스 없음)", () => {
+test("취소선은 delta 전용 — 기존 본문의 ~~ 는 예전처럼 원문 텍스트다", () => {
   const html = render(SINGLE_TOPIC, false);
-  assert.equal(html.includes("md-delta-value"), false);
-  assert.match(html, /<code>2026-4Q<\/code>/);
+  assert.equal(html.includes("<del>"), false);
+  assert.match(html, /~~2026-2Q~~/);
 });
 
-/* ── 7. 기존 Markdown 회귀 ──────────────────────────────────────── */
+/* ── 5. 공용 Markdown 렌더러 회귀 ───────────────────────────────── */
 
 test("링크·강조·목록·인용·표·코드펜스가 기존대로 렌더된다(delta 무관)", () => {
   const md = [
@@ -316,126 +438,8 @@ test("본문 HTML 태그는 실행되지 않고 문자 그대로 이스케이프
   }
 });
 
-/* ── 8. 운영 실제 본문 형태 ──────────────────────────────────────────
-   위 1~7 의 픽스처는 계약 **문서 예시**(`### 변경된 사실`, `- (기존) …`)를 옮긴 것이라
-   운영에서 실제로 오는 두 가지 차이를 잡지 못했다. 아래는 2026-08-11 운영
-   (GET /api/reports/{publicId}, changeHistoryEnabled=true) 응답 body 를 그대로 옮긴 것이다.
-
-     1) 소제목에 건수가 붙는다      → `### 변경된 사실 (2건)`
-     2) (기존)/(변경) 에 불릿이 없다 → `  (기존) …` / `  (변경) …` (2칸 들여쓰기만)
-
-   근거: bambi-agent-api `agent/change_history/features/assembly.py`
-         (`f"{CHANGED_SUBHEADING} ({len(changed)}건)"` · `_changed_line()`).
-   ────────────────────────────────────────────────────────────────── */
-
-/** 운영 리포트 ee9a22dc-… 의 body 발췌(변경 항목 2건 + 다음 섹션). */
-const PRODUCTION_DELTA = `## 변경사항
-
-### 변경된 사실 (2건)
-
-  (기존) ~~오는 18일부터 판매점에서 구매한 종이 로또복권을 등록하면 당첨금을 받을 수 있게 된다.~~
-  (변경) \`로또 당첨금 자동 입금 시스템이 오는 18일부터 시행된다.\` [L1]
-
-  (기존) ~~모번 다이아와 가3 가5가 주요 당번으로 언급되었다.~~
-  (변경) \`로또 제1237회에서 주요 당번으로 모번 다이아와 가3 가5가 언급되었다.\` [L3]
-
-## 내용
-
-로또 미수령 당첨금 자동 지급 시스템이 시행됩니다.`;
-
-/** 운영 리포트 ceaf0c23-… 의 body 발췌(최초 실행 안내 + 신규 팩트). */
-const PRODUCTION_FIRST_RUN = `## 변경사항
-
-이 주제의 최초 실행이라 비교 대상이 없습니다. 오늘 확인된 내용을 전부 정리했습니다.
-
-### 새롭게 확인된 사실 (4건)
-
-- 삼성전자가 '폴더블 헤리티지' 전시 공간을 상시 운영하기 시작했다. [G1]
-
-- 삼성전자의 목표 주가가 \`60만 원\` 에 도달할 것으로 예상된다. [L3]
-
-## 내용
-
-본문입니다.`;
-
-test("운영 형태: 건수가 붙은 소제목도 배지를 받는다 (`### 변경된 사실 (2건)`)", () => {
-  const html = render(PRODUCTION_DELTA, true);
-  assert.match(html, /<h3 class="md-delta-changed">변경된 사실 \(2건\)<\/h3>/);
-});
-
-test("운영 형태: 건수가 붙은 신규 소제목도 배지를 받는다 (`### 새롭게 확인된 사실 (4건)`)", () => {
-  const html = render(PRODUCTION_FIRST_RUN, true);
-  assert.match(html, /<h3 class="md-delta-fresh">새롭게 확인된 사실 \(4건\)<\/h3>/);
-});
-
-test("운영 형태: 불릿 없는 (기존)/(변경) 두 줄이 한 항목으로 묶인다", () => {
-  const html = render(PRODUCTION_DELTA, true);
-  // (기존)/(변경)이 같은 비교 항목 안에서 전/후 읽기 위계를 받아야 한다.
-  assert.match(
-    html,
-    /<li class="md-delta-comparison"><span class="md-delta-line md-delta-before-line">\(기존\) <del>오는 18일부터[^<]*<\/del><\/span><span class="md-cont md-delta-line md-delta-after-line">\(변경\) <code[^>]*>로또 당첨금 자동 입금 시스템이 오는 18일부터 시행된다\.<\/code> \[L1\]<\/span><\/li>/,
-  );
-  // 한 줄로 이어붙인 문단으로 떨어지면 안 된다(회귀 시 여기서 걸린다).
-  assert.equal(html.includes("<p>(기존)"), false);
-});
-
-test("운영 형태: 빈 줄로 나뉜 변경 항목이 각각 별도 <li> 가 된다", () => {
-  const html = render(PRODUCTION_DELTA, true);
-  const items = html.match(/<li class="md-delta-comparison">/g) ?? [];
-  assert.equal(items.length, 2);
-  assert.equal((html.match(/md-delta-after-line/g) ?? []).length, 2);
-  assert.match(html, /<ul class="md-delta-list md-delta-list-changed">/);
-});
-
-test("운영 형태: (변경) 백틱 값이 changed 문맥 색을 받는다", () => {
-  const html = render(PRODUCTION_DELTA, true);
-  assert.match(html, /<code class="md-delta-value-changed">로또 당첨금 자동 입금 시스템/);
-});
-
-test("운영 형태: 최초 실행 안내 문장은 문단으로 남고 목록으로 삼켜지지 않는다", () => {
-  const html = render(PRODUCTION_FIRST_RUN, true);
-  assert.match(html, /<p>이 주제의 최초 실행이라 비교 대상이 없습니다\./);
-  // 신규 팩트는 원래대로 `- ` 불릿 목록이다(작은따옴표는 React 가 &#x27; 로 이스케이프한다).
-  assert.match(html, /<li>삼성전자가 &#x27;폴더블 헤리티지&#x27;/);
-  assert.match(html, /<code class="md-delta-value-fresh">60만 원<\/code>/);
-});
-
-test("운영 형태: 빈 줄로 나뉜 신규 팩트가 하나의 <ul> 로 이어진다", () => {
-  const html = render(PRODUCTION_FIRST_RUN, true);
-  // <ul> 이 쪼개지면 항목 간격이 8px → 24px 로 벌어져 [변경된 사실] 묶음과 리듬이 어긋난다.
-  assert.equal((html.match(/<ul class="md-delta-list md-delta-list-fresh">/g) ?? []).length, 1);
-  assert.equal((html.match(/<li>/g) ?? []).length, 2);
-});
-
-test("빈 줄 뒤가 목록이 아니면 목록은 그대로 끊긴다(다음 블록 보존)", () => {
-  const html = render("## s\n### 변경된 사실 (1건)\n- 항목\n\n## 다음 섹션\n\n문단", true);
-  assert.match(html, /<li>항목<\/li><\/ul>/);
-  assert.match(html, /<h2 class="md-delta-section">다음 섹션<\/h2>/);
-  assert.match(html, /<p>문단<\/p>/);
-});
-
-test("빈 줄 이어붙이기는 delta 에서만 — 기존 본문은 예전처럼 <ul> 가 나뉜다", () => {
-  const html = render("- 첫 항목\n\n- 둘째 항목", false);
-  assert.equal((html.match(/<ul>/g) ?? []).length, 2);
-});
-
-test("운영 형태: 다음 섹션(## 내용)을 변경 항목 묶음이 삼키지 않는다", () => {
-  const html = render(PRODUCTION_DELTA, true);
-  assert.match(html, /<h2 class="md-delta-section">내용<\/h2>/);
-  assert.match(html, /<p>로또 미수령 당첨금 자동 지급 시스템이 시행됩니다\.<\/p>/);
-});
-
-test("운영 형태: delta=false 면 예전 그대로 — 목록화·배지·취소선이 생기지 않는다", () => {
-  const html = render(PRODUCTION_DELTA, false);
-  assert.equal(html.includes("md-cont"), false);
-  assert.equal(html.includes("md-delta"), false);
-  assert.equal(html.includes("<del>"), false);
-  // 들여쓴 두 줄은 기존처럼 한 문단으로 합쳐진다(기존 동작 보존 확인).
-  assert.match(html, /<p>\(기존\) ~~오는 18일부터/);
-});
-
-test("건수 표기가 있어도 문구가 다르면 여전히 배지가 없다(부분 일치 금지 유지)", () => {
-  const html = render("## 변경사항\n### 변경된 사실 안내 (2건)\n### 기타 (3건)\n- x", true);
-  assert.match(html, /<h3>변경된 사실 안내 \(2건\)<\/h3>/);
-  assert.match(html, /<h3>기타 \(3건\)<\/h3>/);
+test("표·인용·코드펜스가 delta 에서도 블록 구조를 그대로 유지한다", () => {
+  const md = "## s\n\n> 인용 ~~옛값~~\n\n| A | B |\n|---|---|\n| 1 | 2 |\n";
+  assert.deepEqual(outline(render(md, true)), outline(render(md, false)));
+  assert.match(render(md, true), /<blockquote><p class="last:mb-0">인용 <del>옛값<\/del><\/p>/);
 });
