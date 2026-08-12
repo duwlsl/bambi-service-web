@@ -38,7 +38,11 @@ export function getPreparingReportTitle(title: string, reportType: TrackableRepo
 }
 
 /**
- * 처리중 슬롯의 "언제 요청했는지" 표기 — `8월 11일 18:30 생성`.
+ * 처리중 슬롯의 "언제 요청했는지" 표기 — `8월 11일 18:30 요청`.
+ *
+ * 접미사가 `생성` 이 아니라 **`요청`** 인 이유: 이 값은 생성이 **접수된** 시각이고 슬롯은 아직
+ * 처리중 상태다. `…18:30 생성` 이라고 쓰면 그 시각에 보고서가 완성된 것처럼 읽힌다
+ * (2026-08-12 브라우저 검수). 표시 문구만 바꾼 것이고 값·타임존 처리는 그대로다.
  *
  * **절대 시각만 쓴다.** `3분 전` 같은 상대 표기는 렌더 시점(현재 시각)에 의존해 SSR 결과와
  * 클라이언트 결과가 달라지고, 5초마다 도는 polling 때마다 값이 흔들린다.
@@ -71,7 +75,7 @@ export function formatPendingCreatedAt(iso: unknown): string {
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return "";
   const at = new Date(ts);
-  return `${PENDING_CREATED_DATE_FORMAT.format(at)} ${PENDING_CREATED_TIME_FORMAT.format(at)} 생성`;
+  return `${PENDING_CREATED_DATE_FORMAT.format(at)} ${PENDING_CREATED_TIME_FORMAT.format(at)} 요청`;
 }
 
 /** 실제 Pending DTO의 필수 필드와 활성 상태 enum을 런타임에서 검증한다. */
