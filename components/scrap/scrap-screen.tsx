@@ -26,6 +26,14 @@ const SCRAPPED_AT_FORMAT = new Intl.DateTimeFormat("ko-KR", {
 });
 
 /**
+ * 카드 하단에 노출할 태그 최대 개수 — 나머지는 실제 남은 개수로 `+N` 표시한다.
+ * 홈 [내 보고서](`home/feed-card.tsx`) · 아카이브(`reports/report-archive-card.tsx`) 카드와 같은
+ * 값이다. 담아둔 카드는 태그가 5개 넘게 오는 일이 흔한데, 전부 깔면 하단이 2~3줄로 불어나
+ * 카드 높이가 태그 수에 끌려다닌다 — 320px 폭에서도 한 줄에 들어가는 선이 2개다.
+ */
+const VISIBLE_TAG_LIMIT = 2;
+
+/**
  * 북마크(스크랩) — /scraps. member 전용(내 보관 목록 = 개인 데이터), 인증 4분기(§15).
  * 목업 saved.html 기준. 목록은 "아직 PUBLIC 인 카드만" 온다(비공개 전환은 백엔드 자동 숨김).
  * 카드 제목·"보고서 열기"는 상세(/report/{publicId})로 간다 — 처음(07-31)엔 타인 공개 카드
@@ -160,6 +168,25 @@ function ScrapView() {
   );
 }
 
+/**
+ * 보관 카드 한 장 — **이 화면 전용**이다(모듈 밖으로 내보내지 않는다).
+ *
+ *   작성자 · 작성일                                    [⚑ 보관 해제]
+ *   제목(최대 2줄, /report/{publicId} 링크)
+ *   요약(최대 2줄)
+ *   #태그 #태그 +N                                     보고서 열기
+ *
+ * 밀도는 홈 [내 보고서] 카드(`home/feed-card.tsx`)의 `.kb-card` 토큰에 맞춘다 —
+ * padding 15/18 · 제목 15px/1.45 · 요약 13px/1.6(mt 5) · 하단 메타 mt 9 · 카드 간격 9.
+ * 담아둔 목록도 "쌓아두고 훑는" 화면이라 한 화면에 더 들어오는 편이 낫다(2026-08-12 UI 검수).
+ * 제목·요약을 2줄로 자르고 태그를 `VISIBLE_TAG_LIMIT` 로 끊는 것도 같은 이유다 — 카드 높이가
+ * 내용 길이에 끌려다니지 않는다. **토큰만 맞췄을 뿐 feed-card 를 재사용하지는 않는다**:
+ * 저쪽은 내 카드 전용이라 생성 종류·공개 범위 배지를 달고 작성자를 안 보여준다.
+ *
+ * `보고서 열기`는 제목과 같은 `/report/{publicId}` 로 가지만 **지우지 않는다** — 이 카드에는
+ * 전체 클릭 핸들러가 없어서(article 은 그냥 컨테이너다) 지우면 진입점이 제목 링크 하나로 줄고,
+ * 목업 saved.html 의 명시적 CTA 도 사라진다. 대신 하단 태그 줄 오른쪽으로 옮겨 줄 하나를 아꼈다.
+ */
 function ScrapItem({ card, onRemoved }: { card: ScrapCard; onRemoved: () => void }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -168,6 +195,8 @@ function ScrapItem({ card, onRemoved }: { card: ScrapCard; onRemoved: () => void
   // 상세 진입 — 공개 피드 카드(public-feed-card)와 같은 경로·패턴.
   // 진입 출처는 `scraps` 라 상세의 뒤로가기가 `← 북마크로` 로 뜨고 이 화면으로 되돌아온다.
   const detailHref = reportDetailHref(card.publicId, { token: "scraps" });
+  const visibleTags = card.tags.slice(0, VISIBLE_TAG_LIMIT);
+  const hiddenTagCount = card.tags.length - visibleTags.length;
 
   function remove() {
     if (busy) return;
@@ -180,61 +209,76 @@ function ScrapItem({ card, onRemoved }: { card: ScrapCard; onRemoved: () => void
   }
 
   return (
-    <article className="mb-4 rounded-[14px] border border-border bg-card px-[18px] pt-4 pb-4">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="min-w-0 text-xs text-muted-foreground">
+    <article className="mb-[9px] rounded-[14px] border border-border bg-card px-[18px] py-[15px]">
+      {/* 작성자·작성일 + 보관 해제 — 항상 한 줄. 버튼은 배지와 같은 h-[22px] 라 이 줄이 텍스트
+          한 줄보다 높아지지 않는다. 줄임(truncate)은 **이름 쪽에만** 건다: 바깥 칸에 걸면
+          overflow:hidden 이 조상이 되어 작성자 링크의 focus-ring(outline)까지 잘리고, 긴 이름이
+          작성일을 통째로 밀어내 버린다. 이름만 줄이면 포커스 링이 온전하고 작성일도 남는다. */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-baseline gap-1 text-[11.5px] text-muted-foreground">
           {card.author.publicId ? (
             <Link
               href={`/users/${card.author.publicId}`}
-              className="focus-ring rounded-[3px] font-semibold text-ink-mid hover:text-signal-ink"
+              className="focus-ring truncate rounded-[3px] font-semibold text-ink-mid hover:text-signal-ink"
             >
               {authorName}
             </Link>
           ) : (
-            <span className="font-semibold">{authorName}</span>
+            <span className="truncate font-semibold">{authorName}</span>
           )}
-          {at && <span> · {at} 작성</span>}
+          {at && <span className="shrink-0 whitespace-nowrap">· {at} 작성</span>}
         </div>
         <button
           type="button"
           onClick={remove}
           disabled={busy}
-          className="focus-ring shrink-0 rounded-[8px] border border-border px-2.5 py-1 text-[12px] text-ink-mid hover:bg-background hover:text-foreground disabled:opacity-50"
+          className="focus-ring inline-flex h-[22px] shrink-0 items-center rounded-[8px] border border-border px-2 text-[11px] text-ink-mid hover:bg-background hover:text-foreground disabled:opacity-50"
         >
           {busy ? "해제 중…" : "⚑ 보관 해제"}
         </button>
       </div>
 
       {/* 제목 = 상세 링크 (피드 카드와 동일 관례 — hover 시 signal 색으로 눌리는 것임을 알린다) */}
-      <h3 className="mb-2 text-lg leading-[1.45] font-bold tracking-[-0.01em] text-foreground">
+      <h3 className="mt-[7px] text-[15px] leading-[1.45] font-bold tracking-[-0.01em] text-foreground">
         <Link
           href={detailHref}
-          className="focus-ring rounded-[3px] break-words hover:text-signal-ink"
+          className="focus-ring line-clamp-2 rounded-[3px] break-words hover:text-signal-ink"
         >
           {card.title}
         </Link>
       </h3>
-      <p className="mb-1 text-sm leading-[1.7] text-ink-mid">{card.summary}</p>
-      <Link
-        href={detailHref}
-        className="focus-ring mb-3 inline-block rounded-[3px] text-sm leading-[1.7] font-semibold text-muted-foreground hover:text-signal-ink"
-      >
-        보고서 열기
-        <span className="sr-only"> — {card.title}</span>
-      </Link>
 
-      {card.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {card.tags.map((tag) => (
+      {/* 요약 2줄. 빈 요약이면 영역을 생략한다(빈 줄만큼 카드가 커지지 않게). */}
+      {card.summary && (
+        <p className="mt-[5px] line-clamp-2 text-[13px] leading-[1.6] break-words text-ink-mid">
+          {card.summary}
+        </p>
+      )}
+
+      {/* 하단 한 줄 — 왼쪽 태그, 오른쪽 `보고서 열기`. 태그가 없어도 왼쪽 칸은 남겨 CTA 자리를
+          고정한다. 좁은 폭에서 겹치지 않도록 태그 칸만 줄어들고(min-w-0) CTA 는 shrink-0 이다. */}
+      <div className="mt-[9px] flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+          {visibleTags.map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-background px-2.5 py-[3px] text-[11.5px] text-muted-foreground"
+              className="max-w-full truncate rounded-full bg-background px-2 py-[2px] text-[11px] text-muted-foreground"
             >
               {tag}
             </span>
           ))}
+          {hiddenTagCount > 0 && (
+            <span className="shrink-0 text-[11px] text-muted-foreground">+{hiddenTagCount}</span>
+          )}
         </div>
-      )}
+        <Link
+          href={detailHref}
+          className="focus-ring shrink-0 rounded-[3px] text-[11.5px] font-semibold text-muted-foreground hover:text-signal-ink"
+        >
+          보고서 열기
+          <span className="sr-only"> — {card.title}</span>
+        </Link>
+      </div>
 
       {failed && (
         <p role="alert" className="mt-2 text-[12px] text-destructive">
