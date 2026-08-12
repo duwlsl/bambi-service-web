@@ -13,6 +13,13 @@ import type {
   WikiGraphNode,
 } from "@/types/wiki";
 
+/**
+ * 상세를 그래프 오른쪽 레일로 세우는 폭. 이 아래에서는 그래프 밑에 전체 폭으로 쌓인다.
+ * `llm-wiki-screen` 의 그래프|상세 분기(min-[1240px])와 **같은 값이어야 한다** —
+ * 옆에 이미 보이는데도 스크롤을 하거나, 아래에 있는데 스크롤을 안 하는 어긋남이 생긴다.
+ */
+const SIDE_RAIL_MIN_WIDTH = 1240;
+
 /** 선택한 Wiki Node를 Graph와 겹치지 않는 별도 패널에서 조회한다. */
 export function WikiDocumentPanel({
   selectedDocumentId,
@@ -40,7 +47,8 @@ export function WikiDocumentPanel({
       return;
     }
 
-    if (window.matchMedia("(min-width: 1100px)").matches) {
+    // 옆 레일로 열리는 폭에서는 이미 보이므로 스크롤하지 않는다(아래로 쌓일 때만 끌어온다).
+    if (window.matchMedia(`(min-width: ${SIDE_RAIL_MIN_WIDTH}px)`).matches) {
       handledRevealRequestRef.current = revealRequest;
       return;
     }
@@ -55,39 +63,54 @@ export function WikiDocumentPanel({
     return () => window.cancelAnimationFrame(frame);
   }, [revealRequest, selectedDocumentId, state.status]);
 
+  /*
+    선택이 없으면 **엘리먼트 자체를 만들지 않는다** — 상단 조작 카드만 남고, 빈 안내 패널을 두지 않는다.
+    레일 자체는 상위가 항상 그리므로 이 카드가 사라져도 3열 구조와 조작 카드는 그대로다.
+
+    카드 껍데기는 그래프 카드와 같은 규칙이다 — `<aside>` 가 radius·border·그림자를 맡고,
+    안쪽 div 는 border 안쪽(radius 17 = 18 − 1px)에서만 본문을 자른다. 테두리를 그리는 곳이
+    한 군데뿐이라 두 겹으로 겹치지 않는다.
+
+    높이: ≥1240px 에서는 레일에 남은 높이를 채운다(`flex-1 min-h-0`) — 조작 카드는 위에서 고정이고
+    긴 문서는 **이 카드 안쪽**(`WikiDocumentFile` 의 `overflow-y-auto`)에서만 스크롤된다.
+    그보다 좁으면 그래프 아래 일반 블록이라 고정 650px 를 쓴다.
+    `order-3` 은 좁은 화면에서 조작 카드(1) → 그래프(2) 다음 자리를 잡기 위한 것이다.
+  */
   if (selectedDocumentId === null || state.status === "idle") return null;
   return (
     <aside
       ref={panelRef}
-      className="flex h-[650px] min-h-[520px] w-full scroll-mt-4 flex-col overflow-hidden rounded-[18px] border border-border bg-card shadow-sm min-[1100px]:absolute min-[1100px]:inset-0 min-[1100px]:h-full min-[1100px]:min-h-0"
+      className="order-3 flex w-full scroll-mt-4 flex-col rounded-[18px] border border-border bg-card shadow-sm min-[1240px]:order-none min-[1240px]:min-h-0 min-[1240px]:flex-1"
     >
-      {state.status === "loading" ? (
-        <div className="p-5" aria-hidden="true">
-          <FeedSkeleton />
-        </div>
-      ) : state.status === "error" ? (
-        <StateView
-          role="alert"
-          className="min-h-[420px]"
-          icon={<IconAlert />}
-          title="노드 상세를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          actions={[
-            { label: "다시 시도", onClick: state.refetch, variant: "primary" },
-            { label: "닫기", onClick: onClear, variant: "ghost" },
-          ]}
-        />
-      ) : state.status === "notFound" ? (
-        <StateView
-          className="min-h-[420px]"
-          icon={<IconEmptyDoc />}
-          title="이 Wiki 노드를 찾을 수 없어요"
-          description="삭제됐거나 더 이상 현재 Wiki에 포함되지 않은 노드예요."
-          actions={[{ label: "닫기", onClick: onClear, variant: "ghost" }]}
-        />
-      ) : (
-        <WikiDocumentFile document={state.document} onSelect={onSelect} onClear={onClear} />
-      )}
+      <div className="flex h-[650px] flex-col overflow-hidden rounded-[17px] min-[1240px]:h-auto min-[1240px]:min-h-0 min-[1240px]:flex-1">
+        {state.status === "loading" ? (
+          <div className="p-5" aria-hidden="true">
+            <FeedSkeleton />
+          </div>
+        ) : state.status === "error" ? (
+          <StateView
+            role="alert"
+            className="min-h-[420px]"
+            icon={<IconAlert />}
+            title="노드 상세를 불러오지 못했어요"
+            description="잠시 후 다시 시도해 주세요."
+            actions={[
+              { label: "다시 시도", onClick: state.refetch, variant: "primary" },
+              { label: "닫기", onClick: onClear, variant: "ghost" },
+            ]}
+          />
+        ) : state.status === "notFound" ? (
+          <StateView
+            className="min-h-[420px]"
+            icon={<IconEmptyDoc />}
+            title="이 Wiki 노드를 찾을 수 없어요"
+            description="삭제됐거나 더 이상 현재 Wiki에 포함되지 않은 노드예요."
+            actions={[{ label: "닫기", onClick: onClear, variant: "ghost" }]}
+          />
+        ) : (
+          <WikiDocumentFile document={state.document} onSelect={onSelect} onClear={onClear} />
+        )}
+      </div>
     </aside>
   );
 }
