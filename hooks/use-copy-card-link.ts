@@ -45,7 +45,7 @@ export function useCopyLink(path: string): {
     // async 함수로 감싸 **동기 throw(비보안 컨텍스트에서 clipboard 미제공)도 rejection 으로** 받는다.
     const write = async () => navigator.clipboard.writeText(url);
     void write()
-      .then(() => announce({ tone: "ok", message: "링크를 복사했어요" }))
+      .then(() => announce({ tone: "ok", message: "링크를 복사했습니다." }))
       .catch(() => announce({ tone: "error", message: "링크를 복사하지 못했어요" }));
   }, [announce, path]);
 
