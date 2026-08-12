@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { changeCardVisibility } from "@/lib/repositories/card";
+import { isMorningBriefing } from "@/lib/report-type";
 import type { CardVisibility } from "@/types/feed";
 
 /**
@@ -23,29 +24,56 @@ import type { CardVisibility } from "@/types/feed";
  * 응답 **전체로 카드를 교체하지 않는다** — 확정 `visibility` 만 `onChanged` 로 올린다.
  * PATCH 응답은 목록용 변환 경로(CardResponse.from)를 타서 `author`·`likeCount`·`liked` 가 모두
  * null 이다(2026-08-05 실측). 통째로 갈아끼우면 좋아요 UI 와 소유자 판정이 사라진다.
+ *
+ * ## 아침 브리핑 공개 전환 차단
+ *
+ * 아침 브리핑은 공개 상태로 바꿀 수 없다. 화면에서 CTA 를 감추는 것과 **별개로 이 훅에서도**
+ * 막는다 — 여기가 프론트의 유일한 공개 전환 mutation 진입점이라, UI 조건이 바뀌거나 다른
+ * 호출부가 생겨도 실수로 요청이 나가지 않게 하려는 것이다. 막을 때는 네트워크 요청을
+ * **보내지 않고** `blocked` 만 세운다(서버 왕복으로 확인하지 않는다).
+ *
+ * 반대 방향(PUBLIC → PRIVATE)은 막지 않는다. 이미 공개된 비정상 데이터를 사용자가 되돌릴
+ * 길까지 막으면 노출을 스스로 거둘 수 없게 된다 — 차단 대상은 "공개로 만드는" 행동뿐이다.
  */
 export function useCardVisibility({
   publicId,
+  reportType,
   onChanged,
 }: {
   publicId: string;
+  /**
+   * 카드의 생성 종류(`CardResponse.reportType` 원본값). 판정은 `lib/report-type.ts` 가 하므로
+   * 여기서는 좁히지 않고 그대로 받는다 — 필드 누락·계약 밖 값도 그쪽에서 한 번에 처리된다.
+   */
+  reportType?: unknown;
   /** 서버가 확정한 값만 넘어온다. 대상 카드는 호출부가 이미 알고 있어 id 를 다시 넘기지 않는다. */
   onChanged: (next: CardVisibility) => void;
 }): {
   pending: boolean;
   failed: boolean;
+  /** 아침 브리핑을 공개로 바꾸려 해서 요청 없이 거절됐는지 — 호출부가 안내 문구를 고른다. */
+  blocked: boolean;
   /** 서버가 확정해 준 마지막 값. 아직 성공한 변경이 없으면 null — 성공 안내 문구의 근거다. */
   confirmed: CardVisibility | null;
   change: (next: CardVisibility) => void;
 } {
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [confirmed, setConfirmed] = useState<CardVisibility | null>(null);
   const lock = useRef(false);
+  const publishBlocked = isMorningBriefing(reportType);
 
   const change = useCallback(
     (next: CardVisibility) => {
       if (lock.current) return; // pending 중 중복 요청 차단
+      // 아침 브리핑 → 공개: 요청을 보내지 않고 여기서 끝낸다(UI 가 CTA 를 감추는 것과 이중 방어).
+      if (next === "PUBLIC" && publishBlocked) {
+        setBlocked(true);
+        setFailed(false);
+        return;
+      }
+      setBlocked(false);
       lock.current = true;
       setPending(true);
       setFailed(false);
@@ -63,8 +91,8 @@ export function useCardVisibility({
           setPending(false);
         });
     },
-    [onChanged, publicId],
+    [onChanged, publicId, publishBlocked],
   );
 
-  return { pending, failed, confirmed, change };
+  return { pending, failed, blocked, confirmed, change };
 }

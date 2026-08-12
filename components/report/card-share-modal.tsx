@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { useCardVisibility } from "@/hooks/use-card-visibility";
 import { useCopyCardLink } from "@/hooks/use-copy-card-link";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { isMorningBriefing } from "@/lib/report-type";
 import type { CardVisibility } from "@/types/feed";
 
 /**
@@ -15,6 +16,17 @@ import type { CardVisibility } from "@/types/feed";
  * - PRIVATE: 공개하면 무엇이 달라지는지 알린 뒤 `공개하기`. 아직 남이 열 수 없는 링크라
  *   **`링크 복사` 를 두지 않는다**(열리지 않는 링크를 공유하도록 유도하지 않는다).
  * - PUBLIC: `링크 복사` 와 `비공개로 전환`.
+ *
+ * ## 아침 브리핑 예외
+ *
+ * 아침 브리핑은 공개로 바꿀 수 없다(`reportType === "MORNING_BRIEFING"`, 판정은
+ * `lib/report-type.ts` 의 `isMorningBriefing` 한 곳). 동작하지 않는 버튼을 만들지 않는
+ * 기존 원칙(CLAUDE.md §2·§7 충돌표 #2)에 따라 **비활성 버튼이 아니라 CTA 자체를 두지 않고**,
+ * 왜 없는지 한 줄로 설명한다.
+ * - PRIVATE + 아침 브리핑: 공개 액션 없음. 닫기만 남는다.
+ * - PUBLIC + 아침 브리핑(비정상 데이터 — 서버 가드가 없어 과거에 공개된 카드가 있을 수 있다):
+ *   `링크 복사`·`비공개로 전환`은 그대로 둔다. 되돌릴 길까지 막으면 사용자가 노출을 스스로
+ *   거둘 수 없다. 한 번 비공개가 되면 위 규칙에 따라 다시 공개할 수 없다.
  *
  * 공개 안내는 서버가 실제로 보장하는 범위까지만 말한다 — 다른 사용자 피드에 보이고(공개 피드
  * 쿼리가 `visibility = 'PUBLIC'`) 좋아요·댓글이 열린다(둘 다 PUBLIC 카드에서만 허용). 조회수·
@@ -33,6 +45,7 @@ export function CardShareModal({
   publicId,
   title,
   visibility,
+  reportType,
   onVisibilityChanged,
 }: {
   onClose: () => void;
@@ -40,13 +53,16 @@ export function CardShareModal({
   title: string;
   /** 현재 확정 공개 범위 — 상세가 들고 있는 값이라 성공 후 이 모달의 내용도 함께 갱신된다. */
   visibility: CardVisibility;
+  /** 카드 생성 종류 원본값 — 아침 브리핑이면 공개 CTA 를 두지 않는다(판정은 lib/report-type.ts). */
+  reportType?: unknown;
   /** PATCH 성공 응답의 확정 visibility — 상세가 카드에 이 값만 병합한다. */
   onVisibilityChanged: (next: CardVisibility) => void;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const { pending, failed, confirmed, change } = useCardVisibility({
+  const { pending, failed, blocked, confirmed, change } = useCardVisibility({
     publicId,
+    reportType,
     onChanged: onVisibilityChanged,
   });
   const { copy, feedback } = useCopyCardLink(publicId);
@@ -73,6 +89,8 @@ export function CardShareModal({
   }, [confirmed]);
 
   const isPublic = visibility === "PUBLIC";
+  // 공개 CTA 를 둘지 — 아침 브리핑이면 두지 않는다(비활성 버튼이 아니라 미노출).
+  const canPublish = !isMorningBriefing(reportType);
 
   function close() {
     if (pending) return; // 요청 중 닫기 차단
@@ -89,17 +107,19 @@ export function CardShareModal({
     우선순위: 진행 중 → 실패 → 복사 결과(2.5초 후 사라짐) → 마지막 변경 성공.
     실패 문구는 코드 기준 공통 문구이며 서버 error.message 원문·내부 코드는 노출하지 않는다.
   */
-  const isErrorLine = failed || feedback?.tone === "error";
+  const isErrorLine = failed || blocked || feedback?.tone === "error";
   const statusLine = pending
     ? "변경 중…"
     : failed
       ? "공개 설정을 변경하지 못했어요. 잠시 후 다시 시도해 주세요."
-      : (feedback?.message ??
-        (confirmed === null
-          ? ""
-          : confirmed === "PUBLIC"
-            ? "공개로 변경했어요"
-            : "비공개로 변경했어요"));
+      : blocked
+        ? "아침 브리핑은 공개로 전환할 수 없어요."
+        : (feedback?.message ??
+          (confirmed === null
+            ? ""
+            : confirmed === "PUBLIC"
+              ? "공개로 변경했어요"
+              : "비공개로 변경했어요"));
 
   return createPortal(
     // 세로로 넘치면 backdrop 이 스크롤되어 320px·200% 확대에서도 하단 버튼까지 도달한다.
@@ -120,7 +140,11 @@ export function CardShareModal({
           {/* .mhead */}
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 id="share-modal-title" className="text-[16.5px] font-bold text-foreground">
-              {isPublic ? "공개 중인 보고서예요" : "보고서를 공개할까요?"}
+              {isPublic
+                ? "공개 중인 보고서예요"
+                : canPublish
+                  ? "보고서를 공개할까요?"
+                  : "나만 볼 수 있는 보고서예요"}
             </h2>
             <button
               ref={closeRef}
@@ -148,11 +172,18 @@ export function CardShareModal({
                 <br />
                 공개 상태에서는 다른 사용자가 좋아요와 댓글을 남길 수 있어요.
               </>
-            ) : (
+            ) : canPublish ? (
               <>
                 지금은 나만 볼 수 있어요.
                 <br />
                 공개하면 다른 사용자의 피드에서 볼 수 있고, 좋아요와 댓글을 받을 수 있어요.
+              </>
+            ) : (
+              /* 아침 브리핑 — 왜 공개 버튼이 없는지 밝힌다(비활성 버튼을 두지 않는 대신). */
+              <>
+                지금은 나만 볼 수 있어요.
+                <br />
+                아침 브리핑은 공개로 전환할 수 없어요.
               </>
             )}
           </p>
@@ -184,7 +215,7 @@ export function CardShareModal({
                   {pending ? "전환 중…" : "비공개로 전환"}
                 </button>
               </>
-            ) : (
+            ) : canPublish ? (
               <>
                 <button type="button" onClick={close} disabled={pending} className={ghostBtn}>
                   취소
@@ -198,6 +229,15 @@ export function CardShareModal({
                   {pending ? "공개 중…" : "공개하기"}
                 </button>
               </>
+            ) : (
+              /*
+                아침 브리핑 PRIVATE — 공개 CTA 자체를 두지 않는다. 남는 액션이 닫기뿐이라
+                `취소`(무엇을 취소하는지 불분명)가 아니라 `확인`으로 문구를 맞춘다.
+                우측 상단 ✕ 와 같은 동작이지만 키보드·모바일에서 도달하기 쉬운 자리를 유지한다.
+              */
+              <button type="button" onClick={close} className={ghostBtn}>
+                확인
+              </button>
             )}
           </div>
         </div>
