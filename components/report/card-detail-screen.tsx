@@ -34,6 +34,7 @@ import {
 } from "@/lib/adapters/report";
 import { ReportMarkdown } from "@/components/report/report-markdown";
 import { isDeltaReport } from "@/lib/report-delta";
+import { isMorningBriefing } from "@/lib/report-type";
 import type { CardResponse, CardVisibility } from "@/types/feed";
 
 /**
@@ -139,6 +140,23 @@ function CardDetailView({
   // 공개 범위 변경은 **카드 소유자에게만** 노출한다(비소유자·게스트는 링크 복사만).
   const owner = isCardOwner(shown, viewerPublicId);
   const isPublic = isPublicCard(shown);
+  /*
+    아침 브리핑 + PRIVATE → 공유 진입점 자체를 두지 않는다.
+
+    이 조합에서는 모달을 열어도 할 수 있는 일이 없다. 공개 전환은 정책상 막혀 있고(#92),
+    PRIVATE 링크는 남이 열 수 없어 `링크 복사`도 의미가 없다 — 남는 건 닫기뿐이라 진입점이
+    막다른 길이 된다. 눌러도 아무것도 못 하는 버튼을 두지 않는다는 기존 원칙과 같다.
+
+    **PUBLIC 아침 브리핑(구 데이터)에서는 그대로 둔다.** 서버 가드가 없던 시절 공개된 카드가
+    있을 수 있고, 그 모달이 `비공개로 전환` 의 유일한 경로다. 여기까지 감추면 사용자가 이미
+    나간 노출을 스스로 거둘 수 없다(#92 가 PUBLIC→PRIVATE 를 막지 않는 것과 같은 이유).
+
+    판별은 콘텐츠 유형을 명시적으로 본다 — `lib/report-type.ts` 의 `isMorningBriefing`
+    (서버 `reportType` 단일 근거). 제목·URL·공개 여부로 유형을 추정하지 않는다.
+    ⚠️ 이건 진입점 정리(UX)일 뿐 차단 수단이 아니다. 공개 차단은 훅(use-card-visibility)과
+    서버가 계속 담당한다 — 버튼을 감췄다고 그쪽 로직을 걷어내지 않는다.
+  */
+  const morningBriefingPrivate = isMorningBriefing(shown.reportType) && !isPublic;
 
   return (
     <div className="min-h-screen bg-background">
@@ -191,10 +209,14 @@ function CardDetailView({
               {/*
                 공유 — 권한과 상태에 따라 할 수 있는 일이 다르다.
                 - 소유자: 공개 범위 설명·변경과 링크 복사를 담은 모달을 연다.
+                  단 PRIVATE 아침 브리핑은 제외 — 모달에 남는 액션이 없다(위 주석 참조).
                 - 비소유자·게스트(PUBLIC 만 여기 도달): 링크 복사만. 공개 범위 변경 UI 도,
                   공개/비공개 문구도 노출하지 않는다(권한 없는 기능을 보여주지 않는다).
+
+                버튼이 빠져도 바 높이·정렬은 그대로다 — 두께는 좌측 링크의 min-h-8 이 만들고
+                링크가 flex-1 로 남은 폭을 채운다(우측 액션은 shrink-0 부가 요소).
               */}
-              {owner ? (
+              {owner && !morningBriefingPrivate ? (
                 <button
                   type="button"
                   onClick={() => setShareOpen(true)}

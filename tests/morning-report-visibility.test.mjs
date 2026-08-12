@@ -183,3 +183,36 @@ test("훅이 mutation 진입점에서 판정 단일 소스를 쓴다", () => {
   assert.match(hookSource, /import \{ isMorningBriefing \} from "@\/lib\/report-type"/);
   assert.match(hookSource, /if \(next === "PUBLIC" && publishBlocked\)/);
 });
+
+/* ── 4. PRIVATE 아침 브리핑 — 공유 진입점 제거 ─────────────────── */
+
+test("PRIVATE 아침 브리핑은 상세에서 공유 버튼을 두지 않는다", () => {
+  // 유형 판별은 명시적으로 — 제목·URL·공개 여부로 추정하지 않는다.
+  assert.match(detailScreen, /import \{ isMorningBriefing \} from "@\/lib\/report-type"/);
+  assert.match(
+    detailScreen,
+    /const morningBriefingPrivate = isMorningBriefing\(shown\.reportType\) && !isPublic;/,
+  );
+  // 공유 버튼이 그 조건 뒤에 있어야 한다.
+  assert.match(detailScreen, /\{owner && !morningBriefingPrivate \? \(/);
+});
+
+test("PUBLIC 아침 브리핑(구 데이터)의 공유 진입점은 남긴다", () => {
+  /*
+    조건에 `!isPublic` 이 들어가 있어야 PUBLIC 아침 브리핑에서는 버튼이 유지된다.
+    그 모달이 `비공개로 전환` 의 유일한 경로라, 여기까지 감추면 이미 나간 노출을 사용자가
+    스스로 거둘 수 없다(#92 가 PUBLIC→PRIVATE 를 막지 않는 것과 같은 이유).
+  */
+  assert.match(detailScreen, /isMorningBriefing\(shown\.reportType\) && !isPublic/);
+});
+
+test("공유 버튼을 감췄다고 공개 차단 로직을 걷어내지 않는다", () => {
+  // 진입점 정리는 UX 일 뿐 차단 수단이 아니다 — 훅·모달의 이중 방어가 그대로 남아야 한다.
+  const hookSource = readFileSync(
+    new URL("../hooks/use-card-visibility.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(hookSource, /setBlocked\(true\)/);
+  assert.match(shareModal, /const canPublish = !isMorningBriefing\(reportType\)/);
+  assert.match(detailScreen, /reportType=\{shown\.reportType\}/);
+});
