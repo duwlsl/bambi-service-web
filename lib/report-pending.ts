@@ -52,7 +52,13 @@ export function getPreparingReportTitle(title: string, reportType: TrackableRepo
  * 브라우저 렌더가 서로 다른 문자열을 만들어 hydration 이 어긋난다. 서비스 기준 시간대(KST —
  * 백엔드 생성 스케줄러도 `Asia/Seoul` 로 돈다)를 명시해 어느 쪽에서 렌더해도 같은 값이 나온다.
  *
- * `hour12:false` 를 주는 이유: ko-KR 기본값은 `오후 06:30` 이라 요구 표기(`18:30`)와 다르다.
+ * **시간 주기를 `h23` 으로 고정한다.** ko-KR 기본값은 `오후 06:30` 이라 요구 표기(`18:30`)와
+ * 다르므로 24시간제가 필요한데, `hour12:false` 만 주면 자정을 **`24:00` 으로 내는 환경이 있다**:
+ * 그 옵션은 h23(`00:00`)·h24(`24:00`) 중 무엇을 쓸지 정하지 않아 ICU 버전에 따라 갈린다
+ * (실측 — Node 22/ICU 77: `00:00`, Node 20: `24:00`. 운영 이미지가 node:20-alpine 이라
+ *  SSR 과 브라우저 렌더가 자정에만 서로 다른 문자열을 만들 수 있다).
+ * `hourCycle` 을 직접 지정하면 어느 런타임에서도 자정이 `00:00` 이다.
+ * ⚠️ `hour12` 를 함께 주면 그쪽이 우선해 `hourCycle` 이 무시되므로 **둘을 같이 쓰지 않는다.**
  *
  * 값이 없거나(`undefined`·`null`) 파싱되지 않으면 **빈 문자열**을 돌려주고 호출부가 줄 자체를
  * 그리지 않는다 — `Invalid Date` 노출도, 현재 시각으로의 대체도 하지 않는다
@@ -67,7 +73,7 @@ const PENDING_CREATED_TIME_FORMAT = new Intl.DateTimeFormat("ko-KR", {
   timeZone: SERVICE_TIME_ZONE,
   hour: "2-digit",
   minute: "2-digit",
-  hour12: false,
+  hourCycle: "h23",
 });
 
 export function formatPendingCreatedAt(iso: unknown): string {
