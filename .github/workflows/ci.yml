@@ -51,14 +51,40 @@ jobs:
       - name: Test (node:test, 190건)
         run: node --test tests/*.test.mjs
 
-      - name: Test (Vitest, RTL·MSW)
-        run: npm run test:unit
-
       # 프로덕션 빌드 검증. API_URL 은 빌드 통과용 더미(런타임 값 아님)
       - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: http://localhost
+
+  # Vitest 만 별도 job 인 이유는 **Node 버전 요구가 다르기 때문**이다.
+  #   jsdom@30 은 engines 가 `^22.22.2 || ^24.15.0 || >=26` 이라 Node 20 을 지원하지 않는다.
+  #   내부 undici@8(>=22.19 요구)이 `webidl.util.markAsUncloneable` 을 부르는데 Node 20 에는 없어
+  #   워커 기동 자체가 TypeError 로 죽는다(Node 20.20.2 에서 CI·로컬 모두 실측).
+  # 위 job 을 통째로 Node 22 로 올리지 않는 건, 운영 이미지가 node:20-alpine 이라
+  # **lint·typecheck·node:test·build 는 Node 20 에서 검증해야 의미가 있기 때문**이다
+  # (실제로 그 Node 20 실행이 자정 표기 결함 #111 을 잡아냈다).
+  # 비용은 npm ci 1회 중복(캐시 적중 시 수십 초)이고, 그 대신 두 런타임 요구를 모두 정확히 지킨다.
+  # 근본 해결은 jsdom 을 Node 20 지원 버전으로 맞추는 것이며, package.json 수정은 이 PR 범위 밖이라
+  # 후속으로 남긴다.
+  unit:
+    name: Unit · Component (Vitest · Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test (Vitest, RTL·MSW)
+        run: npm run test:unit
 
   # E2E 는 브라우저·프로덕션 서버 기동이 필요해 위 job 과 분리한다. 분리 비용은 npm ci 1회
   # 중복(캐시 적중 시 수십 초)이고, 그 대신 lint·typecheck·test·build 결과가 브라우저 설치를
