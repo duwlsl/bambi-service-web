@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 
 import { FeedSkeleton } from "@/components/home/feed-skeleton";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { IconAlert, IconEmptyDoc } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
 import { ERROR_CODES } from "@/constants/errors";
@@ -12,7 +11,6 @@ import { ApiError } from "@/lib/api-client";
 import { deleteInterest } from "@/lib/repositories/interests";
 import type { MyInterestsState } from "@/hooks/use-my-interests";
 import type { InterestDto } from "@/types/interest";
-import type { WikiTag } from "@/types/wiki";
 
 /**
  * 접힌 상태에서 보여줄 관심사 개수. 관심사가 늘어도 패널 높이가 따라 늘지 않게 막는다.
@@ -27,33 +25,40 @@ const MY_PREVIEW = 6;
  * - 목업의 "고정됨"·"잠시 쉬는 중"·수정하기 모달(rename)은 이번 범위 밖 — 고정/중지 백엔드가 없고
  *   rename 은 후속. 동작하지 않는 컨트롤을 만들지 않는다.
  *
- * <b>레이아웃 = 칩 + 팝오버(2026-08-12).</b> 08-11 에 카드 → 한 줄 행으로 압축했는데, 행마다
- * `삭제` 버튼이 반복돼 관심사가 늘수록 같은 버튼이 세로로 쌓였다. 이름만 담은 칩으로 한 번 더
- * 압축하고, **칩을 누르면 팝오버**에 그 관심사의 근거와 삭제를 모은다. 목록 안에서 펼치지
- * 않으므로(팝오버는 Portal) 패널 높이가 흔들리지 않는다.
+ * <b>레이아웃 = 칩 + 편집 모드(2026-08-12 검수).</b> 잠깐 칩 클릭 → 팝오버(이름·삭제)를 썼는데,
+ * 팝오버가 담을 게 삭제 하나뿐이라 기능에 비해 구조가 과했다(빈 상자에 버튼 한 개).
+ * 평상시에는 칩만 두고, 제목 옆 `편집` 을 눌렀을 때만 칩마다 `×` 를 붙인다.
+ * - 평상시 칩은 <b>버튼이 아니다</b>(span) — 눌러도 아무 일이 없어야 하므로 아예 상호작용을 두지 않는다.
+ * - 확인 모달은 두지 않는다. 삭제는 `편집 → ×` 2단계를 이미 거치고, 지운 관심사는 옆 발견 목록으로
+ *   돌아가 한 번에 되돌릴 수 있다(wiki-screen 의 removedNames). 되돌릴 수 없는 조작이 아니다.
  *
- * <b>출처 배지는 두지 않는다.</b> `fetchUserInterests` 가 `source === "USER"` 만 반환해서
- * 이 목록은 전부 USER 다 — AI 추천/직접 설정을 가를 데이터가 애초에 없다. 이름이 일치하는
- * 자동추출 태그로 "AI 일치"를 표기하던 것도 2026-08-11 에 제거됐다(agent confidence 가
- * 전부 52% 로 같아 변별이 0 이었다). 없는 구분을 시각적으로 지어내지 않는다.
+ * <b>출처 배지·근거 문구는 두지 않는다.</b> `fetchUserInterests` 가 `source === "USER"` 만 반환해
+ * 목록이 전부 USER 라 출처는 표시해도 정보가 0 이고(2026-08-11 에 "AI 일치·신뢰도"를 뺀 이유와 동일),
+ * agent 근거는 어느 관심사를 열어도 같은 상용구가 나와서 걷어냈다(2026-08-12).
  */
 export function WikiMyInterests({
   state,
-  wikiTags,
   onRemoved,
 }: {
   state: MyInterestsState & { refetch: () => void };
-  wikiTags: WikiTag[] | null;
   /** 뺀 관심사 이름을 알린다 — 화면이 그 이름을 발견 목록에 남겨 되돌릴 수 있게 한다. */
   onRemoved: (name: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  /** 삭제 결과 낭독 — 칩이 사라지는 조작이라 시각 피드백만으로는 알 수 없다. */
+  const [editRequested, setEditRequested] = useState(false);
+  /** 삭제 성공 낭독 — 칩이 사라지는 조작이라 시각 피드백만으로는 알 수 없다. */
   const [announcement, setAnnouncement] = useState("");
+  /** 삭제 실패 안내 — 칩은 그대로 두고 목록 아래에 어느 관심사가 실패했는지 적는다. */
+  const [error, setError] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
 
   const interests = state.status === "success" ? state.data : [];
   const visible = expanded ? interests : interests.slice(0, MY_PREVIEW);
+  /**
+   * 편집 상태는 파생값이다 — 마지막 관심사를 지우면 편집할 대상이 없으므로 자동으로 풀린다.
+   * (state 로만 들고 있으면 목록이 빈 뒤에도 편집 중이 남아, 새로 추가한 칩에 ×가 붙어 나온다.)
+   */
+  const editing = editRequested && interests.length > 0;
 
   /** 삭제로 칩이 사라지면 포커스가 body 로 떨어진다 → 목록으로 되돌린다. */
   function recoverFocus() {
@@ -67,21 +72,36 @@ export function WikiMyInterests({
       aria-label="내 관심사"
       className="rounded-[14px] border border-border bg-card px-[18px] py-4"
     >
-      <h2 className="flex items-baseline gap-2 text-[15px] font-bold tracking-[-0.01em] text-foreground">
-        내 관심사
-        {state.status === "success" && (
-          <span className="text-[11.5px] font-normal text-muted-foreground">
-            {state.data.length}개
-          </span>
+      {/* 제목 | 개수(보조) ────── 편집/완료. 개수는 제목에 붙여 두고 버튼만 오른쪽 끝으로 민다. */}
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="flex min-w-0 items-baseline gap-2 text-[15px] font-bold tracking-[-0.01em] text-foreground">
+          내 관심사
+          {state.status === "success" && (
+            <span className="text-[11.5px] font-normal text-muted-foreground">
+              {state.data.length}개
+            </span>
+          )}
+        </h2>
+        {interests.length > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={() => {
+              setEditRequested((v) => !v);
+              setError("");
+            }}
+            aria-pressed={editing}
+            className="min-h-8 shrink-0 text-[12px] font-semibold text-ink-mid"
+          >
+            {editing ? "완료" : "편집"}
+          </Button>
         )}
-      </h2>
-      {/*
-        안내는 섹션에 한 번만 둔다(2026-08-11 우석 — 화면 정리). 이전에는 카드마다
-        "직접 추가한 관심사예요 — 관련 자료를 저장하면 AI 이해가 깊어져요"가 똑같이 반복돼
-        10개면 같은 문장이 10번 나왔다. 칩에는 이름만 남기고 나머지는 팝오버로 접는다.
-      */}
-      <p className="mt-1 mb-3 text-[12.5px] leading-[1.6] text-muted-foreground">
-        브리핑 주제로 쓰는 관심사예요. 눌러서 자세히 보거나 삭제할 수 있고, 삭제하면 발견 목록으로 돌아가요.
+      </div>
+
+      {/* 안내는 섹션에 한 번만 둔다(2026-08-11 우석 — 화면 정리). 칩에는 이름만 남긴다. */}
+      <p className="mt-1 mb-3 text-[12.5px] leading-[1.6] text-pretty text-muted-foreground">
+        브리핑 주제로 사용하는 관심사예요. 편집을 눌러 관심사를 정리할 수 있어요.
       </p>
 
       {state.status === "loading" && <FeedSkeleton />}
@@ -113,14 +133,21 @@ export function WikiMyInterests({
               <li key={interest.id} className="min-w-0 max-w-full">
                 <InterestChip
                   interest={interest}
-                  matched={findMatchedTag(interest, wikiTags)}
+                  editing={editing}
                   onRemoved={onRemoved}
                   announce={setAnnouncement}
+                  onError={setError}
                   recoverFocus={recoverFocus}
                 />
               </li>
             ))}
           </ul>
+
+          {error && (
+            <p role="alert" className="mt-2 text-[11.5px] leading-[1.6] text-destructive">
+              {error}
+            </p>
+          )}
 
           {state.data.length > MY_PREVIEW && (
             <Button
@@ -144,164 +171,87 @@ export function WikiMyInterests({
   );
 }
 
-/** 이름(trim·소문자) 일치로 자동추출 태그를 찾는다 — 근거 문구 표시용, 데이터는 섞지 않는다. */
-function findMatchedTag(interest: InterestDto, wikiTags: WikiTag[] | null): WikiTag | null {
-  if (!wikiTags) return null;
-  const name = interest.name.trim().toLowerCase();
-  return wikiTags.find((tag) => tag.tag.trim().toLowerCase() === name) ?? null;
-}
-
 /**
- * 관심사 칩 1개 — 누르면 팝오버에 상세가 열린다.
+ * 관심사 칩 1개.
  *
- * 팝오버 내용은 **지금 데이터로 실제 채울 수 있는 것만** 둔다:
- * 이름(칩에서 잘린 긴 이름을 여기서 온전히 읽는다) + 근거(이름이 일치하는 자동추출 태그의
- * `reasonMessages`, 있을 때만) + 삭제. 생성 출처 줄은 두지 않는다 — 목록이 전부 USER 라
- * 표시해도 정보가 0 이다.
+ * 평상시에는 `span` 이다 — 누를 게 없으므로 버튼으로 만들지 않는다(빈 동작 금지).
+ * 편집 중에만 오른쪽에 삭제 `×` 버튼이 붙는다. 칩 높이는 두 상태가 같고(min-h-9),
+ * 늘어나는 건 `×` 자리(오른쪽 여백을 줄여 증가폭을 줄였다)뿐이라 배치가 크게 흔들리지 않는다.
  *
- * 삭제는 2단계 확인을 거친다. soft delete 라 서버에는 남지만 사용자 입장에선 목록에서
- * 사라지는 조작이고, 되돌리려면 발견 목록에서 다시 추가해야 한다.
+ * 삭제 요청 중에는 칩을 흐리게 하고 버튼을 비활성화해 중복 요청을 막는다.
+ * 실패해도 칩은 그대로 두고, 어느 관심사가 실패했는지 목록 아래 안내로 알린다.
  */
 function InterestChip({
   interest,
-  matched,
+  editing,
   onRemoved,
   announce,
+  onError,
   recoverFocus,
 }: {
   interest: InterestDto;
-  matched: WikiTag | null;
+  editing: boolean;
   onRemoved: (name: string) => void;
   announce: (message: string) => void;
+  onError: (message: string) => void;
   recoverFocus: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  /** 삭제로 닫히는 경우에만 포커스를 목록으로 보낸다(트리거가 사라지므로 radix 기본 복귀가 무의미). */
-  const deleted = useRef(false);
 
-  const reasons = matched?.reasonMessages ?? [];
-
-  function onOpenChange(next: boolean) {
-    setOpen(next);
-    if (!next) {
-      setConfirming(false);
-      setFailed(false);
-    }
+  function finishRemoved() {
+    announce(`${interest.name} 관심사를 삭제했어요`);
+    onRemoved(interest.name);
+    recoverFocus();
   }
 
   function remove() {
     if (busy) return;
     setBusy(true);
-    setFailed(false);
+    onError("");
     deleteInterest(interest.id)
-      .then(() => finishRemoved())
+      .then(finishRemoved)
       .catch((err) => {
         // 이미 삭제된 경우 목표 상태 달성 — 목록 재조회로 정합시킨다.
         if (err instanceof ApiError && err.code === ERROR_CODES.NOT_FOUND) {
           finishRemoved();
           return;
         }
-        setFailed(true);
-        setConfirming(false);
+        onError(`${interest.name} 관심사를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.`);
       })
       .finally(() => setBusy(false));
   }
 
-  function finishRemoved() {
-    deleted.current = true;
-    announce(`${interest.name} 관심사를 삭제했어요`);
-    setOpen(false);
-    onRemoved(interest.name);
-  }
+  /*
+    칩 = 흰 배경 + 주황 틴트 테두리 (2026-08-12 검수). 전부 기존 토큰이다 —
+    `bg-card`(라이트 #FFFFFF · 다크 #181B21: 다크에서 순백을 쓰지 않는다) ·
+    `border-wash-strong` · 본문색 `text-foreground` · hover 는 아주 옅은 주황 배경
+    `bg-wash`(주황 9%/다크 14%). 새 색값을 만들지 않았다.
 
+    테두리는 `--primary` 원색(#FF5A00)이 아니라 **`--wash-strong`(주황 20%/다크 30%)** 이다.
+    원색으로 두니 칩마다 진한 주황 링이 6~9개씩 반복돼 목록이 튀었다(2026-08-12 검수).
+    `--wash-strong` 은 globals.css 에서 "주황 틴트(테두리)" 용도로 정의된 토큰이고,
+    같은 화면의 `＋ 추가` 버튼 테두리와도 같은 값이라 언어가 맞는다.
+    포커스 링은 편집 중 `×` 버튼의 `.focus-ring` 이 맡고, 그 색이 `--ring`(= primary)이다.
+  */
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        {/*
-          칩 전체가 트리거다. hover·focus·열림(aria-expanded) 셋 다 테두리와 글자색이 바뀌어
-          "누를 수 있는 것"이 보이게 한다. 긴 이름은 잘리지만 DOM 에는 전문이 남아
-          접근성 이름과 팝오버 제목에서 온전히 읽힌다.
-          최소 높이 36px — 모바일 터치 영역 확보.
-        */}
+    <span
+      className={`inline-flex min-h-9 max-w-full min-w-0 items-center rounded-full border border-wash-strong bg-card text-[12.5px] font-semibold text-foreground transition-colors hover:bg-wash ${
+        editing ? "py-1 pr-1 pl-3" : "px-3 py-1.5"
+      } ${busy ? "opacity-60" : ""}`}
+    >
+      <span className="min-w-0 truncate">{interest.name}</span>
+      {editing && (
         <button
           type="button"
-          className="focus-ring inline-flex min-h-9 max-w-full min-w-0 cursor-pointer items-center rounded-full border border-border bg-secondary px-3 py-1.5 text-[12.5px] font-semibold text-foreground transition-colors hover:border-primary hover:text-signal-ink aria-expanded:border-primary aria-expanded:text-signal-ink"
+          onClick={remove}
+          disabled={busy}
+          aria-busy={busy}
+          aria-label={`${interest.name} 관심사 삭제`}
+          className="focus-ring ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[15px] leading-none text-muted-foreground hover:bg-background hover:text-destructive disabled:cursor-not-allowed"
         >
-          <span className="min-w-0 truncate">{interest.name}</span>
+          <span aria-hidden="true">×</span>
         </button>
-      </PopoverTrigger>
-
-      <PopoverContent
-        aria-label={`${interest.name} 관심사 상세`}
-        onCloseAutoFocus={(event) => {
-          if (!deleted.current) return; // 일반 닫기(Esc·바깥 클릭)는 radix 기본대로 칩으로 복귀
-          deleted.current = false;
-          event.preventDefault();
-          recoverFocus();
-        }}
-      >
-        <p className="text-[13.5px] font-bold wrap-anywhere text-foreground">{interest.name}</p>
-
-        {reasons.length > 0 && (
-          <ul className="mt-1.5 flex flex-col gap-1">
-            {reasons.map((reason) => (
-              <li key={reason} className="text-[12px] leading-[1.6] text-ink-mid">
-                {reason}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {failed && (
-          <p role="alert" className="mt-2 text-[11.5px] text-destructive">
-            삭제하지 못했어요. 다시 시도해 주세요.
-          </p>
-        )}
-
-        {confirming ? (
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <span className="mr-auto text-[12px] text-ink-mid">삭제할까요?</span>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={remove}
-              disabled={busy}
-              aria-busy={busy}
-              autoFocus
-              className="min-h-9"
-            >
-              {busy ? "삭제 중…" : "삭제"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setConfirming(false)}
-              disabled={busy}
-              className="min-h-9"
-            >
-              취소
-            </Button>
-          </div>
-        ) : (
-          <div className="mt-3 flex justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setConfirming(true)}
-              aria-label={`${interest.name} 관심사 삭제`}
-              className="min-h-9 hover:border-destructive hover:text-destructive"
-            >
-              삭제
-            </Button>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+      )}
+    </span>
   );
 }
