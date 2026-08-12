@@ -40,10 +40,19 @@ jobs:
         run: npx tsc --noEmit
 
       # 브라우저가 필요 없는 테스트 — 같은 job 에서 돈다(설치 결과 재사용, 중복 npm ci 없음).
-      #   npm test = test:legacy(node --test, tests/*.test.mjs) + test:unit(vitest run)
       # 빌드보다 앞에 두는 건 더 싼 검사에서 먼저 떨어뜨리기 위해서다.
-      - name: Test (node:test + Vitest)
-        run: npm test
+      #
+      # ⚠️ `npm test`(= test:legacy && test:unit)를 그대로 부르지 않는 이유:
+      #    test:legacy 의 `node --test "tests/*.test.mjs"` 는 **Node 22+ 에서만** 글롭이 확장된다.
+      #    이 CI 의 Node 20 에서는 리터럴 경로로 읽혀 "Could not find" 로 실패한다(실측).
+      #    여기서는 셸이 글롭을 펼쳐 같은 12파일·190케이스를 그대로 실행한다 — 실행 대상은 동일하다.
+      #    근본 해결은 package.json 의 test:legacy 를 Node 20 호환으로 고치는 것이고(예: `node --test tests/`),
+      #    package.json 수정은 이 PR 범위 밖이라 후속으로 남긴다.
+      - name: Test (node:test, 190건)
+        run: node --test tests/*.test.mjs
+
+      - name: Test (Vitest, RTL·MSW)
+        run: npm run test:unit
 
       # 프로덕션 빌드 검증. API_URL 은 빌드 통과용 더미(런타임 값 아님)
       - name: Build
