@@ -16,7 +16,8 @@
     "test:privacy": "node --test tests/privacy-page.test.mjs",
     "test:wiki-interest-ux": "node --test tests/wiki-interest-ux.test.mjs",
     "test:morning-report-visibility": "node --test tests/morning-report-visibility.test.mjs",
-    "test:report-back-link": "node --test tests/report-back-link.test.mjs"
+    "test:report-back-link": "node --test tests/report-back-link.test.mjs",
+    "test:private-report-scrap": "node --test tests/private-report-scrap.test.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
