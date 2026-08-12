@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { useRequireAuth } from "@/components/auth/use-require-auth";
 import { PostMoreMenu } from "@/components/home/post-more-menu";
@@ -17,9 +18,14 @@ import type { PublicFeedAuthorVM, PublicFeedCardVM, PublicFeedSocialVM } from "@
  *          | 작성 시각
  *   제목 (상세 링크)
  *   요약 2줄 + 더 보기
+ *   [대표 이미지 썸네일]  ← 있는 카드만(`CardMedia`, 고정 높이)
  *   ● 관심사 ‘첫 태그’ +N · 출처 N건
  *   ─────────────
  *   ⚑ 보관 · ♡ 좋아요 수
+ *
+ * 대표 이미지는 목업에 없던 영역이다(2026-08-12). 서버가 공개 피드에도 `coverImage` 를 내려주면서
+ * (service-api `PublicCardResponse.coverImage`) 실데이터가 생겼고, 텍스트 아래 카드 폭 썸네일로
+ * 앉힌다 — 자세한 규칙은 아래 `CardMedia` 참조.
  *
  * 목업 토큰: `.post`(bg-card·border·radius 14·padding 16/18/7·mb 16) · `.phead`(gap 10, mb 6) ·
  * `.pav`(38px 원형) · `.pname`(14px/700, 핸들 `.h` 13px/400 ink-dim) · `.pmeta`(12px ink-dim) ·
@@ -129,6 +135,9 @@ export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
           </>
         )}
 
+        {/* 썸네일 — 본문 바로 아래, 카드 폭을 쓰는 고정 높이 박스(있는 카드만). */}
+        <CardMedia coverImage={card.coverImage} detailHref={detailHref} title={card.title} />
+
         {/*
           .reason — 어떤 주제의 리포트인지 한 줄로 알린다. **card.tags 실값만** 쓰고, 첫 태그를
           문구로 세운 뒤 나머지는 `+N` 으로 접는다. 태그가 없으면 이 문구 자체를 만들지 않는다
@@ -164,6 +173,76 @@ export function PublicFeedCard({ card }: { card: PublicFeedCardVM }) {
         {(card.scrapped !== null || card.social !== null) && <CardActions card={card} />}
       </div>
     </article>
+  );
+}
+
+/**
+ * 카드 썸네일 — 리포트 대표 이미지를 **본문 아래 고정 높이 박스**로 보여준다(2026-08-12).
+ * 작은 우측 썸네일이 아니라 텍스트 다음에 카드 폭을 쓰는 한 덩어리로 앉히되, 크기는 카드마다
+ * 같다.
+ *
+ * **이미지가 있는 카드에만 생긴다.** `coverImage === null`(리포트 없는 카드·대표 이미지를 못 고른
+ * 리포트·필드 미배포 응답)이면 아무것도 렌더하지 않고 카드는 기존 텍스트형 그대로다. 원격 이미지가
+ * 403·404 로 죽는 경우가 실제로 있어(`thumb.mt.co.kr`·`img.etnews.com` 실측) 로드 실패도 같은
+ * 상태로 되돌린다 — 빈 테두리·높이·회색 자리표시자를 남기지 않는다(상세 `ReportCoverHero`와
+ * 동일한 규칙). 실패 판정은 `failedUrl === url` 비교라 카드가 바뀌면(다른 URL) 자동으로 풀린다.
+ *
+ * **높이는 원본 비율과 무관한 고정값**이다 — 180 / `sm` 240 / `lg` 300. 처음에는 원본 비율을 살려
+ * `h-auto` + `max-h` 로 뒀는데, 카드마다 이미지 높이가 제각각이라 목록의 리듬이 무너지고 세로
+ * 이미지 한 장이 화면을 거의 덮었다(2026-08-12 검수). 이 이미지는 본문이 아니라 **보고서의 대표
+ * 썸네일**이므로 목록에서는 같은 크기로 훑히는 편이 맞고, 원본 전체는 상세 화면(`ReportCoverHero`)
+ * 에서 그대로 볼 수 있다. `object-cover object-center` 라 비율은 유지된 채 박스 밖만 잘린다 —
+ * 정사각·세로 이미지가 중앙 기준으로 잘리는 것은 **의도된 동작**이다(찌그러뜨리지 않는다).
+ *
+ * 높이가 고정이라 `loading="lazy"` 이미지가 아직 안 온 동안 박스가 먼저 자리를 잡는다 —
+ * 그때 빈 테두리만 남지 않도록 상세 hero 와 같은 스켈레톤 토큰(`--skel1`, 라이트·다크 각각 정의)을
+ * 이미지 배경에 깐다. **로드 실패와는 다른 상태다**: 실패하면 박스째 사라진다(위 참조).
+ *
+ * **여러 장(콜라주)은 만들지 않는다.** 서버 계약이 카드당 대표 이미지 1장(`cover_image_*` 컬럼 한
+ * 벌)이고 첨부 이미지 배열이 없다 — 2열 배치는 채울 데이터가 없어 가짜 UI 가 된다.
+ *
+ * **대체 텍스트**: 계약에 이미지 설명 필드가 없다(`sourceTitle` 은 원문 기사 제목이지 이미지 설명이
+ * 아니다). 설명을 지어내지 않고 이미지는 장식(`alt=""`)으로 두되, **링크에는 이름을 준다** —
+ * `aria-label` 에 카드의 실제 제목을 그대로 쓴다. 예전처럼 `aria-hidden`+`tabIndex={-1}` 로 통째로
+ * 감추지 않는 이유는 키보드로도 썸네일에 닿아 Enter 로 상세에 갈 수 있어야 하기 때문이고, 그렇게
+ * 노출하는 이상 이름 없는 링크로 두면 안 되기 때문이다. 포커스 표시는 기존 `focus-ring` 토큰.
+ *
+ * **클릭**: 카드 제목과 같은 목적지(`/report/{publicId}`). 목록에서 썸네일을 누르는 기대 동작은
+ * "이 보고서 열기"다(상세 화면의 큰 이미지만 원문 기사로 나간다).
+ */
+function CardMedia({
+  coverImage,
+  detailHref,
+  title,
+}: {
+  coverImage: PublicFeedCardVM["coverImage"];
+  detailHref: string;
+  title: string;
+}) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (coverImage === null || failedUrl === coverImage.url) return null;
+  return (
+    <Link
+      href={detailHref}
+      aria-label={`${title} 보고서 보기`}
+      className="focus-ring mb-3 block h-[180px] overflow-hidden rounded-[12px] border border-border sm:h-[240px] lg:h-[300px]"
+    >
+      {/*
+        next/image 를 쓰지 않는다 — 이미지 호스트가 언론사 CDN 이라 임의로 늘어나는데,
+        next.config 의 remotePatterns 화이트리스트로는 관리할 수 없다(막히면 통째로 안 나온다).
+        `no-referrer` 는 referer 로 외부 이미지를 막는 CDN 때문에 붙인다(상세 화면과 동일).
+      */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={coverImage.url}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => setFailedUrl(coverImage.url)}
+        className="block h-full w-full bg-[var(--skel1)] object-cover object-center"
+      />
+    </Link>
   );
 }
 

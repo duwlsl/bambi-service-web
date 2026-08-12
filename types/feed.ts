@@ -197,14 +197,12 @@ export type FeedCardVM = {
    */
   createdAtMs: number | null;
   /**
-   * 리포트 대표 이미지 — 있을 때만 목록 카드 오른쪽에 썸네일로 보여준다(2026-08-11 우석).
+   * 리포트 대표 이미지 — 어댑터가 `toReportCoverImage` 로 URL 안전성(http/https·사설망 차단)까지
+   * 검증해 담는다. `GET /api/feed` 응답의 `coverImage` 그대로다.
    *
-   * **없으면 없는 대로 둔다.** 실측(2026-08-11, 공개 카드 20건)에서 보유율이 35% 였고,
-   * 원격 이미지가 403·404 로 죽는 경우도 있었다(`thumb.mt.co.kr`·`img.etnews.com`). 그래서
-   * 자리를 미리 비워두거나 회색 박스를 두지 않는다 — 이미지가 있는 카드만 오른쪽이 생기고,
-   * 로드에 실패하면 그 카드도 즉시 기존 모양으로 되돌아간다(카드마다 독립적으로).
-   *
-   * 어댑터가 `toReportCoverImage` 로 URL 안전성(http/https·사설망 차단)까지 검증해 담는다.
+   * **[내 보고서] 카드는 이 값을 렌더하지 않는다**(2026-08-12). 잠시 우측 썸네일이 있었지만
+   * 목록은 제목·요약이 카드 폭을 다 쓰는 편이 낫다고 결론냈다(`components/home/feed-card.tsx`).
+   * 값 자체는 계약대로 남겨 둔다 — 화면이 안 쓸 뿐 응답에는 실제로 있는 필드다.
    */
   coverImage: ReportCoverImageVM | null;
 };
@@ -273,6 +271,15 @@ export type PublicFeedCardResponse = {
    * 화면에 태그를 표시하지는 않는다 — 추천 후보 판정(관심사 일치)에만 쓴다.
    */
   tags?: string[] | null;
+  /**
+   * 카드 본문(리포트)의 대표 이미지 — service-api `PublicCardResponse.coverImage`(2026-08-12 추가).
+   * 내 피드 `CardResponse.coverImage` 와 **같은 값·같은 모양**이다(같은 report 의 cover_image_* 컬럼).
+   *
+   * 리포트가 없는(즉시) 카드나 대표 이미지를 못 고른 리포트는 `null` 이다. 이 필드가 없는
+   * 배포본에서도 화면이 깨지지 않게 optional 로 두고(태그·scrapped 와 같은 규율), 값 판별은
+   * 어댑터(`toReportCoverImage`)가 한다 — 없으면 카드는 기존 텍스트형 그대로다.
+   */
+  coverImage?: ReportCoverImage | null;
   /** 객체는 항상 존재. 단 publicId·username·displayName 이 동시에 null 일 수 있다. */
   author: CardAuthor;
   /** 카드 전체 좋아요 수(조회자 무관). primitive long → null 없음. */
@@ -352,6 +359,19 @@ export type PublicFeedCardVM = {
   title: string;
   summary: string;
   author: PublicFeedAuthorVM;
+  /**
+   * 카드 본문(리포트)의 대표 이미지 — 있으면 본문 아래 미디어 영역으로 크게 렌더한다
+   * (`components/home/public-feed-card.tsx`). 없으면 `null` 이고 카드는 기존 텍스트형 그대로다
+   * — 자리표시자·회색 박스를 만들지 않는다.
+   *
+   * 어댑터가 `toReportCoverImage` 로 URL 안전성(http/https·사설망 차단)까지 검증하므로,
+   * 여기 값이 있다는 것은 "렌더해도 되는 원격 이미지"라는 뜻이다. 그래도 원격 이미지는 403·404 로
+   * 죽을 수 있어(`thumb.mt.co.kr`·`img.etnews.com` 실측) 로드 실패는 화면이 따로 처리한다.
+   *
+   * **서버가 주는 이미지는 카드당 1장이다.** `cover_image_*` 컬럼 한 벌이 전부이고 첨부 이미지
+   * 배열 같은 계약은 없다 — 여러 장 배치(콜라주)를 만들 데이터가 없다.
+   */
+  coverImage: ReportCoverImageVM | null;
   /**
    * 좋아요 값 — 검증을 통과했을 때만 채워진다. null 이면 화면이 **좋아요 영역 자체를 렌더하지
    * 않는다**(이번 범위에서는 읽기 전용 표시이고, 토글은 카드 상세에만 연결돼 있다).
