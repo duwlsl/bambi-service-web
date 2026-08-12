@@ -123,7 +123,7 @@ export function ReportSettings({ settings: s }: { settings: ReturnType<typeof us
           {settings.changeHistoryEnabled !== undefined && (
             <SettingsRow
               label="변경사항 비교로 보기"
-              description="보고서를 즉시 생성할 때, 지난 보고서 이후 새로 생기거나 달라진 내용을 중심으로 정리해 드려요. 주제를 처음 받는 경우에는 전체 내용으로 만들어져요."
+              description="이 설정을 켜면 아침 보고서와 관심사 보고서를 포함해 앞으로 생성되는 보고서를, 지난 보고서 이후 새로 생기거나 달라진 내용 중심으로 정리해 드려요. 주제를 처음 받는 경우에는 전체 내용으로 만들어져요."
               status={
                 <RowStatus
                   field="changeHistoryEnabled"
