@@ -13,7 +13,7 @@ import type { ReportType } from "@/types/report";
  */
 const REPORT_TYPE_LABEL: Record<ReportType, string> = {
   MORNING_BRIEFING: "아침 브리핑",
-  ON_DEMAND: "온디맨드",
+  ON_DEMAND: "수동 생성",
   // API 식별값은 ONBOARDING 이지만 사용자에게는 "첫 리포트"로만 보인다(원문 노출 금지).
   ONBOARDING: "첫 리포트",
   WIKI_INTEREST: "Wiki 관심사",

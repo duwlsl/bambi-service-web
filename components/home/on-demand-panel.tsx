@@ -34,10 +34,10 @@ export function OnDemandPanel({
 }) {
   return (
     <section
-      aria-label="온디맨드 보고서 만들기"
+      aria-label="수동 보고서 생성"
       className={`rounded-[14px] border border-border bg-card px-4 py-[15px] ${className ?? ""}`}
     >
-      <h2 className="text-[13px] font-bold text-foreground">온디맨드 보고서 만들기</h2>
+      <h2 className="text-[13px] font-bold text-foreground">수동 보고서 생성</h2>
       <p className="mt-1 text-[12px] leading-[1.6] text-muted-foreground">
         내 관심사 하나를 골라 바로 보고서를 요청하세요.
       </p>
