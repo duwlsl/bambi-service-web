@@ -1,7 +1,7 @@
 "use client";
 
 import { Orb } from "@/components/brand/orb";
-import { getPreparingReportTitle } from "@/lib/report-pending";
+import { formatPendingCreatedAt, getPreparingReportTitle } from "@/lib/report-pending";
 import type { MyReport, TrackableReportType } from "@/types/report";
 
 /**
@@ -19,7 +19,12 @@ export function PreparingReports({ reports }: { reports: MyReport[] }) {
   return (
     <section aria-label="생성 중인 보고서" aria-live="polite" className="mb-4 flex flex-col gap-2.5">
       {reports.map((report) => (
-        <PreparingSlot key={report.id} title={report.title} reportType={report.reportType} />
+        <PreparingSlot
+          key={report.id}
+          title={report.title}
+          reportType={report.reportType}
+          createdAt={report.createdAt}
+        />
       ))}
     </section>
   );
@@ -39,7 +44,18 @@ const PREPARING_DESCRIPTION = "완료되면 내 보고서에 바로 표시돼요
  * 앞에 붙여 무엇을·지금 상태를 한눈에 같이 읽게 하고, 완료 후 어디서 보이는지는 하단 별도 행으로
  * 뺀다. 색·애니메이션·카드 골격은 그대로 유지한다.
  */
-function PreparingSlot({ title, reportType }: { title: string; reportType: TrackableReportType }) {
+function PreparingSlot({
+  title,
+  reportType,
+  createdAt,
+}: {
+  title: string;
+  reportType: TrackableReportType;
+  /** 서버 접수 시각(ISO). 없거나 파싱 실패면 아래에서 빈 문자열이 되어 줄 자체를 그리지 않는다. */
+  createdAt?: string;
+}) {
+  const createdAtLabel = formatPendingCreatedAt(createdAt);
+
   return (
     <article className="rounded-[14px] border border-border bg-card px-[18px] py-4">
       <div className="flex items-start gap-3">
@@ -55,7 +71,22 @@ function PreparingSlot({ title, reportType }: { title: string; reportType: Track
               {getPreparingReportTitle(title, reportType)}
             </p>
           </div>
-          <p className="mt-1.5 text-[12px] text-muted-foreground">{PREPARING_DESCRIPTION}</p>
+          {/*
+            안내 문구와 생성 시각을 한 줄에 둔다 — 둘 다 보조 정보라 위계를 새로 만들지 않고
+            기존 12px muted 텍스트를 그대로 쓴다(제목·배지·Orb 위계 불변).
+
+            좁은 폭(390px)에서는 flex-wrap 으로 두 줄이 된다. 구분점을 시각 span 안에 함께 넣어
+            줄이 바뀔 때 점만 앞줄 끝에 남지 않게 하고, 시각은 whitespace-nowrap 으로 통째로 넘긴다.
+            생성 시각이 없으면 span 자체를 렌더하지 않으므로 점도 함께 사라진다.
+          */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] text-muted-foreground">
+            <span>{PREPARING_DESCRIPTION}</span>
+            {createdAtLabel !== "" && (
+              <span className="whitespace-nowrap">
+                <span aria-hidden="true">·</span> {createdAtLabel}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </article>
