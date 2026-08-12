@@ -14,7 +14,7 @@ import { StateView } from "@/components/ui/state-view";
 import { CardComments } from "@/components/report/card-comments";
 import { CardLikeButton } from "@/components/report/card-like-button";
 import { CardScrapButton } from "@/components/report/card-scrap-button";
-import { CardShareModal } from "@/components/report/card-share-modal";
+import { CardVisibilityToggle } from "@/components/report/card-visibility-toggle";
 import { ReportTypeBadge } from "@/components/report/report-type-badge";
 import { CopyToast } from "@/components/ui/copy-toast";
 import { useCardDetail } from "@/hooks/use-card-detail";
@@ -101,7 +101,8 @@ export function CardDetailScreen({
  * 상단 HomeNav 는 자체적으로 useAuth 로 분기하므로 별도 prop 이 필요 없다.
  *
  * **공개 범위·공유는 이 화면이 담당한다**(목록 카드에는 읽기 전용 배지만 둔다):
- * - 소유자: readbar `공유` → CardShareModal 에서 공개/비공개 전환과 링크 복사
+ * - 소유자: readbar 의 공개/비공개 토글(`CardVisibilityToggle`) — 공개 전환만 확인 다이얼로그를
+ *   거친다. 공개 상태면 `링크 복사`가 함께 뜬다(비공개 링크는 남이 못 열어 의미가 없다).
  * - 비소유자·게스트: PUBLIC 상세에서 링크 복사만 (여기 도달하는 남의 카드는 PUBLIC 뿐 —
  *   남의 PRIVATE 는 서버가 404 로 감춰 DetailNotFound 로 간다)
  * 전환이 성공하면 같은 화면에서 좋아요·댓글 노출 조건이 곧바로 다시 평가된다(재요청·이동 없음).
@@ -118,7 +119,6 @@ function CardDetailView({
   viewerPublicId: string | null;
 }) {
   const [amOpen, setAmOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
   /*
     공개 범위 변경 결과 — PATCH 성공 응답의 `visibility` **한 필드만** 서버 카드 위에 얹는다.
     응답 전체로 교체하지 않는 이유: PATCH 응답은 목록용 변환 경로라 author·likeCount·liked 가
@@ -247,13 +247,19 @@ function CardDetailView({
                 링크의 mr-auto 가 우측 액션을 민다(우측 액션은 shrink-0 부가 요소).
               */}
               {owner && !morningBriefingPrivate ? (
-                <button
-                  type="button"
-                  onClick={() => setShareOpen(true)}
-                  className="focus-ring inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-transparent px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink-mid hover:bg-background"
-                >
-                  ↗ 공유
-                </button>
+                <>
+                  {/*
+                    링크 복사는 **공개 상태일 때만** 둔다. 비공개 링크는 남이 열 수 없어
+                    복사해도 줄 곳이 없다(모달 시절 `링크 복사`를 PRIVATE 에서 빼둔 것과 같은 이유).
+                  */}
+                  {isPublic && <CopyLinkButton publicId={shown.publicId} />}
+                  <CardVisibilityToggle
+                    publicId={shown.publicId}
+                    reportType={shown.reportType}
+                    visibility={visibility}
+                    onChanged={applyVisibility}
+                  />
+                </>
               ) : (
                 isPublic && <CopyLinkButton publicId={shown.publicId} />
               )}
@@ -365,22 +371,6 @@ function CardDetailView({
       </div>
 
       <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} />
-      {/* 열릴 때만 mount 해 이전 pending·오류 상태가 다시 열 때 남지 않게 한다. */}
-      {shareOpen && (
-        <CardShareModal
-          onClose={() => setShareOpen(false)}
-          publicId={shown.publicId}
-          title={vm.title}
-          visibility={visibility}
-          /*
-            아침 브리핑 공개 전환 차단의 판정 입력. 서버 응답의 원본값(`shown.reportType`)을
-            그대로 넘긴다 — 어댑터가 좁힌 `vm.reportType` 도 같은 값이지만, 판정은
-            lib/report-type.ts 한 곳에서만 하도록 원본을 넘겨 경로를 하나로 유지한다.
-          */
-          reportType={shown.reportType}
-          onVisibilityChanged={applyVisibility}
-        />
-      )}
     </div>
   );
 }
