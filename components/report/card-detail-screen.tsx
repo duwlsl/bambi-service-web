@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/use-auth";
@@ -74,26 +74,90 @@ export function CardDetailScreen({
 }) {
   const { status, user, refreshAuth } = useAuth();
   const detail = useCardDetail(publicId);
+  /*
+    관심 자료 추가 모달 열림 상태 — **화면 최상위**에 둔다. 예전에는 CardDetailView 안에 있었지만,
+    그러면 HomeNav 도 그 안에서 렌더돼야 해서 상태 전환마다 헤더가 통째로 다시 mount 됐다
+    (아래 DetailShell 주석 참조). 여는 콜백은 지금도 **상세가 뜬 뒤에만** 연결한다(기존 동작 유지) —
+    로딩·오류·notFound 에서는 HomeNav 의 ＋관심자료가 예전처럼 아무 일도 하지 않는다.
+  */
+  const [amOpen, setAmOpen] = useState(false);
+  const openAddMaterial = useCallback(() => setAmOpen(true), []);
+  const closeAddMaterial = useCallback(() => setAmOpen(false), []);
 
   // 1) 인증(복구) 상태 — 확정 전엔 데이터 화면을 내보내지 않는다.
-  if (status === "loading") return <DetailSkeleton />;
-  if (status === "error") return <DetailAuthError onRetry={refreshAuth} />;
+  if (status === "loading") return <DetailShell>{DETAIL_SKELETON_BODY}</DetailShell>;
+  if (status === "error")
+    return (
+      <DetailShell>
+        <DetailAuthErrorBody onRetry={refreshAuth} />
+      </DetailShell>
+    );
 
   // 2) 데이터 상태 — 인증 확정(guest·authenticated) 후에 평가한다.
   //    guest 도 여기까지 온다: PUBLIC 이면 상세가 뜨고, 아니면 API 404 → DetailNotFound.
-  if (detail.status === "loading") return <DetailSkeleton />;
+  if (detail.status === "loading") return <DetailShell>{DETAIL_SKELETON_BODY}</DetailShell>;
   if (detail.status === "error")
-    return <DetailDataError onRetry={detail.refetch} errorCode={detail.errorCode} />;
-  if (detail.status === "notFound") return <DetailNotFound />;
+    return (
+      <DetailShell>
+        <DetailDataErrorBody onRetry={detail.refetch} errorCode={detail.errorCode} />
+      </DetailShell>
+    );
+  if (detail.status === "notFound")
+    return (
+      <DetailShell className="flex min-h-[100dvh] flex-col bg-background">
+        <DetailNotFoundBody />
+      </DetailShell>
+    );
   return (
-    <CardDetailView
-      card={detail.card}
-      guest={status === "guest"}
-      origin={origin}
-      // 소유자 판정의 좌변. guest·error·loading 에서는 user 가 null 이라 자연히 비소유자가 된다.
-      // publicId 는 백엔드 UserSummary 확장(#24) 이후 값이라 optional — 없으면 판정이 false 다.
-      viewerPublicId={user?.publicId ?? null}
-    />
+    <DetailShell onAddOpen={openAddMaterial}>
+      <CardDetailView
+        card={detail.card}
+        guest={status === "guest"}
+        origin={origin}
+        // 소유자 판정의 좌변. guest·error·loading 에서는 user 가 null 이라 자연히 비소유자가 된다.
+        // publicId 는 백엔드 UserSummary 확장(#24) 이후 값이라 optional — 없으면 판정이 false 다.
+        viewerPublicId={user?.publicId ?? null}
+      />
+      <AddMaterialModal open={amOpen} onClose={closeAddMaterial} />
+    </DetailShell>
+  );
+}
+
+/** ＋관심자료가 아직 연결되지 않은 상태에서 쓰는 고정 no-op — 매 렌더 새 함수를 만들지 않는다. */
+const NOOP = () => {};
+
+/**
+ * 상세 화면의 공통 껍데기 — **헤더(HomeNav)를 트리에서 한 자리에 고정한다.**
+ *
+ * 이 컴포넌트가 있는 이유는 레이아웃 정리가 아니라 **중복 요청 제거**다(2026-08-13, 여진).
+ * 예전에는 상태별 갈래(DetailSkeleton · DetailDataError · CardDetailView …)가 각자 자기 안에서
+ * HomeNav 를 렌더했다. React 는 같은 자리의 **엘리먼트 타입이 바뀌면** 그 하위 트리를 통째로
+ * unmount 후 다시 mount 하므로, 카드 응답이 도착해 `DetailSkeleton → CardDetailView` 로 갈리는
+ * 순간 헤더도 같이 다시 mount 됐다. 헤더 안에는 알림 드롭다운(useNotifications)이 있어
+ * **화면 진입 한 번에 `GET /api/notifications` 가 2회** 나갔고(로컬 production build 실측:
+ * 진입 직후 1회 + 카드 응답 직후 1회), 30초 polling 타이머도 함께 리셋됐다.
+ *
+ * 이제 모든 갈래가 이 껍데기를 루트로 반환한다 → 자리와 타입이 그대로라 HomeNav 는 mount 를
+ * 유지하고, 바뀌는 건 `children` 뿐이다. 요청을 캐시하거나 공유하지 않는다 — 애초에 두 번째
+ * mount 가 일어나지 않게 한 것이다(정상 polling·재시도·인증 전환 동작은 그대로).
+ *
+ * `className` 은 갈래마다 달랐던 바깥 wrapper 를 그대로 옮긴 값이다(기본값 = 기존 다수 갈래).
+ * DOM 구조·클래스는 이전과 동일하다.
+ */
+function DetailShell({
+  className = "min-h-screen bg-background",
+  onAddOpen = NOOP,
+  children,
+}: {
+  className?: string;
+  onAddOpen?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <HomeNav onAddOpen={onAddOpen} />
+      {children}
+    </div>
   );
 }
 
@@ -121,7 +185,6 @@ function CardDetailView({
   origin: ReportOrigin;
   viewerPublicId: string | null;
 }) {
-  const [amOpen, setAmOpen] = useState(false);
   /*
     공개 범위 변경 결과 — PATCH 성공 응답의 `visibility` **한 필드만** 서버 카드 위에 얹는다.
     응답 전체로 교체하지 않는 이유: PATCH 응답은 목록용 변환 경로라 author·likeCount·liked 가
@@ -180,202 +243,197 @@ function CardDetailView({
   const morningBriefingPrivate = isMorningBriefing(shown.reportType) && !isPublic;
 
   return (
-    <div className="min-h-screen bg-background">
-      <HomeNav onAddOpen={() => setAmOpen(true)} />
-      <div className="mx-auto max-w-[1440px]">
-        <div className="flex items-start justify-center gap-[22px] px-5 pt-6 pb-14">
-          {/* 개인 foot 데이터가 없어 footLines 는 비운다(임의 생성 금지). */}
-          <SideLeft footLines={[]} guest={guest} />
+    <div className="mx-auto max-w-[1440px]">
+      <div className="flex items-start justify-center gap-[22px] px-5 pt-6 pb-14">
+        {/* 개인 foot 데이터가 없어 footLines 는 비운다(임의 생성 금지). */}
+        <SideLeft footLines={[]} guest={guest} />
 
-          <main className="min-w-0 max-w-[760px] flex-1">
+        <main className="min-w-0 max-w-[760px] flex-1">
+          {/*
+            .readbar — 좌측 뒤로가기 + 우측 액션(보관·공유). MD 내려받기는 실 카드 미지원 → 두지 않음.
+
+            목업(report-detail.html)의 readbar 는 padding 9px 12px 이고, **두께는 내부
+            `.btn`(height:32px)이 만든다** → 좌측 링크와 우측 버튼 모두 32px 높이를 줘 목업과
+            같은 두께(32 + 9·2 + 보더 2 = 52px)를 유지한다. sticky·border·bg-card·rounded·
+            shadow·focus-ring 은 기존 그대로이고 새 강조색을 만들지 않는다.
+
+            클릭 영역은 `←` + 문구가 실제로 차지하는 만큼이다. 예전에는 링크가 flex-1 로 남은
+            가로 공간까지 차지해 바의 빈 자리를 눌러도 돌아갔는데, 누른 줄도 모르고 화면이
+            바뀌는 오작동이라 걷어냈다. 지금은 inline-flex + w-fit 으로 콘텐츠 폭만 쓰고 우측
+            액션은 링크의 mr-auto 가 민다 — hover·focus·pointer 도 링크 영역에만 걸린다.
+
+            문구·목적지는 진입 출처 하나에서 같이 나온다(`reportBackTarget`) — 둘이 어긋날 수
+            없다. `←` 는 장식이라 aria-hidden 이고, 링크의 접근 가능한 이름 = 화면 문구다.
+          */}
+          <div className="sticky top-4 z-20 mb-4 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-[9px] shadow-[var(--shadow)]">
+            <Link
+              href={back.href}
+              className="focus-ring mr-auto inline-flex min-h-8 w-fit items-center gap-2 rounded-lg text-[13.5px] font-semibold whitespace-nowrap text-ink-mid hover:text-signal-ink"
+            >
+              <span aria-hidden="true" className="text-muted-foreground">
+                ←
+              </span>
+              {back.label}
+            </Link>
             {/*
-              .readbar — 좌측 뒤로가기 + 우측 액션(보관·공유). MD 내려받기는 실 카드 미지원 → 두지 않음.
+              보관 — readbar 의 공유 왼쪽. `PUBLIC 이거나 내 카드` + `scrapped` 검증 통과일 때 렌더한다.
 
-              목업(report-detail.html)의 readbar 는 padding 9px 12px 이고, **두께는 내부
-              `.btn`(height:32px)이 만든다** → 좌측 링크와 우측 버튼 모두 32px 높이를 줘 목업과
-              같은 두께(32 + 9·2 + 보더 2 = 52px)를 유지한다. sticky·border·bg-card·rounded·
-              shadow·focus-ring 은 기존 그대로이고 새 강조색을 만들지 않는다.
+              `|| owner` 가 붙은 이유(2026-08-12, service-api #85): 서버가 **본인 소유 PRIVATE 의
+              스크랩 생성·해제를 허용**하고 `GET /api/scraps` 에도 포함해 내려준다. 그전까지는
+              스크랩 대상이 PUBLIC 뿐이라 `isPublic` 하나로 막아 뒀는데, 그 조건이 그대로 남아
+              내 비공개 보고서만 담기 버튼이 사라져 있었다(서버는 되는데 화면이 막던 자리).
 
-              클릭 영역은 `←` + 문구가 실제로 차지하는 만큼이다. 예전에는 링크가 flex-1 로 남은
-              가로 공간까지 차지해 바의 빈 자리를 눌러도 돌아갔는데, 누른 줄도 모르고 화면이
-              바뀌는 오작동이라 걷어냈다. 지금은 inline-flex + w-fit 으로 콘텐츠 폭만 쓰고 우측
-              액션은 링크의 mr-auto 가 민다 — hover·focus·pointer 도 링크 영역에만 걸린다.
+              **남의 PRIVATE 는 이 조건으로도 열리지 않는다**: `isPublic` 이 false 이고 `owner` 는
+              `isCardOwner`(양쪽 publicId 의 UUID 일치)가 false 라 둘 다 걸리지 않는다. 애초에
+              서버가 남의 PRIVATE 를 404 로 감춰 이 화면까지 오지도 않는다(DetailNotFound).
+              author 가 없는 응답에서도 `isCardOwner` 는 false 라 안전한 쪽으로 닫힌다.
 
-              문구·목적지는 진입 출처 하나에서 같이 나온다(`reportBackTarget`) — 둘이 어긋날 수
-              없다. `←` 는 장식이라 aria-hidden 이고, 링크의 접근 가능한 이름 = 화면 문구다.
+              좋아요(카드 article 하단)와 같은 줄에 두지 않은 이유: 두 액션의 노출 조건이 서로
+              달라(`social !== null` vs `scrapped !== null`) 한 줄로 묶으면 한쪽이 없을 때 빈
+              구분선만 남는다. readbar 는 이미 `공유` 를 담은 액션 자리이고 스크롤과 무관하게
+              고정돼 있어, 상세 레이아웃을 건드리지 않고 들어갈 수 있는 가장 자연스러운 위치다.
             */}
-            <div className="sticky top-4 z-20 mb-4 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-[9px] shadow-[var(--shadow)]">
-              <Link
-                href={back.href}
-                className="focus-ring mr-auto inline-flex min-h-8 w-fit items-center gap-2 rounded-lg text-[13.5px] font-semibold whitespace-nowrap text-ink-mid hover:text-signal-ink"
-              >
-                <span aria-hidden="true" className="text-muted-foreground">
-                  ←
-                </span>
-                {back.label}
-              </Link>
-              {/*
-                보관 — readbar 의 공유 왼쪽. `PUBLIC 이거나 내 카드` + `scrapped` 검증 통과일 때 렌더한다.
+            {(isPublic || owner) && scrapped !== null && (
+              <CardScrapButton
+                publicId={shown.publicId}
+                initialScrapped={scrapped}
+                variant="bar"
+              />
+            )}
+            {/*
+              공유 — 권한과 상태에 따라 할 수 있는 일이 다르다.
+              - 소유자: 공개 범위 설명·변경과 링크 복사를 담은 모달을 연다.
+                단 PRIVATE 아침 브리핑은 제외 — 모달에 남는 액션이 없다(위 주석 참조).
+              - 비소유자·게스트(PUBLIC 만 여기 도달): 링크 복사만. 공개 범위 변경 UI 도,
+                공개/비공개 문구도 노출하지 않는다(권한 없는 기능을 보여주지 않는다).
 
-                `|| owner` 가 붙은 이유(2026-08-12, service-api #85): 서버가 **본인 소유 PRIVATE 의
-                스크랩 생성·해제를 허용**하고 `GET /api/scraps` 에도 포함해 내려준다. 그전까지는
-                스크랩 대상이 PUBLIC 뿐이라 `isPublic` 하나로 막아 뒀는데, 그 조건이 그대로 남아
-                내 비공개 보고서만 담기 버튼이 사라져 있었다(서버는 되는데 화면이 막던 자리).
-
-                **남의 PRIVATE 는 이 조건으로도 열리지 않는다**: `isPublic` 이 false 이고 `owner` 는
-                `isCardOwner`(양쪽 publicId 의 UUID 일치)가 false 라 둘 다 걸리지 않는다. 애초에
-                서버가 남의 PRIVATE 를 404 로 감춰 이 화면까지 오지도 않는다(DetailNotFound).
-                author 가 없는 응답에서도 `isCardOwner` 는 false 라 안전한 쪽으로 닫힌다.
-
-                좋아요(카드 article 하단)와 같은 줄에 두지 않은 이유: 두 액션의 노출 조건이 서로
-                달라(`social !== null` vs `scrapped !== null`) 한 줄로 묶으면 한쪽이 없을 때 빈
-                구분선만 남는다. readbar 는 이미 `공유` 를 담은 액션 자리이고 스크롤과 무관하게
-                고정돼 있어, 상세 레이아웃을 건드리지 않고 들어갈 수 있는 가장 자연스러운 위치다.
-              */}
-              {(isPublic || owner) && scrapped !== null && (
-                <CardScrapButton
+              버튼이 빠져도 바 높이·정렬은 그대로다 — 두께는 좌측 링크의 min-h-8 이 만들고
+              링크의 mr-auto 가 우측 액션을 민다(우측 액션은 shrink-0 부가 요소).
+            */}
+            {owner && !morningBriefingPrivate ? (
+              <>
+                {/*
+                  링크 복사는 **공개 상태일 때만** 둔다. 비공개 링크는 남이 열 수 없어
+                  복사해도 줄 곳이 없다(모달 시절 `링크 복사`를 PRIVATE 에서 빼둔 것과 같은 이유).
+                */}
+                {isPublic && <CopyLinkButton publicId={shown.publicId} />}
+                <CardVisibilityToggle
                   publicId={shown.publicId}
-                  initialScrapped={scrapped}
-                  variant="bar"
+                  reportType={shown.reportType}
+                  visibility={visibility}
+                  onChanged={applyVisibility}
                 />
-              )}
-              {/*
-                공유 — 권한과 상태에 따라 할 수 있는 일이 다르다.
-                - 소유자: 공개 범위 설명·변경과 링크 복사를 담은 모달을 연다.
-                  단 PRIVATE 아침 브리핑은 제외 — 모달에 남는 액션이 없다(위 주석 참조).
-                - 비소유자·게스트(PUBLIC 만 여기 도달): 링크 복사만. 공개 범위 변경 UI 도,
-                  공개/비공개 문구도 노출하지 않는다(권한 없는 기능을 보여주지 않는다).
+              </>
+            ) : (
+              isPublic && <CopyLinkButton publicId={shown.publicId} />
+            )}
+          </div>
 
-                버튼이 빠져도 바 높이·정렬은 그대로다 — 두께는 좌측 링크의 min-h-8 이 만들고
-                링크의 mr-auto 가 우측 액션을 민다(우측 액션은 shrink-0 부가 요소).
-              */}
-              {owner && !morningBriefingPrivate ? (
-                <>
-                  {/*
-                    링크 복사는 **공개 상태일 때만** 둔다. 비공개 링크는 남이 열 수 없어
-                    복사해도 줄 곳이 없다(모달 시절 `링크 복사`를 PRIVATE 에서 빼둔 것과 같은 이유).
-                  */}
-                  {isPublic && <CopyLinkButton publicId={shown.publicId} />}
-                  <CardVisibilityToggle
-                    publicId={shown.publicId}
-                    reportType={shown.reportType}
-                    visibility={visibility}
-                    onChanged={applyVisibility}
-                  />
-                </>
-              ) : (
-                isPublic && <CopyLinkButton publicId={shown.publicId} />
-              )}
-            </div>
-
-            {/* .dcard */}
-            <article className="mb-4 rounded-2xl border border-border bg-card px-5 py-6 sm:px-[30px] sm:py-[26px]">
-              <ReportCoverHero coverImage={coverImage} />
-              {/*
-                생성 종류 + 작성 시각 한 줄. 종류 배지는 **내 보고서에만** 의미가 있으므로
-                소유자에게만 렌더한다 — 이 화면은 소유자와 공개 카드 열람자(타인·게스트)가 같은
-                컴포넌트를 공유하는 유일한 자리라, 게이트 없이 두면 남의 카드에 배지가 노출된다.
-                값이 없으면 배지가 스스로 사라지고 기존 날짜 줄만 남는다(레이아웃 동일).
-              */}
-              {(owner || vm.createdAtLabel) && (
-                <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  {owner && <ReportTypeBadge reportType={vm.reportType} />}
-                  {vm.createdAtLabel && <span>{vm.createdAtLabel}</span>}
-                </div>
-              )}
-              <h1 className="mb-3 text-[25px] leading-[1.38] font-bold tracking-[-0.015em] text-foreground">
-                {vm.title}
-              </h1>
-              <p className="text-base leading-[1.66] text-ink-mid">{vm.summary}</p>
-
-              {/* 왜 나에게 왔나 (whyForYou) */}
-              {vm.whyForYou && (
-                <div className="mt-4 flex items-start gap-2 border-t border-border pt-4 text-[13px] leading-[1.6] text-ink-mid">
-                  <span className="mt-[6px] h-[5px] w-[5px] shrink-0 rounded-full bg-primary" />
-                  <span>{vm.whyForYou}</span>
-                </div>
-              )}
-
-              {/* 리포트 본문 — reportId 로 이어지는 2번째 요청의 상태별 렌더(카드 요약 아래). */}
-              <CardReportBody body={body} />
-
-              {/*
-                좋아요 — 본문 아래, 카드 article 최하단. PUBLIC 이고 소셜 값이 검증됐을 때만 렌더한다.
-                PRIVATE 카드는 서버가 좋아요를 404 로 막으므로 버튼 자체를 두지 않는다.
-                작성자 본인 여부는 검사하지 않는다(정책: 본인도 좋아요 가능).
-              */}
-              {isPublic && social !== null && (
-                <CardLikeButton publicId={shown.publicId} social={social} />
-              )}
-            </article>
-
+          {/* .dcard */}
+          <article className="mb-4 rounded-2xl border border-border bg-card px-5 py-6 sm:px-[30px] sm:py-[26px]">
+            <ReportCoverHero coverImage={coverImage} />
             {/*
-              출처 — 어댑터(toCardSources)가 정규화한 출처만 온다: 빈 출처({title:null,url:null} 등)는
-              제외되고, 건수도 정규화 결과 기준이다. 유효 출처가 0건이면 섹션 자체를 렌더하지 않는다.
-              URL 은 http/https 인 경우에만 실제 외부 링크로 나간다(mock 상세의 시각 전용 링크와 다름).
+              생성 종류 + 작성 시각 한 줄. 종류 배지는 **내 보고서에만** 의미가 있으므로
+              소유자에게만 렌더한다 — 이 화면은 소유자와 공개 카드 열람자(타인·게스트)가 같은
+              컴포넌트를 공유하는 유일한 자리라, 게이트 없이 두면 남의 카드에 배지가 노출된다.
+              값이 없으면 배지가 스스로 사라지고 기존 날짜 줄만 남는다(레이아웃 동일).
             */}
-            {vm.sources.length > 0 && (
-              <section className="mb-4 rounded-2xl border border-border bg-card px-6 py-5">
-                <div className="mb-3.5 text-[15px] font-bold text-foreground">
-                  출처{" "}
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {vm.sources.length}건
-                  </span>
-                </div>
-                <ul className="flex flex-col gap-2">
-                  {vm.sources.map((source, i) => (
-                    <li
-                      key={`${vm.publicId}-src-${i}`}
-                      className="flex items-center gap-[11px] rounded-[10px] border border-border bg-card px-3.5 py-[11px]"
-                    >
-                      <span className="w-[22px] shrink-0 text-[11.5px] text-muted-foreground">
-                        [{i + 1}]
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13.5px] font-semibold text-foreground">
-                          {source.label}
-                        </div>
-                        {/* 제목이 없어 URL 이 라벨로 쓰인 출처는 같은 URL 을 두 번 쓰지 않는다. */}
-                        {source.url && source.url !== source.label && (
-                          <div className="mt-px truncate text-[11.5px] text-muted-foreground">
-                            {source.url}
-                          </div>
-                        )}
-                      </div>
-                      {/* hit-24: 12px 한 줄이라 실제 높이가 16px 이었다. 출처 행(약 46px)이 훨씬
-                          높아 24px 로 넓혀도 행 높이·인접 출처(gap 8px)와 겹치지 않는다. */}
-                      {source.url && (
-                        <a
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="focus-ring hit-24 ml-auto shrink-0 rounded-[3px] text-xs font-semibold whitespace-nowrap text-signal-ink hover:underline"
-                        >
-                          원문 열기 ↗
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+            {(owner || vm.createdAtLabel) && (
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {owner && <ReportTypeBadge reportType={vm.reportType} />}
+                {vm.createdAtLabel && <span>{vm.createdAtLabel}</span>}
+              </div>
+            )}
+            <h1 className="mb-3 text-[25px] leading-[1.38] font-bold tracking-[-0.015em] text-foreground">
+              {vm.title}
+            </h1>
+            <p className="text-base leading-[1.66] text-ink-mid">{vm.summary}</p>
+
+            {/* 왜 나에게 왔나 (whyForYou) */}
+            {vm.whyForYou && (
+              <div className="mt-4 flex items-start gap-2 border-t border-border pt-4 text-[13px] leading-[1.6] text-ink-mid">
+                <span className="mt-[6px] h-[5px] w-[5px] shrink-0 rounded-full bg-primary" />
+                <span>{vm.whyForYou}</span>
+              </div>
             )}
 
+            {/* 리포트 본문 — reportId 로 이어지는 2번째 요청의 상태별 렌더(카드 요약 아래). */}
+            <CardReportBody body={body} />
+
             {/*
-              댓글 — 카드 본문 → 출처 → 댓글 순서. **PUBLIC 카드에서만** 렌더한다:
-              서버가 PRIVATE·부재·형식오류를 전부 404 로 막으므로(CommentService.resolvePublicCard)
-              비공개 카드에 섹션을 두면 확실한 404 를 부르게 된다.
-              이 컴포넌트는 카드 상세가 ready 인 뒤에만 mount 되므로 loading/error/notFound 중에는
-              댓글 요청이 나가지 않는다. 경로에는 카드 publicId 만 쓴다(내부 id·reportId 사용 금지).
+              좋아요 — 본문 아래, 카드 article 최하단. PUBLIC 이고 소셜 값이 검증됐을 때만 렌더한다.
+              PRIVATE 카드는 서버가 좋아요를 404 로 막으므로 버튼 자체를 두지 않는다.
+              작성자 본인 여부는 검사하지 않는다(정책: 본인도 좋아요 가능).
             */}
-            {isPublic && <CardComments cardPublicId={shown.publicId} guest={guest} />}
-          </main>
+            {isPublic && social !== null && (
+              <CardLikeButton publicId={shown.publicId} social={social} />
+            )}
+          </article>
 
-          {/* 우측 rail — 실 UUID 상세 전용. 값이 실제로 있는 리포트(ready)에서만 렌더된다. */}
-          <CardReportRail body={body} />
-        </div>
+          {/*
+            출처 — 어댑터(toCardSources)가 정규화한 출처만 온다: 빈 출처({title:null,url:null} 등)는
+            제외되고, 건수도 정규화 결과 기준이다. 유효 출처가 0건이면 섹션 자체를 렌더하지 않는다.
+            URL 은 http/https 인 경우에만 실제 외부 링크로 나간다(mock 상세의 시각 전용 링크와 다름).
+          */}
+          {vm.sources.length > 0 && (
+            <section className="mb-4 rounded-2xl border border-border bg-card px-6 py-5">
+              <div className="mb-3.5 text-[15px] font-bold text-foreground">
+                출처{" "}
+                <span className="text-xs font-medium text-muted-foreground">
+                  {vm.sources.length}건
+                </span>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {vm.sources.map((source, i) => (
+                  <li
+                    key={`${vm.publicId}-src-${i}`}
+                    className="flex items-center gap-[11px] rounded-[10px] border border-border bg-card px-3.5 py-[11px]"
+                  >
+                    <span className="w-[22px] shrink-0 text-[11.5px] text-muted-foreground">
+                      [{i + 1}]
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13.5px] font-semibold text-foreground">
+                        {source.label}
+                      </div>
+                      {/* 제목이 없어 URL 이 라벨로 쓰인 출처는 같은 URL 을 두 번 쓰지 않는다. */}
+                      {source.url && source.url !== source.label && (
+                        <div className="mt-px truncate text-[11.5px] text-muted-foreground">
+                          {source.url}
+                        </div>
+                      )}
+                    </div>
+                    {/* hit-24: 12px 한 줄이라 실제 높이가 16px 이었다. 출처 행(약 46px)이 훨씬
+                        높아 24px 로 넓혀도 행 높이·인접 출처(gap 8px)와 겹치지 않는다. */}
+                    {source.url && (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="focus-ring hit-24 ml-auto shrink-0 rounded-[3px] text-xs font-semibold whitespace-nowrap text-signal-ink hover:underline"
+                      >
+                        원문 열기 ↗
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/*
+            댓글 — 카드 본문 → 출처 → 댓글 순서. **PUBLIC 카드에서만** 렌더한다:
+            서버가 PRIVATE·부재·형식오류를 전부 404 로 막으므로(CommentService.resolvePublicCard)
+            비공개 카드에 섹션을 두면 확실한 404 를 부르게 된다.
+            이 컴포넌트는 카드 상세가 ready 인 뒤에만 mount 되므로 loading/error/notFound 중에는
+            댓글 요청이 나가지 않는다. 경로에는 카드 publicId 만 쓴다(내부 id·reportId 사용 금지).
+          */}
+          {isPublic && <CardComments cardPublicId={shown.publicId} guest={guest} />}
+        </main>
+
+        {/* 우측 rail — 실 UUID 상세 전용. 값이 실제로 있는 리포트(ready)에서만 렌더된다. */}
+        <CardReportRail body={body} />
       </div>
-
-      <AddMaterialModal open={amOpen} onClose={() => setAmOpen(false)} />
     </div>
   );
 }
@@ -563,12 +621,17 @@ function CardReportRail({ body }: { body: ReportBodyState }) {
   );
 }
 
-/** 인증 복원 / 데이터 로딩 공통 스켈레톤 — reader 컬럼만 중립 placeholder. */
-function DetailSkeleton() {
+/**
+ * 인증 복원 / 데이터 로딩 공통 스켈레톤 — reader 컬럼만 중립 placeholder.
+ *
+ * 상수(엘리먼트 값)로 둔 이유: 인증 loading 과 데이터 loading 두 갈래가 **같은 엘리먼트**를
+ * 그대로 재사용해야 그 사이 전환에서 헛된 remount 가 생기지 않는다. 내부 상태·prop 이 없어
+ * 렌더마다 새로 만들 이유도 없다.
+ */
+const DETAIL_SKELETON_BODY = (() => {
   const bar = "rounded-md bg-[var(--skel1)]";
   return (
-    <div className="min-h-screen bg-background">
-      <HomeNav onAddOpen={() => {}} />
+    <>
       <div className="mx-auto max-w-[1440px]">
         <div className="flex items-start justify-center gap-[22px] px-5 pt-6 pb-14">
           <main className="min-w-0 max-w-[760px] flex-1" aria-hidden="true">
@@ -588,29 +651,26 @@ function DetailSkeleton() {
       <span className="sr-only" role="status">
         불러오는 중…
       </span>
-    </div>
+    </>
   );
-}
+})();
 
 /** 인증 복원 오류(500·네트워크) — 재시도. */
-function DetailAuthError({ onRetry }: { onRetry: () => void }) {
+function DetailAuthErrorBody({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="min-h-screen bg-background">
-      <HomeNav onAddOpen={() => {}} />
-      <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
-        <StateView
-          role="alert"
-          className="w-[420px] max-w-full"
-          iconTone="brand"
-          icon={<Orb size={22} />}
-          title="인증 상태를 확인하지 못했어요"
-          description="네트워크나 서버 상태를 확인한 뒤 다시 시도해 주세요."
-          actions={[
-            { label: "다시 시도", onClick: onRetry, variant: "primary" },
-            { label: "홈으로", href: "/", variant: "ghost" },
-          ]}
-        />
-      </div>
+    <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
+      <StateView
+        role="alert"
+        className="w-[420px] max-w-full"
+        iconTone="brand"
+        icon={<Orb size={22} />}
+        title="인증 상태를 확인하지 못했어요"
+        description="네트워크나 서버 상태를 확인한 뒤 다시 시도해 주세요."
+        actions={[
+          { label: "다시 시도", onClick: onRetry, variant: "primary" },
+          { label: "홈으로", href: "/", variant: "ghost" },
+        ]}
+      />
     </div>
   );
 }
@@ -619,25 +679,22 @@ function DetailAuthError({ onRetry }: { onRetry: () => void }) {
  * 카드 데이터 로드 실패(error) — 재시도(refetch).
  * 원인이 특정되는 코드(권한·AI 장애)면 StateView 가 설명을 공통 문구로 바꾼다. 제목·액션은 그대로다.
  */
-function DetailDataError({ onRetry, errorCode }: { onRetry: () => void; errorCode?: ErrorCode }) {
+function DetailDataErrorBody({ onRetry, errorCode }: { onRetry: () => void; errorCode?: ErrorCode }) {
   return (
-    <div className="min-h-screen bg-background">
-      <HomeNav onAddOpen={() => {}} />
-      <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
-        <StateView
-          role="alert"
-          className="w-[440px] max-w-full"
-          icon={<IconAlert />}
-          title="카드를 불러오지 못했어요"
-          description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
-          errorCode={errorCode}
-          actions={[
-            { label: "다시 시도", onClick: onRetry, variant: "primary" },
-            // 홈 `/` 의 기본 탭은 [내 보고서]라 문구대로 피드에 닿으려면 탭을 명시해야 한다.
-            { label: "홈 피드로", href: homeTabHref("feed"), variant: "ghost" },
-          ]}
-        />
-      </div>
+    <div className="mx-auto flex max-w-[1440px] items-center justify-center px-5 py-24">
+      <StateView
+        role="alert"
+        className="w-[440px] max-w-full"
+        icon={<IconAlert />}
+        title="카드를 불러오지 못했어요"
+        description="일시적인 문제일 수 있어요. 잠시 후 다시 시도해 주세요."
+        errorCode={errorCode}
+        actions={[
+          { label: "다시 시도", onClick: onRetry, variant: "primary" },
+          // 홈 `/` 의 기본 탭은 [내 보고서]라 문구대로 피드에 닿으려면 탭을 명시해야 한다.
+          { label: "홈 피드로", href: homeTabHref("feed"), variant: "ghost" },
+        ]}
+      />
     </div>
   );
 }
@@ -648,22 +705,19 @@ function DetailDataError({ onRetry, errorCode }: { onRetry: () => void; errorCod
  * 백엔드가 비공개를 403 이 아닌 404 로 감추므로(존재 노출 없음) guest·member 모두 같은 화면을 본다 —
  * "로그인하면 볼 수 있다"고 안내하지 않는다(사실이 아닐 수 있고, 카드 존재를 알려주게 된다).
  */
-function DetailNotFound() {
+function DetailNotFoundBody() {
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-background">
-      <HomeNav onAddOpen={() => {}} />
-      <PageState
-        icon={<IconSearch />}
-        title="카드를 찾을 수 없어요"
-        description={
-          <>
-            이미 삭제됐거나 접근할 수 없는 카드예요.
-            <br />
-            홈 피드에서 다시 확인해 주세요.
-          </>
-        }
-        actions={[{ label: "홈 피드로", href: homeTabHref("feed"), variant: "primary" }]}
-      />
-    </div>
+    <PageState
+      icon={<IconSearch />}
+      title="카드를 찾을 수 없어요"
+      description={
+        <>
+          이미 삭제됐거나 접근할 수 없는 카드예요.
+          <br />
+          홈 피드에서 다시 확인해 주세요.
+        </>
+      }
+      actions={[{ label: "홈 피드로", href: homeTabHref("feed"), variant: "primary" }]}
+    />
   );
 }
