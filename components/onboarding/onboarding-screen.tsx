@@ -18,7 +18,6 @@ import { useOnboardingInterests } from "@/hooks/use-onboarding-interests";
 import { ApiError } from "@/lib/api-client";
 import { replaceUserInterests } from "@/lib/repositories/interests";
 import { completeOnboarding } from "@/lib/repositories/onboarding";
-import clipperInstallImage from "@/public/onboarding/clipper-install.png";
 import type { InterestDto, InterestTaxonomyDto } from "@/types/interest";
 
 /**
@@ -211,10 +210,14 @@ function OnboardingFlow({
                 밤새비서 클리퍼를 설치하면 웹에서 발견한 자료를 클릭 한 번으로 저장할 수 있어요.
               </p>
               {/*
-                설치 후 모습 — 무엇인지 읽은 다음 실제 화면을 본다. static import 라 Next 가 원본
-                비율(width·height)을 그대로 심어 레이아웃 이동 없이 h-auto 로 축소된다.
+                설치 후 모습 — 무엇인지 읽은 다음 실제 화면을 본다. width·height 는 원본 픽셀값
+                그대로라 레이아웃 이동 없이 h-auto 로 비율을 지키며 축소된다.
                 테두리·배경·그림자를 두지 않는다 — 흰 스크린샷이 본문 위에 얹힌 별도 카드처럼
                 읽히면 안 되고, 온보딩의 다른 단계에도 그런 박스는 없다.
+
+                public 경로를 직접 가리킨다(정적 import 아님). 정적 import 는 *.png 모듈 타입이
+                필요한데 그 선언은 next-env.d.ts 에 있고 그 파일은 gitignore 라, build 앞에서
+                도는 CI 의 `tsc --noEmit` 이 TS2307 로 떨어진다.
 
                 unoptimized: 최적화 경로(/_next/image)를 태우면 브라우저가 srcset 후보를 하나도
                 고르지 못해 요청조차 하지 않고 빈 자리만 남았다(currentSrc 빈 값 · naturalWidth 0).
@@ -222,8 +225,10 @@ function OnboardingFlow({
                 고정 스크린샷 한 장이라 최적화를 포기해도 잃는 게 없다.
               */}
               <Image
-                src={clipperInstallImage}
+                src="/onboarding/clipper-install.png"
                 alt="밤새비서 클리퍼가 Chrome에 설치된 모습"
+                width={3240}
+                height={2115}
                 sizes="(max-width: 640px) 100vw, 600px"
                 unoptimized
                 className="h-auto w-full max-w-[600px]"
