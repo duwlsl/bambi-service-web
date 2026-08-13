@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/use-auth";
@@ -17,6 +18,7 @@ import { useOnboardingInterests } from "@/hooks/use-onboarding-interests";
 import { ApiError } from "@/lib/api-client";
 import { replaceUserInterests } from "@/lib/repositories/interests";
 import { completeOnboarding } from "@/lib/repositories/onboarding";
+import clipperInstallImage from "@/public/onboarding/clipper-install.png";
 import type { InterestDto, InterestTaxonomyDto } from "@/types/interest";
 
 /**
@@ -205,6 +207,18 @@ function OnboardingFlow({
               <h1 className="text-[25px] font-bold tracking-[-0.015em] text-balance text-foreground">
                 관심 있는 자료를 바로 저장해보세요
               </h1>
+              {/*
+                설치 후 모습 — 설명하기 전에 결과부터 보여준다. static import 라 Next 가 원본
+                비율(width·height)을 그대로 심어 레이아웃 이동 없이 h-auto 로 축소된다.
+                테두리·배경·그림자를 두지 않는다 — 흰 스크린샷이 본문 위에 얹힌 별도 카드처럼
+                읽히면 안 되고, 온보딩의 다른 단계에도 그런 박스는 없다.
+              */}
+              <Image
+                src={clipperInstallImage}
+                alt="밤새비서 클리퍼가 Chrome에 설치된 모습"
+                sizes="(max-width: 640px) 100vw, 360px"
+                className="h-auto w-full max-w-[360px]"
+              />
               <p className="text-[14px] leading-[1.7] text-pretty text-muted-foreground">
                 밤새비서 클리퍼를 설치하면 웹에서 발견한 자료를 클릭 한 번으로 저장할 수 있어요.
               </p>
