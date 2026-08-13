@@ -230,7 +230,7 @@ function OnboardingFlow({
               />
 
               {/* .ob-cta — 완료 화면과 같은 가로 배치. 좁은 화면에서는 flex-wrap 으로 접힌다. */}
-              <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+              <div className="mt-8 flex flex-wrap justify-center gap-2.5">
                 {/*
                   .btn.signal — 스토어는 새 탭으로 연다. window.open 대신 앵커라 팝업 차단·
                   가운데 클릭·"새 창에서 열기" 가 모두 브라우저 기본 동작으로 처리된다.
