@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState, type KeyboardEvent, type Ref } from "react";
 import Link from "next/link";
 
 import { useSearchParams } from "next/navigation";
@@ -31,6 +31,16 @@ type HomeTab = "mine" | "rec";
 
 /** HomeView 의 `tab` 최초 진입값과 동일 — 로고 재클릭 시 되돌아갈 기본 탭. */
 const HOME_INITIAL_TAB: HomeTab = "mine";
+
+/**
+ * 홈 탭 목록 — **DOM 순서·패널 순서·방향키 순서의 단일 소스**다.
+ * 세 곳이 각자 순서를 들고 있으면 탭 하나를 추가할 때 조용히 어긋난다(§ tablist 계약).
+ * guest 는 [내 보고서] 가 없으므로 아래에서 렌더되는 탭만 걸러 쓴다.
+ */
+const HOME_TABS: readonly { id: HomeTab; label: string }[] = [
+  { id: "mine", label: "내 보고서" },
+  { id: "rec", label: "피드" },
+];
 
 /**
  * 탭을 URL 쿼리(`?tab=feed`)에 남긴다 (2026-08-11 우석 — "피드 보다 새로고침하면 내 보고서로 돌아온다").
@@ -114,6 +124,30 @@ function HomeView({ isMember }: { isMember: boolean }) {
 
   // 로고 재클릭 시 홈을 최초 진입 상태로 되돌린다 — 현재 구조에서 탭에 종속된 로컬 상태는 tab 뿐이다.
   const resetHome = () => selectTab(HOME_INITIAL_TAB);
+
+  // 실제로 렌더되는 탭만 담는다 — roving tabindex 와 방향키가 "화면에 있는 탭 개수"를 따라가야
+  // guest(피드 1탭)에서 방향키가 없는 탭으로 이동하지 않는다.
+  const tabs = isMember ? HOME_TABS : HOME_TABS.filter((t) => t.id === "rec");
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  /**
+   * tablist 방향키 (WAI-ARIA Tabs) — ArrowLeft/ArrowRight 로 이동하며 **이동과 동시에 활성화**한다
+   * (자동 활성화). 패널 전환이 로컬 상태 + URL 갱신뿐이라 비용이 없어, 이동 후 Enter 로 한 번 더
+   * 확정하게 만들 이유가 없다.
+   *
+   * Enter·Space·마우스 클릭은 button 기본 동작 → onClick(selectTab) 이 그대로 처리한다. 여기서
+   * 가로채지 않으므로 기존 조작·URL 계약(`?tab=feed`)이 그대로다. 탭이 하나뿐인 guest 는
+   * preventDefault 없이 빠져나가 방향키를 브라우저에 돌려준다(스크롤 등 기본 동작 유지).
+   */
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const delta = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+    if (delta === 0 || tabs.length < 2) return;
+    event.preventDefault();
+    const next = (index + delta + tabs.length) % tabs.length;
+    selectTab(tabs[next].id);
+    tabRefs.current[next]?.focus();
+  }
+
   // member [내 보고서] 탭 데이터를 HomeView 가 소유한다 → 저장 성공 시 refetch 를 저장 모달과 공유(§4).
   // guest 는 useMemberFeed / useMyReportJobs 내부 enabled=false 라 API 를 호출하지 않는다.
   const memberFeed = useMemberFeed();
@@ -156,20 +190,34 @@ function HomeView({ isMember }: { isMember: boolean }) {
 
           {/* .feed */}
           <main className="min-w-0 max-w-[760px] flex-1">
+            {/*
+              페이지 제목 — 홈의 첫 heading 이 카드 h3 로 시작하던 문제(heading 아웃라인에 최상위가
+              없음)를 고친다. 화면에서 이 자리를 실제로 설명하는 건 바로 아래 탭이고 목업에도 제목
+              텍스트가 없으므로, **레이아웃을 바꾸지 않도록 sr-only 로만 둔다.**
+              홈의 다른 상태(스켈레톤·인증 오류)는 heading 자체가 없어 여기 하나면 중복이 생기지 않는다.
+            */}
+            <h1 className="sr-only">홈</h1>
+
             {/* .tabs — member 는 2탭, guest 는 피드 단일 탭 */}
             <div
               role="tablist"
               aria-label="홈 피드 전환"
               className="sticky top-4 z-20 mb-4 flex overflow-hidden rounded-[14px] border border-border bg-card"
             >
-              {isMember && (
-                <TabButton id="mine" active={effectiveTab === "mine"} onSelect={() => selectTab("mine")}>
-                  내 보고서
+              {tabs.map((t, i) => (
+                <TabButton
+                  key={t.id}
+                  id={t.id}
+                  active={effectiveTab === t.id}
+                  ref={(el) => {
+                    tabRefs.current[i] = el;
+                  }}
+                  onSelect={() => selectTab(t.id)}
+                  onKeyDown={(event) => handleTabKeyDown(event, i)}
+                >
+                  {t.label}
                 </TabButton>
-              )}
-              <TabButton id="rec" active={effectiveTab === "rec"} onSelect={() => selectTab("rec")}>
-                피드
-              </TabButton>
+              ))}
             </div>
 
             {/* [내 보고서] — 개인 데이터(GET /api/feed)라 member 에서만 렌더. tab 순서(내 보고서→피드)와 DOM 순서 일치. */}
@@ -181,9 +229,11 @@ function HomeView({ isMember }: { isMember: boolean }) {
                 {memberFeed.status === "success" && (
                   <div className="mb-3 flex items-baseline justify-between px-0.5">
                     <span className="text-[13px] font-bold text-ink-mid">내 보고서</span>
+                    {/* hit-24: 12.5px 한 줄이라 실제 높이가 18.8px 이었다 — 글자는 그대로 두고
+                        클릭 영역만 24px 로 넓힌다(같은 줄 좌측 `내 보고서` 는 텍스트라 겹칠 대상 없음). */}
                     <Link
                       href="/reports"
-                      className="focus-ring rounded-[6px] text-[12.5px] font-semibold text-signal-ink hover:underline"
+                      className="focus-ring hit-24 rounded-[6px] text-[12.5px] font-semibold text-signal-ink hover:underline"
                     >
                       전체 보기 →
                     </Link>
@@ -363,21 +413,30 @@ function TabButton({
   id,
   active,
   onSelect,
+  onKeyDown,
+  ref,
   children,
 }: {
   id: string;
   active: boolean;
   onSelect: () => void;
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
+  ref: Ref<HTMLButtonElement>;
   children: React.ReactNode;
 }) {
   return (
     <button
+      ref={ref}
       type="button"
       role="tab"
       id={`tab-${id}`}
       aria-selected={active}
       aria-controls={`panel-${id}`}
+      // roving tabindex — tablist 전체가 Tab 한 번에 잡히고, 그 안의 이동은 방향키가 맡는다.
+      // 선택된 탭만 Tab 순서에 남으므로 탭이 늘어도 Tab 횟수가 늘지 않는다.
+      tabIndex={active ? 0 : -1}
       onClick={onSelect}
+      onKeyDown={onKeyDown}
       // 포커스 링: 공통 .focus-ring(outline 2px + offset 2px)은 tablist 의 overflow-hidden 에 바깥이 잘려
       // 두 탭 사이 세로선처럼 보인다. 공통 클래스는 그대로 쓰고(색·굵기·forced-colors 대응 유지) 이 홈 탭에서만
       // outline-offset 을 -2px 로 덮어써 링을 버튼 내부에 그린다 → 부모에 안 잘리고 포커스된 탭 전체를 감싼다.
