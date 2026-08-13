@@ -212,11 +212,17 @@ function OnboardingFlow({
                 비율(width·height)을 그대로 심어 레이아웃 이동 없이 h-auto 로 축소된다.
                 테두리·배경·그림자를 두지 않는다 — 흰 스크린샷이 본문 위에 얹힌 별도 카드처럼
                 읽히면 안 되고, 온보딩의 다른 단계에도 그런 박스는 없다.
+
+                unoptimized: 최적화 경로(/_next/image)를 태우면 브라우저가 srcset 후보를 하나도
+                고르지 못해 요청조차 하지 않고 빈 자리만 남았다(currentSrc 빈 값 · naturalWidth 0).
+                정적 파일 자체는 정상이라 최적화만 빼면 그대로 보인다. 온보딩에서 한 번 쓰는
+                고정 스크린샷 한 장이라 최적화를 포기해도 잃는 게 없다.
               */}
               <Image
                 src={clipperInstallImage}
                 alt="밤새비서 클리퍼가 Chrome에 설치된 모습"
                 sizes="(max-width: 640px) 100vw, 360px"
+                unoptimized
                 className="h-auto w-full max-w-[360px]"
               />
               <p className="text-[14px] leading-[1.7] text-pretty text-muted-foreground">
