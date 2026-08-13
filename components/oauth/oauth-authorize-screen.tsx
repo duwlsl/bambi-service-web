@@ -29,6 +29,8 @@ export function OAuthAuthorizeScreen() {
   const requestIdIsValid = requestId !== null && REQUEST_ID_PATTERN.test(requestId);
   const [loadState, setLoadState] = useState<LoadState>({ kind: "loading" });
   const [deciding, setDeciding] = useState<"approve" | "deny" | null>(null);
+  const canWriteWiki =
+    loadState.kind === "ready" && hasScope(loadState.request.scope, "wiki:write");
 
   useEffect(() => {
     if (!requestIdIsValid || !requestId) return;
@@ -116,10 +118,22 @@ export function OAuthAuthorizeScreen() {
                   <p className="text-sm font-medium text-foreground">개인 LLM Wiki 읽기</p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     저장된 문서를 검색하고 선택한 문서의 본문과 출처를 읽을 수 있습니다.
-                    문서 수정·삭제 권한은 포함되지 않습니다.
+                    {!canWriteWiki && " 문서 저장·수정 권한은 포함되지 않습니다."}
                   </p>
                 </div>
               </div>
+              {canWriteWiki && (
+                <div className="mt-4 flex gap-3 border-t border-border pt-4">
+                  <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">개인 LLM Wiki 쓰기</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      새 원본과 구조화된 항목을 저장하고, 기존 지식을 강화하거나 재빌드를
+                      요청할 수 있습니다. 삭제 권한은 포함되지 않습니다.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <p className="mb-5 text-center text-xs leading-5 text-muted-foreground">
@@ -150,6 +164,10 @@ export function OAuthAuthorizeScreen() {
       </section>
     </main>
   );
+}
+
+function hasScope(scope: string, expected: string) {
+  return scope.split(/\s+/).includes(expected);
 }
 
 function Status({ title, description }: { title: string; description: string }) {
