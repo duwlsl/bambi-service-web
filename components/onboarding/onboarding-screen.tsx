@@ -10,7 +10,7 @@ import { ChipCheckIcon, InterestPicker } from "@/components/onboarding/interest-
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
-import { ERROR_CODES } from "@/constants/errors";
+import { ERROR_CODES, type ErrorCode } from "@/constants/errors";
 import { INTEREST_SELECTION_MAX } from "@/constants/interests";
 import { useOnboardingInterests } from "@/hooks/use-onboarding-interests";
 import { ApiError } from "@/lib/api-client";
@@ -49,7 +49,8 @@ function OnboardingView() {
 
   if (interests.status === "loading") return <OnboardingSkeleton />;
   // 조회 실패는 "선택 0개"로 위장하지 않는다 — 별도 오류 상태 + 재시도.
-  if (interests.status === "error") return <OnboardingLoadError onRetry={interests.refetch} />;
+  if (interests.status === "error")
+    return <OnboardingLoadError onRetry={interests.refetch} errorCode={interests.errorCode} />;
   return <OnboardingFlow initial={interests.data.interests} taxonomy={interests.data.taxonomy} />;
 }
 
@@ -366,7 +367,13 @@ function OnboardingSkeleton() {
 }
 
 /** 관심사 조회 실패 — 선택 0개로 위장하지 않고 오류 + 재시도를 보여준다(저장 오류와 별개). */
-function OnboardingLoadError({ onRetry }: { onRetry: () => void }) {
+function OnboardingLoadError({
+  onRetry,
+  errorCode,
+}: {
+  onRetry: () => void;
+  errorCode?: ErrorCode;
+}) {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-card">
       <OnboardingHeader />
@@ -377,6 +384,7 @@ function OnboardingLoadError({ onRetry }: { onRetry: () => void }) {
           icon={<IconAlert />}
           title="관심사를 불러오지 못했어요"
           description="네트워크나 서버 상태를 확인한 뒤 다시 시도해 주세요."
+          errorCode={errorCode}
           actions={[
             { label: "다시 시도", onClick: onRetry, variant: "primary" },
             { label: "홈으로", href: "/", variant: "ghost" },
