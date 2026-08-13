@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/use-auth";
@@ -10,6 +11,7 @@ import { ChipCheckIcon, InterestPicker } from "@/components/onboarding/interest-
 import { PageState } from "@/components/ui/page-state";
 import { IconAlert } from "@/components/ui/state-icons";
 import { StateView } from "@/components/ui/state-view";
+import { CLIPPER_CHROME_WEBSTORE_URL } from "@/constants/clipper";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errors";
 import { INTEREST_SELECTION_MAX } from "@/constants/interests";
 import { useOnboardingInterests } from "@/hooks/use-onboarding-interests";
@@ -30,6 +32,8 @@ import type { InterestDto, InterestTaxonomyDto } from "@/types/interest";
  *   agent 자동 추론 태그(INFERRED · /api/wiki/tags)는 조회·저장 어느 쪽에도 섞지 않는다.
  * - 저장한 관심사의 선택 순서를 Service에 확정하면 최대 3개의 첫 리포트가 비동기 등록된다.
  * - 관심사 저장과 온보딩 완료 처리까지 성공한 뒤에만 완료 화면으로 넘어간다.
+ * - 완료 화면 다음은 클리퍼 설치 안내(선택)다. 안내만 하고 설치를 강제하지 않는다 — 어느 CTA 로
+ *   나가도 온보딩은 이미 끝난 상태이고, 목적지는 똑같이 내 보고서다.
  *
  * 인증 상태 4분기(설정·홈과 동일 패턴): loading→스켈레톤 / error→복원오류 / guest→접근제한 / authenticated→본문.
  * guest 직접 진입 시 관심사 API 는 호출하지 않는다(훅이 authenticated 에서만 요청).
@@ -64,7 +68,10 @@ function resolveInterestSaveError(code: string): string {
   return "관심사를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.";
 }
 
-type OnboardingStep = "pick" | "done";
+type OnboardingStep = "pick" | "done" | "clipper";
+
+/** 헤더 "n / 총" 표기의 단일 출처 — 관심사 선택 · 완료 · 클리퍼 설치 안내. */
+const ONBOARDING_STEP_TOTAL = 3;
 
 function OnboardingFlow({
   initial,
@@ -91,6 +98,11 @@ function OnboardingFlow({
   /** 저장 성공 후 서버 확정본 — 완료 화면 요약은 이 값만 신뢰한다. */
   const [saved, setSaved] = useState<InterestDto[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  /**
+   * 클리퍼 웹 스토어를 새 탭으로 연 적이 있는지 — 설치 **여부**가 아니다(웹은 확장 설치를 알 수 없다).
+   * 스토어가 새 탭에서 열리면 이 탭은 안내 화면에 남으므로, 그때만 현재 탭에서 이어갈 경로를 띄운다.
+   */
+  const [storeOpened, setStoreOpened] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // 같은 프레임 안의 연타는 state(submitting) 반영 전에 통과할 수 있어 ref 로 동기 차단한다.
@@ -176,6 +188,106 @@ function OnboardingFlow({
     }
   }
 
+  if (step === "clipper") {
+    return (
+      <div className="flex min-h-[100dvh] flex-col bg-card">
+        <OnboardingHeader stepLabel="클리퍼 설치" stepNo={3} />
+        {/* .ob-body — 완료 화면(.ob-done)과 같은 세로 중앙 배치·560px 칼럼을 그대로 쓴다. */}
+        <main className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col items-center justify-center px-8 py-[30px]">
+            <div className="flex w-full max-w-[560px] flex-col items-center gap-2.5 text-center">
+              {/*
+                .ob-orb — 설치 대상이 밤새비서 자신이라 완료 화면과 같은 브랜드 오브를 같은 크기로 쓴다.
+                클리퍼 전용 일러스트는 만들지 않는다(목업 없음 · 새 시각 언어 금지).
+              */}
+              <div className="mb-1.5 flex h-14 w-14 items-center justify-center">
+                <Orb size={46} />
+              </div>
+              <h1 className="text-[25px] font-bold tracking-[-0.015em] text-balance text-foreground">
+                관심 있는 자료를 바로 저장해보세요
+              </h1>
+              <p className="text-[14px] leading-[1.7] text-pretty text-muted-foreground">
+                밤새비서 클리퍼를 설치하면 웹에서 발견한 자료를 클릭 한 번으로 저장할 수 있어요.
+              </p>
+              {/*
+                설치 후 모습 — 무엇인지 읽은 다음 실제 화면을 본다. width·height 는 원본 픽셀값
+                그대로라 레이아웃 이동 없이 h-auto 로 비율을 지키며 축소된다.
+                테두리·배경·그림자를 두지 않는다 — 흰 스크린샷이 본문 위에 얹힌 별도 카드처럼
+                읽히면 안 되고, 온보딩의 다른 단계에도 그런 박스는 없다.
+
+                public 경로를 직접 가리킨다(정적 import 아님). 정적 import 는 *.png 모듈 타입이
+                필요한데 그 선언은 next-env.d.ts 에 있고 그 파일은 gitignore 라, build 앞에서
+                도는 CI 의 `tsc --noEmit` 이 TS2307 로 떨어진다.
+
+                unoptimized: 최적화 경로(/_next/image)를 태우면 브라우저가 srcset 후보를 하나도
+                고르지 못해 요청조차 하지 않고 빈 자리만 남았다(currentSrc 빈 값 · naturalWidth 0).
+                정적 파일 자체는 정상이라 최적화만 빼면 그대로 보인다. 온보딩에서 한 번 쓰는
+                고정 스크린샷 한 장이라 최적화를 포기해도 잃는 게 없다.
+              */}
+              <Image
+                src="/onboarding/clipper-install.png"
+                alt="밤새비서 클리퍼가 Chrome에 설치된 모습"
+                width={3240}
+                height={2115}
+                sizes="(max-width: 640px) 100vw, 600px"
+                unoptimized
+                className="h-auto w-full max-w-[600px]"
+              />
+
+              {/* .ob-cta — 완료 화면과 같은 가로 배치. 좁은 화면에서는 flex-wrap 으로 접힌다. */}
+              <div className="mt-8 flex flex-wrap justify-center gap-2.5">
+                {/*
+                  .btn.signal — 스토어는 새 탭으로 연다. window.open 대신 앵커라 팝업 차단·
+                  가운데 클릭·"새 창에서 열기" 가 모두 브라우저 기본 동작으로 처리된다.
+                */}
+                <a
+                  href={CLIPPER_CHROME_WEBSTORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setStoreOpened(true)}
+                  className="focus-ring inline-flex items-center justify-center rounded-[10px] border border-primary bg-primary px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
+                >
+                  Chrome에 설치하기
+                </a>
+                {/* .btn — 보조 CTA(모달 "취소" 와 같은 중립 스타일). 설치는 선택이므로 항상 열어둔다. */}
+                <Link
+                  href="/"
+                  className="focus-ring inline-flex items-center justify-center rounded-[10px] border border-border bg-card px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-foreground hover:bg-background"
+                >
+                  나중에 하기
+                </Link>
+              </div>
+
+              {/*
+                .ob-addhint 와 같은 위치·톤(액션 아래 보조 안내). 모바일 Chrome 은 확장 프로그램을
+                설치할 수 없으므로 좁은 화면에서만 이유를 알려주고, 진행은 "나중에 하기" 로 하게 둔다.
+              */}
+              <p className="text-xs text-muted-foreground sm:hidden">
+                데스크톱 Chrome에서 설치할 수 있어요.
+              </p>
+
+              {/*
+                .ob-back2 — 스토어가 새 탭에서 열린 뒤 이 탭에서 이어갈 경로. 설치 완료를 확인할
+                방법이 없으니 판단은 사용자에게 맡긴다. 라이브 영역은 내용이 바뀌기 전부터 있어야
+                읽히므로 빈 상태에서도 컨테이너를 유지한다.
+              */}
+              <div aria-live="polite">
+                {storeOpened && (
+                  <Link
+                    href="/"
+                    className="focus-ring rounded-[6px] text-[13px] text-muted-foreground underline underline-offset-[3px] hover:text-ink-mid"
+                  >
+                    설치를 마쳤다면 내 보고서로 가기
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (step === "done") {
     return (
       <div className="flex min-h-[100dvh] flex-col bg-card">
@@ -208,14 +320,18 @@ function OnboardingFlow({
                 ))}
               </ul>
 
-              {/* .ob-cta — 가로 배치, 주 CTA 1개 */}
+              {/*
+                .ob-cta — 가로 배치, 주 CTA 1개. 여기서 바로 내 보고서로 나가지 않고 클리퍼 설치
+                안내(3/3)를 한 번 거친다 — 두 CTA 모두 결국 내 보고서로 도착한다.
+              */}
               <div className="mt-3.5 flex flex-wrap justify-center gap-2.5">
-                <Link
-                  href="/"
+                <button
+                  type="button"
+                  onClick={() => setStep("clipper")}
                   className="focus-ring inline-flex items-center justify-center rounded-[10px] border border-primary bg-primary px-[15px] py-[9px] text-[13.5px] font-semibold whitespace-nowrap text-primary-foreground hover:brightness-[.96]"
                 >
-                  내 보고서로 가기
-                </Link>
+                  계속하기
+                </button>
               </div>
               {/* .ob-back2 — 밑줄 텍스트 링크형 */}
               <button
@@ -321,7 +437,7 @@ function OnboardingHeader({
   stepNo = 1,
 }: {
   stepLabel?: string;
-  stepNo?: 1 | 2;
+  stepNo?: 1 | 2 | 3;
 }) {
   return (
     <header className="flex items-center gap-[9px] border-b border-border bg-card px-[max(32px,calc((100%_-_1376px)/2))] py-5">
@@ -331,7 +447,7 @@ function OnboardingHeader({
       </span>
       {/* .ob-step — b 는 signal-ink */}
       <span className="ml-auto text-[12.5px] whitespace-nowrap text-muted-foreground">
-        {stepLabel} · <b className="font-bold text-signal-ink">{stepNo}</b> / 2
+        {stepLabel} · <b className="font-bold text-signal-ink">{stepNo}</b> / {ONBOARDING_STEP_TOTAL}
       </span>
     </header>
   );
