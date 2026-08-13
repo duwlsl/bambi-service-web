@@ -139,8 +139,8 @@ export function McpApiKeySettings({
           </p>
         )}
         <p className="mt-2 text-[11.5px] leading-[1.55] text-muted-foreground">
-          Claude·ChatGPT UI에는 이 URL만 등록하세요. 기존 계정 로그인과 읽기 권한 승인 화면이
-          자동으로 열립니다. API Key 입력란이 있는 개발자용 client만 아래 키를 사용하세요.
+          Claude·ChatGPT UI에는 이 URL만 등록하세요. 기존 계정 로그인과 읽기·쓰기 권한 승인
+          화면이 자동으로 열립니다. API Key 입력란이 있는 개발자용 client만 아래 키를 사용하세요.
         </p>
       </div>
 
@@ -275,6 +275,7 @@ function OAuthConnectionList({
             <div className="text-[13px] font-semibold text-foreground">{connection.clientName}</div>
             <div className="mt-1 text-[11px] text-muted-foreground">
               {connection.status === "active" ? "연결됨" : connection.status === "expired" ? "만료됨" : "해제됨"}
+              {" · "}{connection.scope.split(/\s+/).includes("wiki:write") ? "읽기·쓰기" : "읽기"}
               {" · 승인 "}{formatDate(connection.createdAt)}
             </div>
           </div>
