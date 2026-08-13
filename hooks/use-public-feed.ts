@@ -39,6 +39,12 @@ import type { PublicFeedCardVM } from "@/types/feed";
  * 섞으면 그 순위가 사라진다. 지금은 `pickRecommendedCandidates` 가 필터링만 하고 `allPublic`
  * 순서를 그대로 보존한다 — 같은 입력이면 항상 같은 결과가 나온다(결정적).
  *
+ * **개인화 결과가 하나도 없으면 게스트와 같은 목록을 보여준다**(2026-08-13 결함 수정). 팔로잉 0건
+ * + 추천 후보 0건이면 혼합 결과가 빈 배열이라, 볼 수 있는 공개 카드가 있는데도 Empty 가 떴다.
+ * 이때는 `allPublic`(게스트가 보는 바로 그 목록)을 그대로 돌려준다. 둘 중 하나라도 개인화 결과가
+ * 있으면 기존 혼합 규칙 그대로다 — 남는 자리를 공개 카드로 채우지 않는다(가짜 추천 금지).
+ * `allPublic` 도 0건이면 빈 배열이므로 기존 Empty 상태가 그대로 유지된다.
+ *
  * **부분 실패 정책**(Promise.allSettled 로 각 요청을 독립 평가):
  *   - 팔로잉 성공 + 전체 공개 실패 → 팔로잉 카드만 표시
  *   - 전체 공개 성공(추천 계산 가능) + 팔로잉 실패 → 추천 카드만 표시
@@ -103,6 +109,13 @@ export function usePublicFeed(): PublicFeedState & { refetch: () => void } {
         // 두 소스 모두 구성 불가 → 사용자에게 오류를 알린다(mock 보충 없음).
         const reason = followingRes.status === "rejected" ? followingRes.reason : undefined;
         throw reason instanceof Error ? reason : new Error("public feed: all sources failed");
+      }
+
+      // 섞을 개인화 결과가 하나도 없으면(팔로잉 0건 + 추천 후보 0건) 혼합 결과는 빈 배열이 된다 →
+      // 공개 카드가 있는데도 Empty 가 뜨던 지점이다. 게스트와 같은 목록을 그대로 보여준다.
+      // 팔로잉 조회가 실패한 경우(null)는 여기 해당하지 않는다 — 위 부분 실패 정책을 그대로 둔다.
+      if (allPublic !== null && followingCards?.length === 0 && recommendedCards.length === 0) {
+        return allPublic;
       }
 
       return buildMixedFeed({
