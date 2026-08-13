@@ -224,13 +224,13 @@ function OnboardingFlow({
               <Image
                 src={clipperInstallImage}
                 alt="밤새비서 클리퍼가 Chrome에 설치된 모습"
-                sizes="(max-width: 640px) 100vw, 520px"
+                sizes="(max-width: 640px) 100vw, 600px"
                 unoptimized
-                className="h-auto w-full max-w-[520px]"
+                className="h-auto w-full max-w-[600px]"
               />
 
               {/* .ob-cta — 완료 화면과 같은 가로 배치. 좁은 화면에서는 flex-wrap 으로 접힌다. */}
-              <div className="mt-3.5 flex flex-wrap justify-center gap-2.5">
+              <div className="mt-4 flex flex-wrap justify-center gap-2.5">
                 {/*
                   .btn.signal — 스토어는 새 탭으로 연다. window.open 대신 앵커라 팝업 차단·
                   가운데 클릭·"새 창에서 열기" 가 모두 브라우저 기본 동작으로 처리된다.
