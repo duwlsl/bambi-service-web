@@ -12,10 +12,10 @@ export function DevelopmentReportPanel({
 }) {
   return (
     <section
-      aria-label="개발용 리포트 테스트"
+      aria-label="시연용 리포트"
       className={`rounded-[14px] border border-border bg-card px-4 py-[15px] ${className ?? ""}`}
     >
-      <h2 className="text-[13px] font-bold text-foreground">개발용 리포트 테스트</h2>
+      <h2 className="text-[13px] font-bold text-foreground">시연용 리포트</h2>
       <p className="mt-1 text-[12px] leading-[1.6] text-muted-foreground">
         실제 리포트와 알림이 생성되며 LLM 비용이 발생합니다.
       </p>
