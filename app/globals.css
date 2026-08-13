@@ -242,6 +242,33 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+
+  /* 최소 24×24 CSS px 클릭·터치 영역(WCAG 2.2 · 2.5.8 Target Size (Minimum)).
+     작은 텍스트 링크·스위치처럼 **글자·아이콘을 키울 수 없는** 대상에 쓴다 — 보이지 않는 hit area 만
+     넓히므로 글자 크기·줄바꿈·주변 여백이 그대로다(레이아웃 시프트 없음).
+
+     세로로만 늘린다: 가로는 대상들이 이미 24px 을 넘고, 좌우로 넓히면 같은 줄의 다른 링크와 클릭
+     영역이 겹칠 수 있다. 세로 확장 폭도 최대 (24 - 대상 높이)/2 라 인접 행·인접 링크와 겹치지
+     않는다 — 적용 지점마다 실제 렌더 rect 로 확인했다(가장 좁은 간격이 54.5px).
+
+     ⚠ 이 블록은 위 `.focus-ring` 과 **같은 `@layer components` 안에 둔다.** 별도 `@layer components`
+     블록으로 나누면 Tailwind v4 빌드에서 뒤 블록이 출력에서 사라진다(실측 2026-08-13).
+
+     ⚠ `line-clamp`(display:-webkit-box) 요소에는 쓰지 않는다: ::after 가 box 의 한 줄로 잡혀
+     클램프 줄 수가 어긋난다. 그런 대상은 min-height 로 높이를 확보한다(components/home/feed-card.tsx). */
+  .hit-24 {
+    position: relative;
+  }
+
+  .hit-24::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 24px;
+    min-width: 24px;
+    transform: translateY(-50%);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────

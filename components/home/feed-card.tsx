@@ -57,9 +57,12 @@ export function FeedCard({ card }: { card: FeedCardVM }) {
       <h3 className="text-[15px] leading-[1.45] font-bold tracking-[-0.01em] text-foreground">
         {/* 이 카드는 [내 보고서] 탭 전용이라 진입 출처가 `mine` 으로 고정이다 — 상세의
             뒤로가기가 `← 내 보고서로` 로 뜨고 같은 탭으로 되돌아간다. */}
+        {/* 한 줄짜리 제목의 실제 높이가 21.8px(15px × 1.45) 라 클릭 영역이 24px 에 못 미쳤다.
+            `line-clamp` 은 display:-webkit-box 라 ::after hit area 를 쓰면 클램프 줄 수가 어긋나므로,
+            글자 크기는 그대로 두고 min-height 로만 24px 을 확보한다(두 줄 제목은 이미 넘어 영향 없음). */}
         <Link
           href={reportDetailHref(card.publicId, { token: "mine" })}
-          className="focus-ring line-clamp-2 rounded-[3px] hover:text-signal-ink"
+          className="focus-ring line-clamp-2 min-h-6 rounded-[3px] hover:text-signal-ink"
         >
           {card.title}
         </Link>

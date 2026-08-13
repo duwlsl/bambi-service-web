@@ -403,12 +403,14 @@ function CardDetailView({
                         </div>
                       )}
                     </div>
+                    {/* hit-24: 12px 한 줄이라 실제 높이가 16px 이었다. 출처 행(약 46px)이 훨씬
+                        높아 24px 로 넓혀도 행 높이·인접 출처(gap 8px)와 겹치지 않는다. */}
                     {source.url && (
                       <a
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="focus-ring ml-auto shrink-0 rounded-[3px] text-xs font-semibold whitespace-nowrap text-signal-ink hover:underline"
+                        className="focus-ring hit-24 ml-auto shrink-0 rounded-[3px] text-xs font-semibold whitespace-nowrap text-signal-ink hover:underline"
                       >
                         원문 열기 ↗
                       </a>
