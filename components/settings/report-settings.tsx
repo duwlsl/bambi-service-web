@@ -175,6 +175,9 @@ function RowStatus({
  *
  * `role="switch"` 대신 실제 `<button>` 에 `aria-checked` 를 얹어 Space/Enter·포커스 링을
  * 브라우저 기본 동작으로 얻는다. 상태를 색만으로 전달하지 않도록 knob 위치도 함께 움직인다.
+ *
+ * 트랙 자체는 목업 토큰대로 38×22 를 유지하고(스위치를 키우면 설정 행의 리듬이 깨진다),
+ * 부족한 세로 2px 은 `hit-24` 의 보이지 않는 hit area 로 채운다 — 클릭 영역만 38×24 가 된다.
  */
 function Switch({
   label,
@@ -195,7 +198,8 @@ function Switch({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`focus-ring relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+      // `relative` 는 knob(absolute) 기준이라 그대로 둔다 — hit-24 도 같은 값을 쓰므로 충돌하지 않는다.
+      className={`focus-ring hit-24 relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
         checked ? "bg-primary" : "bg-border"
       }`}
     >

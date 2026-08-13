@@ -28,6 +28,24 @@ function acquireBackgroundInert(): void {
   inertRefCount += 1;
 }
 
+/**
+ * 트리거로 포커스를 되돌린다. 트리거가 닫히는 사이에 DOM 에서 사라졌으면(예: 저장 성공 →
+ * 목록 refetch 로 그 버튼을 품던 Empty 상태가 통째로 교체) 포커스는 갈 곳을 잃고 문서 최상단
+ * (`<body>`)으로 떨어진다 — 키보드 사용자가 방금 있던 자리를 잃고 처음부터 Tab 해야 한다.
+ * 그럴 때만 앱 셸(#app-shell)을 임시 포커스 대상으로 삼아 **본문 시작점**에 세워 둔다.
+ * (`tabIndex=-1` 이라 Tab 순서에는 들어가지 않고, 프로그램적 포커스만 받는다.)
+ */
+function restoreFocus(trigger: HTMLElement | null): void {
+  if (trigger && document.contains(trigger)) {
+    trigger.focus();
+    return;
+  }
+  const shell = document.getElementById(INERT_TARGET_ID);
+  if (!shell) return;
+  shell.tabIndex = -1;
+  shell.focus();
+}
+
 /** 배경 inert 해제 — 마지막 모달에서만 저장했던 이전 값으로 정확히 복원. */
 function releaseBackgroundInert(): void {
   if (inertRefCount === 0) return;
@@ -54,6 +72,8 @@ function releaseBackgroundInert(): void {
  *
  * 닫힘(cleanup) 순서: 리스너 제거 → 배경 inert 해제 → 트리거로 포커스 복원.
  * (inert 해제를 먼저 해야 #app-shell 안의 트리거가 다시 포커스 가능해진다.) Esc·backdrop 닫기는 각 모달이 처리한다.
+ * 복원 규칙은 `restoreFocus` 참조 — 트리거가 사라진 경우까지 포함해 포커스가 문서 최상단으로
+ * 떨어지지 않게 한다.
  */
 export function useFocusTrap<T extends HTMLElement>(
   open: boolean,
@@ -65,8 +85,12 @@ export function useFocusTrap<T extends HTMLElement>(
     if (!current) return;
     const node = current;
 
-    // 초기 포커스 이동 전에 트리거 캡처.
-    const trigger = document.activeElement as HTMLElement | null;
+    // 초기 포커스 이동 전에 **실제로 연 그 요소**를 캡처한다. 호출부가 "마지막 트리거"를 따로
+    // 들고 있지 않으므로, 같은 모달 인스턴스를 여러 트리거(상단 nav ＋ · 본문 Empty 카드 CTA,
+    // 데스크톱/모바일 중복 배치 등)가 공유해도 누른 그 트리거로 정확히 되돌아간다.
+    // 포커스 없이 열린 경우(activeElement 가 body) 되돌릴 트리거가 없으므로 null 로 둔다.
+    const active = document.activeElement;
+    const trigger = active instanceof HTMLElement && active !== document.body ? active : null;
 
     acquireBackgroundInert();
 
@@ -99,7 +123,7 @@ export function useFocusTrap<T extends HTMLElement>(
     return () => {
       node.removeEventListener("keydown", onKeyDown);
       releaseBackgroundInert();
-      if (trigger && document.contains(trigger)) trigger.focus();
+      restoreFocus(trigger);
     };
   }, [open, containerRef]);
 }
