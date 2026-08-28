@@ -510,9 +510,16 @@ docs/design-handoff/  디자인 목업 (구현 기준, 빌드 대상 아님)
 | production 서버 | `npm run start` | **확정** — `build` 후 실행용 (`start` 존재) |
 | lint | `npm run lint` (= `eslint`) | **확정** — `package.json`에 `lint` 존재 |
 | type check | `npx tsc --noEmit` | **확정** — 전용 script 없음. `tsconfig.json`이 `noEmit: true`라 타입 검사 전용으로 동작 |
-| 테스트 | **없음** — test script·러너 미설정 | **확정** — P0 범위 밖. 임의로 script·러너 추가 금지 |
+| 테스트 (비브라우저 전체) | `npm test` (= `test:legacy` → `test:unit` 순차 실행) | **확정** — 브라우저가 필요 없는 두 러너를 한 번에 |
+| 테스트 (node:test) | `npm run test:legacy` (= `node --test "tests/*.test.mjs"`) | **확정** — 순수 로직·구현 규약. 아래 글롭 제약 참조 |
+| 테스트 (Vitest · RTL · MSW) | `npm run test:unit` (= `vitest run`) | **확정** — jsdom 화면 렌더·네트워크 계약. watch 는 `test:unit:watch` |
+| 테스트 (Playwright E2E) | `npm run test:e2e` (= `playwright test`) | **확정** — Chromium 1종. `/api/**` 는 테스트가 stub 하므로 백엔드 불필요 |
 
-> 현재 `package.json` scripts는 **`dev` / `build` / `start` / `lint` 4개뿐이다.** 여기 없는 script(`typecheck`, `test` 등)를 임의로 만들어 문서·명령에 넣지 말 것.
+> `package.json` 에는 위 스크립트 외에 **개별 node:test 파일만 돌리는 `test:<이름>` 스크립트들**도 있다(로컬 디버깅용). 실행할 명령은 항상 **현재 `package.json` 을 확인**하고, 거기 없는 script(`typecheck` 등)를 임의로 만들어 문서·명령에 넣지 않는다. 새 테스트 도구·러너도 임의로 추가하지 않는다.
+
+> ⚠️ **`test:legacy` 의 글롭 제약 (CI 가 명령을 달리 쓰는 이유)**: `node --test "tests/*.test.mjs"` 는 **Node 22+ 에서만** Node 가 글롭을 확장한다. CI 는 Node 20 이라 리터럴 경로로 읽혀 "Could not find" 로 실패한다(실측). 그래서 **CI 는 `npm test` 대신 셸이 글롭을 펼치는 `node --test tests/*.test.mjs` 를 직접 호출**한다(`.github/workflows/ci.yml`). 실행 대상은 동일하다. 근본 해결(예: `node --test tests/`)은 `package.json` 수정이 필요해 후속 과제로 남아 있다.
+
+> **테스트 개수를 문서에 고정 숫자로 적지 않는다.** 테스트가 늘어나는 순간 문서가 거짓이 되기 때문이다 — 실제 개수는 실행 로그가 말한다. 같은 이유로 CI 의 job 이름·주석에도 개수를 넣지 않는다.
 
 ### 백엔드 로컬 실행 (이 레포 밖, 참고용)
 
@@ -632,7 +639,7 @@ main(또는 develop) 최신화 (git pull)
 **프론트 내부 결정 (레포 확인 후 문서화)**
 - ~~토큰 localStorage key 이름~~ → **`bambi.accessToken` 확정. `constants/auth.ts`의 `ACCESS_TOKEN_STORAGE_KEY` 상수 1곳에 정의 (§5·§10)**
 - ~~`NEXT_PUBLIC_API_URL`의 `/api` prefix 포함 여부~~ → **base는 origin-only(`http://localhost`), `/api`는 요청 경로에. 공통 client 1곳에서 결합 (§6)**
-- ~~`package.json` script 목록~~ → **`dev` / `build` / `start` / `lint` 4개만 존재. type check는 `npx tsc --noEmit`, test 없음 (§12)**
+- ~~`package.json` script 목록~~ → **`dev`·`build`·`start`·`lint` 와 test 계열 스크립트가 존재한다. 세부 명령은 현재 `package.json` 을 기준으로 확인하며, typecheck 는 `npx tsc --noEmit` 을 사용한다 (§12)**
 
 ---
 
