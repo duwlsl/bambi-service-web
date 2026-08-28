@@ -184,8 +184,23 @@ export function usePolledData<T>(
     let timer: ReturnType<typeof setTimeout> | null = null;
     let effectActive = true;
 
+    /**
+     * 다음 tick 예약. **활성 타이머는 항상 최대 1개**임을 여기서 보장한다.
+     *
+     * startTimer 는 "요청이 끝났으니 다음 주기를 잡아라"는 신호이고, 그 신호는 여러 갈래로
+     * 들어온다(최초 조회 · 주기 tick · visible 복귀 · 수동 refetch). 그런데 **in-flight 락에
+     * 걸려 건너뛴 호출도 즉시 resolve 돼 finally(startTimer) 를 탄다** — 그래서 진행 중 요청이
+     * 있는 동안 visible 로 복귀하면 복귀분과 완료분이 각각 예약해 타이머가 2개가 됐다. 게다가
+     * 지역 변수 `timer` 는 나중 예약만 가리키므로 앞선 타이머는 clearTimeout 대상에서도 빠져,
+     * 그 뒤로 주기마다 요청이 2번씩 나갔다(in-flight 락은 요청만 막지 타이머는 막지 못한다).
+     * 예약 전에 기존 타이머를 걷어내 그 경합을 없앤다 — 예약은 누적이 아니라 항상 교체다.
+     *
+     * 걷어내는 위치가 delay·hidden 판정보다 앞인 것도 의도다: "지금은 폴링하지 않는다"로
+     * 판정된 경우에도 앞서 걸어둔 예약이 살아남으면 안 된다(숨김 탭 정지 정책과 같은 방향).
+     */
     function startTimer() {
       if (!effectActive) return;
+      stopTimer();
       const delay = nextIntervalRef.current;
       if (delay === null) return;
       if (document.hidden) return; // 숨김 탭에서는 걸지 않는다 — visible 복귀 시 다시 건다
