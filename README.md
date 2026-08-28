@@ -94,7 +94,7 @@
 | UI | React 19, Tailwind CSS v4, shadcn/ui(radix-ui), lucide-react | 디자인 토큰(CSS 변수) 위에 얇게 얹어 목업의 시각 언어를 유지 |
 | 테스트 | node:test, Vitest 4, Testing Library, MSW, Playwright | 순수 로직은 node:test, 화면·네트워크 계약은 Vitest + MSW, 핵심 흐름은 E2E |
 | 품질 | ESLint 9(`eslint-config-next`), `tsc --noEmit` | PR마다 CI에서 lint·타입 검사를 빌드보다 먼저 실행 |
-| 배포 | Docker(멀티스테이지, `output: "standalone"`), GitHub Actions, GHCR | 빌드는 CI에서 하고 서버는 이미지 pull만 수행 *(팀 공동 성과)* |
+| 배포 *(팀 프로젝트 당시)* | Docker(멀티스테이지, `output: "standalone"`), GitHub Actions, GHCR | 빌드는 CI에서 하고 서버는 이미지 pull만 수행 *(팀 공동 성과)*. **개인 Fork에는 배포 환경이 없고 Docker 빌드 검증만 합니다** |
 
 ---
 
@@ -186,13 +186,15 @@ Bambi Service API
 | Vitest + Testing Library + MSW (jsdom) | 화면 렌더와 네트워크 계약 (상세 화면, 피드 오류·Empty, 모달 포커스, 중복 요청 회귀, 알림 배경 폴링) | 9파일 **51 케이스 통과** |
 | Playwright (Chromium) | 홈 피드 → 보고서 상세 진입 E2E 1개. `/api/**`를 stub 해 백엔드에 의존하지 않음 | 1개 시나리오 구성 |
 
-CI([.github/workflows/ci.yml](.github/workflows/ci.yml))는 `main`·`develop` 대상 PR과 push에서 실행되며, 같은 브랜치에 새 커밋이 오면 이전 실행을 취소합니다.
+CI([.github/workflows/ci.yml](.github/workflows/ci.yml))는 **`main` 대상 PR · `main` push · 수동 실행(`workflow_dispatch`)** 에서 돌며, 같은 브랜치에 새 커밋이 오면 이전 실행을 취소합니다. 권한은 `contents: read`만 씁니다. *(팀 원본에 있던 `develop` 트리거는 이 Fork에 대응 브랜치가 없어 제거했습니다.)*
 
 - **build** — `npm ci` → lint → `tsc --noEmit` → node:test → Vitest → production build (더 싼 검사에서 먼저 실패시키는 순서)
 - **e2e** — Chromium만 설치해 production 빌드·기동 후 실행, 실패했을 때만 리포트 아티팩트 업로드
 - **secret-scan** — gitleaks로 히스토리에서 키·토큰 커밋 여부 검사
 
-배포용 [image.yml](.github/workflows/image.yml)은 PR에서는 Dockerfile 검증만, `main` push에서는 GHCR 이미지 빌드·푸시 후 배포 워크플로를 디스패치합니다. *(배포 파이프라인은 팀 공동 성과)*
+[image.yml](.github/workflows/image.yml)(`Docker Build`)은 **개인 Fork에서는 Dockerfile이 빌드되는지만 검증**합니다 — 레지스트리 로그인·이미지 push·배포 디스패치는 없습니다.
+
+**팀 프로젝트 당시** 이 파일은 CD였습니다: `main` push에서 GHCR로 이미지를 빌드·푸시하고 원본 조직 저장소의 배포 워크플로를 디스패치해 서버에 반영했습니다. *(배포 파이프라인은 팀 공동 성과)* 개인 Fork는 팀 인프라와 시크릿에 접근하지 않아야 하므로 그 동작을 제거했고, 배포 대상이 정해지지 않아 현재는 CI까지만 구성합니다.
 
 ---
 

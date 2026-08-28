@@ -348,7 +348,7 @@ process.env.NEXT_PUBLIC_API_URL
 | 환경 | 값 | 상태 |
 |---|---|---|
 | 로컬 | **`NEXT_PUBLIC_API_URL=http://localhost`** (nginx 80 → backend 8080). `/api`는 base가 아니라 경로에 → `http://localhost/api/health` = `{"status":"UP"}` | **실측 확인됨** |
-| 배포(운영) | **`NEXT_PUBLIC_API_URL` 비움** → same-origin 상대경로 `/api/*`. 운영 nginx가 같은 origin의 `/api/*`를 service-api로 전달. 정식 배포는 `.github/workflows/image.yml`(GCP 이미지) 방식 | **확정** (2026-07-24, 우석 정책·배포 승인) |
+| 배포(운영) — **과거 팀 프로젝트 구조** | **`NEXT_PUBLIC_API_URL` 비움** → same-origin 상대경로 `/api/*`. 운영 nginx가 같은 origin의 `/api/*`를 service-api로 전달했다 | **팀 프로젝트 당시 확정** (2026-07-24, 우석 정책·배포 승인). **개인 Fork 에는 배포 환경이 없다** (아래 「배포」 참조) |
 
 > **`/api` prefix — 확정 (2026-07-15 프론트 결정): `NEXT_PUBLIC_API_URL`은 origin(scheme+host)까지만 담고 `/api`는 요청 경로에 둔다.**
 >
@@ -360,8 +360,10 @@ process.env.NEXT_PUBLIC_API_URL
 
 ### 배포
 
-- **정식 배포:** `.github/workflows/image.yml` → GHCR 이미지 빌드 → bambi-build 서버 배포(GCP). 이미지 빌드는 `NEXT_PUBLIC_API_URL`을 **비운 채** 수행 → 런타임 same-origin `/api/*`.
-- 운영은 **nginx가 같은 origin의 `/api/*`를 service-api로 전달**하는 것을 전제로 한다.
+> **개인 Fork 에는 배포가 없다.** 첫 항목은 **과거 팀 프로젝트 구조**의 기록이고, 두 번째 항목이 이 Fork 의 현재 상태다.
+
+- **과거 팀 프로젝트 구조 (현재 이 Fork 에서는 동작하지 않는다):** `.github/workflows/image.yml` → GHCR 이미지 빌드·push → 원본 조직 저장소(`bambi-build`)의 배포 워크플로 dispatch → 서버 반영(GCP). 이미지 빌드는 `NEXT_PUBLIC_API_URL`을 **비운 채** 수행해 런타임 same-origin `/api/*` 가 되게 했고, 운영은 **nginx가 같은 origin의 `/api/*`를 service-api로 전달**하는 것을 전제로 했다.
+- **개인 Fork 현재:** `.github/workflows/image.yml` 은 워크플로 이름이 **`Docker Build`** 이며 **Dockerfile 이 빌드되는지만 검증**한다. 레지스트리 로그인 · 이미지 push · 조직 저장소 workflow dispatch · 배포 시크릿 · 서버 배포는 **전부 없다.** 배포 대상이 정해지지 않아 **CI 까지만** 구성한다.
 - 다른 origin의 절대 API를 써야 하는 환경에서만 배포 변수 `NEXT_PUBLIC_API_URL`(origin-only)을 설정한다. **레포에 실제 운영 URL·tunnel 주소를 하드코딩·커밋하지 않는다.** (GitHub 변수 관리는 우석 담당)
 
 ---
@@ -510,9 +512,16 @@ docs/design-handoff/  디자인 목업 (구현 기준, 빌드 대상 아님)
 | production 서버 | `npm run start` | **확정** — `build` 후 실행용 (`start` 존재) |
 | lint | `npm run lint` (= `eslint`) | **확정** — `package.json`에 `lint` 존재 |
 | type check | `npx tsc --noEmit` | **확정** — 전용 script 없음. `tsconfig.json`이 `noEmit: true`라 타입 검사 전용으로 동작 |
-| 테스트 | **없음** — test script·러너 미설정 | **확정** — P0 범위 밖. 임의로 script·러너 추가 금지 |
+| 테스트 (비브라우저 전체) | `npm test` (= `test:legacy` → `test:unit` 순차 실행) | **확정** — 브라우저가 필요 없는 두 러너를 한 번에 |
+| 테스트 (node:test) | `npm run test:legacy` (= `node --test "tests/*.test.mjs"`) | **확정** — 순수 로직·구현 규약. 아래 글롭 제약 참조 |
+| 테스트 (Vitest · RTL · MSW) | `npm run test:unit` (= `vitest run`) | **확정** — jsdom 화면 렌더·네트워크 계약. watch 는 `test:unit:watch` |
+| 테스트 (Playwright E2E) | `npm run test:e2e` (= `playwright test`) | **확정** — Chromium 1종. `/api/**` 는 테스트가 stub 하므로 백엔드 불필요 |
 
-> 현재 `package.json` scripts는 **`dev` / `build` / `start` / `lint` 4개뿐이다.** 여기 없는 script(`typecheck`, `test` 등)를 임의로 만들어 문서·명령에 넣지 말 것.
+> `package.json` 에는 위 스크립트 외에 **개별 node:test 파일만 돌리는 `test:<이름>` 스크립트들**도 있다(로컬 디버깅용). 실행할 명령은 항상 **현재 `package.json` 을 확인**하고, 거기 없는 script(`typecheck` 등)를 임의로 만들어 문서·명령에 넣지 않는다. 새 테스트 도구·러너도 임의로 추가하지 않는다.
+
+> ⚠️ **`test:legacy` 의 글롭 제약 (CI 가 명령을 달리 쓰는 이유)**: `node --test "tests/*.test.mjs"` 는 **Node 22+ 에서만** Node 가 글롭을 확장한다. CI 는 Node 20 이라 리터럴 경로로 읽혀 "Could not find" 로 실패한다(실측). 그래서 **CI 는 `npm test` 대신 셸이 글롭을 펼치는 `node --test tests/*.test.mjs` 를 직접 호출**한다(`.github/workflows/ci.yml`). 실행 대상은 동일하다. 근본 해결(예: `node --test tests/`)은 `package.json` 수정이 필요해 후속 과제로 남아 있다.
+
+> **테스트 개수를 문서에 고정 숫자로 적지 않는다.** 테스트가 늘어나는 순간 문서가 거짓이 되기 때문이다 — 실제 개수는 실행 로그가 말한다. 같은 이유로 CI 의 job 이름·주석에도 개수를 넣지 않는다.
 
 ### 백엔드 로컬 실행 (이 레포 밖, 참고용)
 
@@ -540,24 +549,31 @@ docker compose up --build
 
 ## 13. Git 작업 규약
 
-루트 규약: `main`(배포) · `develop`(통합) · `feature/*`, **PR로만 머지.**
+> **이 절은 개인 Fork(`duwlsl/bambi-service-web`)의 현재 규칙이다.**
+> **과거 팀 프로젝트 구조:** 루트 규약에 따라 `main`(배포) · `develop`(통합) · `feature/*` 3단계를 썼다.
+> 이 Fork 에는 **`develop` 브랜치가 없고 배포도 하지 않으므로** 그 규약을 그대로 쓰지 않는다.
+
+기준 브랜치: **`main`(기준 브랜치)** — 배포 브랜치가 아니다. **PR로만 머지.**
 
 ```text
-main(또는 develop) 최신화 (git pull)
-→ feature 브랜치 생성
+최신 main 으로 갱신 (git checkout main && git pull)
+→ 목적별 브랜치 생성
 → 작업
-→ 로컬 검증 (lint / type check / build)
+→ 로컬 검증 (lint / type check / test / build)
 → commit
 → push
-→ Pull Request
+→ Pull Request (base: main)
 ```
 
 - **MUST NOT**: `main`에 직접 커밋·푸시.
-- 작업 단위별 **`feature/<작업명>`** 브랜치 (예: `feature/yeojin-auth-ui`).
+- **작업 전 항상 최신 `main`에서 분기한다.**
+- 브랜치 이름은 **목적별 접두사**를 쓴다 — `feat/*` · `fix/*` · `refactor/*` · `test/*` · `docs/*` · `chore/*` · `ci/*`
+  (예: `fix/notification-polling-consistency`, `chore/portfolio-repository-workflow`).
+- **사람 이름 접두사(`yeojin/*` 등)는 쓰지 않는다** — 개인 단독 Fork 라 작성자를 구분할 이유가 없다.
 - 브랜치는 **일회용**. 머지 후 새 작업은 최신 `main`에서 새로 분기.
-- **하나의 PR에 하나의 목적**만. 무관한 대규모 리팩터링 섞지 않기.
+- **작업 단위별로 PR을 만든다.** 하나의 PR에 하나의 목적만 — 무관한 대규모 리팩터링 섞지 않기.
 - 커밋 메시지는 **변경 의도**가 드러나게.
-- PR 본문: 작업 내용 / 확인 방법 / 화면 변경(스크린샷) / 남은 이슈.
+- PR 본문 형식은 **§16**을 따른다 (`.github/pull_request_template.md`).
 - **환경변수 파일·비밀정보 커밋 금지.**
 
 ---
@@ -599,7 +615,7 @@ main(또는 develop) 최신화 (git pull)
 
 **팀 결정 (우석 정책·배포 승인)** — 배포용 `NEXT_PUBLIC_API_URL` 절대 주소를 받는 대신 **same-origin fallback**으로 확정했다 (§6).
 
-- ~~배포용 `NEXT_PUBLIC_API_URL` 확정 주소 (우석 제공 예정)~~ → **운영 빌드에서는 `NEXT_PUBLIC_API_URL`을 비운다.** 프론트는 same-origin `/api/*` 상대경로를 쓰고, 운영 nginx가 `/api/*`를 `service-api`로 프록시한다. base 결정은 `getApiBaseUrl()` 1곳(값 있으면 그 origin, 없으면 빈 base). 정식 배포는 `.github/workflows/image.yml`(GCP 이미지, 기본값 제거로 빈값 빌드). **GitHub 변수 `NEXT_PUBLIC_API_URL` 제거는 우석이 PR 머지 시점에 처리.**
+- ~~배포용 `NEXT_PUBLIC_API_URL` 확정 주소 (우석 제공 예정)~~ → **운영 빌드에서는 `NEXT_PUBLIC_API_URL`을 비운다.** 프론트는 same-origin `/api/*` 상대경로를 쓰고, 운영 nginx가 `/api/*`를 `service-api`로 프록시한다. base 결정은 `getApiBaseUrl()` 1곳(값 있으면 그 origin, 없으면 빈 base). 당시 정식 배포는 `.github/workflows/image.yml`(GCP 이미지, 기본값 제거로 빈값 빌드). **GitHub 변수 `NEXT_PUBLIC_API_URL` 제거는 우석이 PR 머지 시점에 처리.** — 이 항목은 **과거 팀 프로젝트 구조**의 기록이며, 개인 Fork 의 `image.yml` 은 현재 빌드 검증만 한다(§6 「배포」).
 
 ### ✅ 해소 완료 (2026-07-21) — 비로그인 guest 정책
 
@@ -632,4 +648,42 @@ main(또는 develop) 최신화 (git pull)
 **프론트 내부 결정 (레포 확인 후 문서화)**
 - ~~토큰 localStorage key 이름~~ → **`bambi.accessToken` 확정. `constants/auth.ts`의 `ACCESS_TOKEN_STORAGE_KEY` 상수 1곳에 정의 (§5·§10)**
 - ~~`NEXT_PUBLIC_API_URL`의 `/api` prefix 포함 여부~~ → **base는 origin-only(`http://localhost`), `/api`는 요청 경로에. 공통 client 1곳에서 결합 (§6)**
-- ~~`package.json` script 목록~~ → **`dev` / `build` / `start` / `lint` 4개만 존재. type check는 `npx tsc --noEmit`, test 없음 (§12)**
+- ~~`package.json` script 목록~~ → **`dev`·`build`·`start`·`lint` 와 test 계열 스크립트가 존재한다. 세부 명령은 현재 `package.json` 을 기준으로 확인하며, typecheck 는 `npx tsc --noEmit` 을 사용한다 (§12)**
+
+---
+
+## 16. 포트폴리오 Fork — PR 작성 규칙
+
+> 이 절은 **개인 Fork(`duwlsl/bambi-service-web`)** 에 적용된다. PR **본문 형식**에 한해 §13 의
+> 「PR 본문: 작업 내용 / 확인 방법 / 화면 변경(스크린샷) / 남은 이슈」를 대체한다.
+> §13 의 나머지(브랜치 전략·PR 로만 머지·비밀정보 커밋 금지)는 그대로 유효하다.
+
+### 형식 (MUST)
+
+- PR 본문은 **`.github/pull_request_template.md` 형식을 따른다** — `문제 / 변경 / 검증 / 영향 범위` 네 섹션.
+- 네 섹션 밖의 내용을 덧붙이지 않는다.
+
+### 분량과 서술 (MUST NOT)
+
+- 문제를 **재현하고 원인을 찾아간 과정을 시간순으로** 늘어놓지 않는다. 원인은 결론만 적는다.
+- **내부 구현을 장황하게 설명하지 않는다.** 코드를 읽으면 알 수 있는 것은 코드에 맡긴다.
+- **커밋별 작업을 전부 반복해서 설명하지 않는다.** 커밋 목록은 PR 이 이미 보여준다.
+- 문제·변경·검증·영향 범위만 간결하게 쓴다.
+
+### 사실성 (MUST)
+
+- **테스트 결과는 실제 실행값만 적는다.** 실행하지 않은 명령의 결과를 쓰지 않고, 통과 건수·실패 메시지는 실행 출력 그대로 옮긴다.
+- **확인하지 않은 내용을 단정하지 않는다.** 확인된 사실과 추정을 구분해 쓴다.
+- 변경하지 않은 영역을 「영향 범위」에 밝혀 검토 범위를 좁힌다.
+
+### 도구 표기 금지 (MUST NOT)
+
+- **AI · LLM · Claude · Codex 사용 사실을 나타내는 자동 푸터를 추가하지 않는다.**
+- `Generated with Claude Code` · `Co-Authored-By: Claude ...` 같은 문구를 **PR 본문과 커밋 메시지 어디에도** 넣지 않는다.
+
+### 팀 작업과의 구분 (MUST)
+
+- **포트폴리오 Fork 의 개인 개선과 원본 팀 프로젝트 당시 작업을 구분한다.** 종료 후 진행한 개선은
+  README 「프로젝트 종료 후 개인 개선 계획」에 날짜·브랜치·PR 로 기록하고, 팀 당시 구현으로 읽히게 쓰지 않는다.
+- 원본 팀 저장소(`hk-toss-final-project/*`)와 팀 인프라(배포 서버·조직 시크릿)는 이 Fork 의 작업 대상이 아니다.
+  워크플로가 그쪽을 호출하지 않는 상태를 유지한다(`.github/workflows/image.yml`).
