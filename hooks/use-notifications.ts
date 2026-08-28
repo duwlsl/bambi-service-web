@@ -25,7 +25,8 @@ const NOTIFICATIONS_POLL_MS = 30_000;
  * `hooks/use-polled-data.ts` 는 정확히 이 문제를 위해 만들어졌지만(파일 상단 주석이 이 훅을
  * 지목하고 있다) 정작 알림은 이관되지 않은 채 남아 있었다.
  *
- * 이관으로 함께 얻는 것(전부 usePolledData 가 이미 구현한 동작 — 그 파일은 수정하지 않았다):
+ * 이관으로 함께 얻는 것(주된 폴링 동작은 기존 usePolledData 를 그대로 재사용했고, 이관 과정에서
+ * 발견한 타이머 중복 예약 결함은 그 훅에서 함께 고쳤다 — 해당 파일의 startTimer 주석 참조):
  * - **stale-while-revalidate**: 최초 로드만 loading, 이후 재조회는 기존 목록·unreadCount 를 유지한 채
  *   `isRevalidating` 으로만 표시한다.
  * - **숨김 탭 정지**: `document.hidden` 이면 다음 tick 을 걸지 않고, visible 복귀 시 즉시 1회
