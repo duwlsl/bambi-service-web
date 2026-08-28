@@ -269,6 +269,54 @@ describe("알림 배경 polling", () => {
     expect(counter.calls).toBe(3); // 주기 재개
   });
 
+  /**
+   * 타이머 중복 예약 회귀 — in-flight 락은 "요청"만 막지 "타이머"는 막지 못한다.
+   *
+   * 진행 중 요청이 있는 동안 visible 로 복귀하면 복귀 조회는 락에 막혀 건너뛰어지지만, 그
+   * 건너뛴 호출도 즉시 resolve 돼 `finally(startTimer)` 로 **다음 tick 을 예약**한다. 잠시 뒤
+   * 진행 중이던 요청이 끝나면서 그 요청의 `finally(startTimer)` 가 **또 한 번 예약**하므로,
+   * 이 시점부터 활성 타이머가 2개가 된다(게다가 지역 변수 `timer` 는 나중 것만 가리켜 앞선
+   * 타이머는 clearTimeout 대상에서 영영 빠진다). 그때부터 주기마다 요청이 2번씩 나간다.
+   *
+   * 복귀 예약분과 완료 예약분이 **서로 다른 시각**에 걸리도록 응답을 푸는 시점을 15초 뒤로
+   * 미룬다 — 두 타이머가 같은 순간에 만료되면 뒤엣것이 in-flight 락에 막혀 결함이 요청 수에
+   * 드러나지 않을 수 있기 때문이다(측정을 응답 속도에 의존시키지 않는다).
+   */
+  test("진행 중 요청 도중 hidden → visible 전환이 일어나도 주기당 요청은 1회뿐이다", async () => {
+    const second = createGate();
+    const counter = serveNotifications(async (call) => {
+      if (call === 1) return ok(FIRST_PAGE);
+      if (call === 2) await second.promise;
+      return ok(SECOND_PAGE);
+    });
+
+    renderAuthenticated(<NotificationMenu />);
+    expect(await screen.findByRole("button", { name: "알림 3개 읽지 않음" })).toBeInTheDocument();
+    expect(counter.calls).toBe(1);
+
+    // 두 번째 요청을 진행 중(gate) 상태로 붙잡아 둔다.
+    await advance(POLL_MS);
+    expect(counter.calls).toBe(2);
+
+    // 진행 중인 동안 숨겼다가 되돌린다 — 복귀 조회는 락에 막혀 요청을 만들지 않는다.
+    setTabHidden(true);
+    setTabHidden(false);
+    await advance(15_000);
+    expect(counter.calls).toBe(2);
+
+    // 진행 중이던 요청 완료 → 여기서 다음 주기가 다시 예약된다.
+    second.release();
+    expect(await screen.findByRole("button", { name: "알림 5개 읽지 않음" })).toBeInTheDocument();
+
+    // 검증 지점: 타이머가 2개면 이 30초 구간에서 요청이 2번 나간다.
+    await advance(POLL_MS);
+    expect(counter.calls).toBe(3);
+
+    // 그 다음 주기에도 정확히 1회씩만 늘어난다(중복이 누적되지 않는다).
+    await advance(POLL_MS);
+    expect(counter.calls).toBe(4);
+  });
+
   test("응답이 느려도 다음 폴링 요청이 겹쳐 나가지 않는다", async () => {
     const slow = createGate();
     const counter = serveNotifications(async (call) => {
