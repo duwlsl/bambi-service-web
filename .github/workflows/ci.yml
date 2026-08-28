@@ -1,13 +1,22 @@
 name: CI
 
-# service-web(Next.js) PR 자동 검사
-# main / develop 로 향하는 PR과 해당 브랜치 push 시 실행
+# service-web(Next.js) 자동 검사 — lint · typecheck · 단위 테스트 · 빌드 · E2E · 시크릿 스캔
+# main 으로 향하는 PR과 main push 에서 실행하고, 필요하면 수동으로도 돌린다.
+#
+# 이 저장소는 팀 원본의 개인 Fork 라 브랜치가 main 하나뿐이다. 원본에 있던 develop 트리거는
+# 이 Fork 에 대응 브랜치가 없어 영원히 발동하지 않으므로 뺐다(죽은 설정을 남기지 않는다).
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   push:
-    branches: [main, develop]
+    branches: [main]
+  workflow_dispatch:
+
+# 검사만 하는 워크플로라 저장소 읽기 외의 권한이 필요 없다. 최소 권한을 최상위에 두어
+# 모든 job 이 같은 기본값을 상속한다(job 이 늘어도 권한이 조용히 넓어지지 않는다).
+permissions:
+  contents: read
 
 # 같은 브랜치에서 새 커밋이 오면 이전 실행은 취소 (CI 시간 절약)
 concurrency:
@@ -45,10 +54,12 @@ jobs:
       # ⚠️ `npm test`(= test:legacy && test:unit)를 그대로 부르지 않는 이유:
       #    test:legacy 의 `node --test "tests/*.test.mjs"` 는 **Node 22+ 에서만** 글롭이 확장된다.
       #    이 CI 의 Node 20 에서는 리터럴 경로로 읽혀 "Could not find" 로 실패한다(실측).
-      #    여기서는 셸이 글롭을 펼쳐 같은 12파일·190케이스를 그대로 실행한다 — 실행 대상은 동일하다.
+      #    여기서는 셸이 글롭을 펼쳐 `tests/*.test.mjs` 전부를 실행한다 — 실행 대상은 동일하다.
+      #    파일·케이스가 늘어도 글롭이 그대로 집어가므로 개수는 적어 두지 않는다(적어 두면 늘어난
+      #    순간부터 이름과 주석이 거짓이 된다 — 실제 개수는 실행 로그가 말한다).
       #    근본 해결은 package.json 의 test:legacy 를 Node 20 호환으로 고치는 것이고(예: `node --test tests/`),
-      #    package.json 수정은 이 PR 범위 밖이라 후속으로 남긴다.
-      - name: Test (node:test, 190건)
+      #    package.json 수정은 이 작업 범위 밖이라 후속으로 남긴다.
+      - name: Test (node:test)
         run: node --test tests/*.test.mjs
 
       # jsdom 은 Node 20 을 공식 지원하는 라인(#112)이라 이 job 의 Node 20 에서 그대로 돈다.
