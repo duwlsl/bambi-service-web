@@ -348,7 +348,7 @@ process.env.NEXT_PUBLIC_API_URL
 | 환경 | 값 | 상태 |
 |---|---|---|
 | 로컬 | **`NEXT_PUBLIC_API_URL=http://localhost`** (nginx 80 → backend 8080). `/api`는 base가 아니라 경로에 → `http://localhost/api/health` = `{"status":"UP"}` | **실측 확인됨** |
-| 배포(운영) | **`NEXT_PUBLIC_API_URL` 비움** → same-origin 상대경로 `/api/*`. 운영 nginx가 같은 origin의 `/api/*`를 service-api로 전달. 정식 배포는 `.github/workflows/image.yml`(GCP 이미지) 방식 | **확정** (2026-07-24, 우석 정책·배포 승인) |
+| 배포(운영) — **과거 팀 프로젝트 구조** | **`NEXT_PUBLIC_API_URL` 비움** → same-origin 상대경로 `/api/*`. 운영 nginx가 같은 origin의 `/api/*`를 service-api로 전달했다 | **팀 프로젝트 당시 확정** (2026-07-24, 우석 정책·배포 승인). **개인 Fork 에는 배포 환경이 없다** (아래 「배포」 참조) |
 
 > **`/api` prefix — 확정 (2026-07-15 프론트 결정): `NEXT_PUBLIC_API_URL`은 origin(scheme+host)까지만 담고 `/api`는 요청 경로에 둔다.**
 >
@@ -360,8 +360,10 @@ process.env.NEXT_PUBLIC_API_URL
 
 ### 배포
 
-- **정식 배포:** `.github/workflows/image.yml` → GHCR 이미지 빌드 → bambi-build 서버 배포(GCP). 이미지 빌드는 `NEXT_PUBLIC_API_URL`을 **비운 채** 수행 → 런타임 same-origin `/api/*`.
-- 운영은 **nginx가 같은 origin의 `/api/*`를 service-api로 전달**하는 것을 전제로 한다.
+> **개인 Fork 에는 배포가 없다.** 첫 항목은 **과거 팀 프로젝트 구조**의 기록이고, 두 번째 항목이 이 Fork 의 현재 상태다.
+
+- **과거 팀 프로젝트 구조 (현재 이 Fork 에서는 동작하지 않는다):** `.github/workflows/image.yml` → GHCR 이미지 빌드·push → 원본 조직 저장소(`bambi-build`)의 배포 워크플로 dispatch → 서버 반영(GCP). 이미지 빌드는 `NEXT_PUBLIC_API_URL`을 **비운 채** 수행해 런타임 same-origin `/api/*` 가 되게 했고, 운영은 **nginx가 같은 origin의 `/api/*`를 service-api로 전달**하는 것을 전제로 했다.
+- **개인 Fork 현재:** `.github/workflows/image.yml` 은 워크플로 이름이 **`Docker Build`** 이며 **Dockerfile 이 빌드되는지만 검증**한다. 레지스트리 로그인 · 이미지 push · 조직 저장소 workflow dispatch · 배포 시크릿 · 서버 배포는 **전부 없다.** 배포 대상이 정해지지 않아 **CI 까지만** 구성한다.
 - 다른 origin의 절대 API를 써야 하는 환경에서만 배포 변수 `NEXT_PUBLIC_API_URL`(origin-only)을 설정한다. **레포에 실제 운영 URL·tunnel 주소를 하드코딩·커밋하지 않는다.** (GitHub 변수 관리는 우석 담당)
 
 ---
@@ -547,24 +549,31 @@ docker compose up --build
 
 ## 13. Git 작업 규약
 
-루트 규약: `main`(배포) · `develop`(통합) · `feature/*`, **PR로만 머지.**
+> **이 절은 개인 Fork(`duwlsl/bambi-service-web`)의 현재 규칙이다.**
+> **과거 팀 프로젝트 구조:** 루트 규약에 따라 `main`(배포) · `develop`(통합) · `feature/*` 3단계를 썼다.
+> 이 Fork 에는 **`develop` 브랜치가 없고 배포도 하지 않으므로** 그 규약을 그대로 쓰지 않는다.
+
+기준 브랜치: **`main`(기준 브랜치)** — 배포 브랜치가 아니다. **PR로만 머지.**
 
 ```text
-main(또는 develop) 최신화 (git pull)
-→ feature 브랜치 생성
+최신 main 으로 갱신 (git checkout main && git pull)
+→ 목적별 브랜치 생성
 → 작업
-→ 로컬 검증 (lint / type check / build)
+→ 로컬 검증 (lint / type check / test / build)
 → commit
 → push
-→ Pull Request
+→ Pull Request (base: main)
 ```
 
 - **MUST NOT**: `main`에 직접 커밋·푸시.
-- 작업 단위별 **`feature/<작업명>`** 브랜치 (예: `feature/yeojin-auth-ui`).
+- **작업 전 항상 최신 `main`에서 분기한다.**
+- 브랜치 이름은 **목적별 접두사**를 쓴다 — `feat/*` · `fix/*` · `refactor/*` · `test/*` · `docs/*` · `chore/*` · `ci/*`
+  (예: `fix/notification-polling-consistency`, `chore/portfolio-repository-workflow`).
+- **사람 이름 접두사(`yeojin/*` 등)는 쓰지 않는다** — 개인 단독 Fork 라 작성자를 구분할 이유가 없다.
 - 브랜치는 **일회용**. 머지 후 새 작업은 최신 `main`에서 새로 분기.
-- **하나의 PR에 하나의 목적**만. 무관한 대규모 리팩터링 섞지 않기.
+- **작업 단위별로 PR을 만든다.** 하나의 PR에 하나의 목적만 — 무관한 대규모 리팩터링 섞지 않기.
 - 커밋 메시지는 **변경 의도**가 드러나게.
-- PR 본문: 작업 내용 / 확인 방법 / 화면 변경(스크린샷) / 남은 이슈.
+- PR 본문 형식은 **§16**을 따른다 (`.github/pull_request_template.md`).
 - **환경변수 파일·비밀정보 커밋 금지.**
 
 ---
@@ -606,7 +615,7 @@ main(또는 develop) 최신화 (git pull)
 
 **팀 결정 (우석 정책·배포 승인)** — 배포용 `NEXT_PUBLIC_API_URL` 절대 주소를 받는 대신 **same-origin fallback**으로 확정했다 (§6).
 
-- ~~배포용 `NEXT_PUBLIC_API_URL` 확정 주소 (우석 제공 예정)~~ → **운영 빌드에서는 `NEXT_PUBLIC_API_URL`을 비운다.** 프론트는 same-origin `/api/*` 상대경로를 쓰고, 운영 nginx가 `/api/*`를 `service-api`로 프록시한다. base 결정은 `getApiBaseUrl()` 1곳(값 있으면 그 origin, 없으면 빈 base). 정식 배포는 `.github/workflows/image.yml`(GCP 이미지, 기본값 제거로 빈값 빌드). **GitHub 변수 `NEXT_PUBLIC_API_URL` 제거는 우석이 PR 머지 시점에 처리.**
+- ~~배포용 `NEXT_PUBLIC_API_URL` 확정 주소 (우석 제공 예정)~~ → **운영 빌드에서는 `NEXT_PUBLIC_API_URL`을 비운다.** 프론트는 same-origin `/api/*` 상대경로를 쓰고, 운영 nginx가 `/api/*`를 `service-api`로 프록시한다. base 결정은 `getApiBaseUrl()` 1곳(값 있으면 그 origin, 없으면 빈 base). 당시 정식 배포는 `.github/workflows/image.yml`(GCP 이미지, 기본값 제거로 빈값 빌드). **GitHub 변수 `NEXT_PUBLIC_API_URL` 제거는 우석이 PR 머지 시점에 처리.** — 이 항목은 **과거 팀 프로젝트 구조**의 기록이며, 개인 Fork 의 `image.yml` 은 현재 빌드 검증만 한다(§6 「배포」).
 
 ### ✅ 해소 완료 (2026-07-21) — 비로그인 guest 정책
 
